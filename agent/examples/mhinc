@@ -1,0 +1,34 @@
+#! /bin/sh
+# @(#) incorporates mail in an mh folder from a mail/news folder
+
+if test $# -eq 0; then
+	exec inc
+fi
+
+if folder="$HOME/mail/$1" && test -s $folder; then
+	:
+elif folder="$HOME/news/$1" && test -s $folder; then
+	:
+else
+	echo "mhinc: no mail to incorporate"
+	exit 0
+fi
+
+if test -d $folder; then
+	echo "mhinc: $folder is a directory!"
+	exit 0
+fi
+
+echo "mhinc: using $folder"
+inc +$1 -file $folder -truncate
+
+# Do not leave zero-length files. This may lead to some trouble when
+# saving news articles in them (trn will not recognize the "mailbox"
+# format, which is required by inc).
+
+if test -s $folder; then
+	echo "mhinc: folder was not emptied"
+else
+	rm $folder
+fi
+

@@ -1,0 +1,2017 @@
+Sat Mar 17 19:29:59 MET 2001   Raphael Manfredi <Raphael_Manfredi@pobox.com>
+
+. Description:
+
+	Added credits for Manoj Srivastava, the Debian packager, for
+	his wonderful work.
+
+	Added two variables: domain and hidenet, in order to address
+	the Debian bug #72737.  The values hardwired at Configure time
+	in mailagent are now used only up to the moment where we have
+	parsed the user configuration.
+
+	Forgot to increment buf in pool_read(), in the C filter.
+	This was an important bug, which had never hit me however.
+	I noticed it by looking a the Debian patches.
+
+	Use the "email" config var verbatim in FORWARD.  It used to
+	determine the Resent-From: by constructing a full email address,
+	but this is wrong.  We should use whatever the user said, and
+	it is up to MTAs to fix the address should it be unqualified.
+
+	Removed unused var in POST.
+
+	Fixed longstanding lie in man; "To: gue@eiffel.fr" now works
+	as advertised in the man page.  It also means you can write:
+
+	    To Cc: user@example.com
+
+	instead of the heavier:
+
+	    To Cc: /^user@example\.com$/
+
+	However, if you wish to use more complex patterns, you still
+	have to use the /^/ anchored form.
+
+	Create a new filter/address test to test various matching
+	patterns on address selectors.
+
+	Try to run tests as nobody when super-user -- from Debian.
+
+	Fixed test rules for UNIQUE, removing spurious REJECT -f.  The
+	error present in the man page had also propagated to the test
+	cases.
+
+. Files changed:
+
+	* agent/files/setup.cf, agent/files/mailagent.cf: Added two
+	variables: domain and hidenet.
+
+	* agent/filter/io.c: Forgot to increment buf in pool_read() -- from
+	Debian.
+
+	* agent/magent.sh: Mydomain and hiddennet now superseded by config
+	vars.  Changed email_addr() and domain_addr() to honour new config
+	vars.
+
+	* agent/man/mailagent.SH: Documented new config vars: domain and
+	hidenet.  Various fixes from bug reports on Debian.
+
+	* agent/pl/actions.pl: Use the "email" config var verbatim in
+	FORWARD.  Removed unused var in POST.
+
+	* agent/pl/builtins.pl: Hostname computed via domain_addr() to honour
+	hidenet.
+
+	* agent/pl/matching.pl: Fixed longstanding lie in man; "To:
+	gue@eiffel.fr" now works.
+
+	* agent/pl/parse.pl: Use the "domain" config var instead of mydomain.
+
+	* agent/pl/read_conf.pl: Computes suitable defaults for new "domain"
+	and "hidenet".
+
+	* agent/pl/rfc822.pl: Use "domain" config var instead of mydomain.
+
+	* agent/test/TEST: Try to run tests as nobody when super-user -- from
+	Debian.
+
+	* agent/test/actions: Fixed test rules for UNIQUE, removing spurious
+	REJECT -f.
+
+	* agent/test/filter/address.t: Created.
+
+	* agent/test/filter/list.t: Unlink files we expect to be created
+	before running command.
+
+	* agent/test/rules: Added new filter/address tests.
+
+Tue Mar 13 14:27:14 MET 2001   Raphael Manfredi <Raphael_Manfredi@pobox.com>
+
+. Description:
+
+	Made fixup of header fields in POST be a warning in the
+	logs, instead of a mere notice.
+
+	Added fix for broken continuations in parse_mail().  I have
+	started receiving messages with invalid header continuations,
+	and this led to failure in POST: the remote news server is
+	much more strict on headers than mail agents.
+
+	Fixed RESYNC, copied continuation fix from parse_mail().
+
+	Added support for SUBST/TR on mail headers: it is now possible
+	to say something like:
+
+	    SUBST Subject: /foo/bar/g;
+
+	to alter header field in place.  See the updated manual page
+	for details.
+
+	Added rule to suppress () and {} in message ids, since again
+	it led to failures when using POST.
+
+	Added test cases for SUBST/TR on header fields.
+
+	The newsgate program now computes the In-Reply-To field via a
+	regexp instead of a split on References to cope with bad
+	References line that dont have a space between message ids.
+
+. Files changed:
+
+	* agent/man/mailagent.SH: Documented SUBST/TR on header fields.
+
+	* agent/pl/actions.pl: Made fixup of header fields in POST be a
+	warning.  Fixed RESYNC, copied continuation fix from parse_mail(). 
+	Added support for SUBST/TR on mail headers.
+
+	* agent/pl/filter.pl: Changed SUBST/TR parameter parsing to support
+	header fields.
+
+	* agent/pl/header.pl: Added rule to suppress () and {} in message ids.
+
+	* agent/pl/history.pl: Message ids are now cleaned-up via
+	msgid_cleanup().
+
+	* agent/pl/parse.pl: Added fix for broken continuations in
+	parse_mail().
+
+	* agent/test/actions: Added test cases for SUBST/TR on header fields.
+
+	* agent/test/cmd/subst.t: Added test cases for SUBST on header fields.
+
+	* agent/test/cmd/tr.t: Added test cases for TR on header fields.
+
+	* misc/news/ml.map: Typo fixes in leading comment.
+
+	* misc/news/newsgate: The in-reply-to field is now computed via a
+	regexp.
+
+Wed Jan 10 18:10:29 MET 2001   Raphael Manfredi <Raphael_Manfredi@pobox.com>
+
+. Description:
+
+	Updated date in README and my e-mail address.
+
+	Documented my CPAN directory URL in agent/README.
+
+	Compilation bug fixes in filter:
+	. switched to dynamic init of standard file array for GNU libc
+	. fixed incorrect selection of sys_errlist[]
+
+	Changed semantics of "tome": the '.' and '_' in names is no
+	longer stripped.  If your full name was, say, raphael_manfredi,
+	then you could set "tome: manfredi" and it worked.  The heuristics
+	were bad, and it prevented doing useful things.  Let's drop
+	support for that and see if anyone complains. ;-)
+
+	Updated POST to current practices.  In particular, it has been
+	tested to establish a mail -> news gateway with INN 1.7.2.
+	POST also support a new "-b" switch to cause article biffing, just
+	like saving in a folder triggers mail biffing.
+
+	The following new features are available in POST:
+	. fix lines like From: A.B <a@b> into From: "A.B" <a@b>
+	. remove duplicate Content-Transfer-Encoding and other MIME headers
+	. generate proper References: line and fixes bad Message-ID lines.
+	. fix date if too old or too far in the future
+
+	In the new misc/news directory, you'll find a program and instruction
+	to setup a news -> mail gateway (tested with INN 1.7.2), thereby
+	making it possible to build a bi-directional mail <=> news gateway
+	with mailagent.
+
+	Fixed wrong lexical attribute synthesis for numbers during date
+	parsing, which cause 08 and 09 to not parse at all.
+
+	Fixed sed command that produced bad dependencies on linux in the
+	agent/pl/utmp directory.
+
+	Fixed dates for the SELECT test to avoid failures past year 2001.
+
+. Files changed:
+
+	* agent/filter/io.c: Switched to dynamic init of standard file array
+	for GNU libc.
+
+	* agent/filter/logfile.c: Fixed incorrect selection of sys_errlist[].
+
+	* agent/man/mailagent.SH: Changed semantics of "tome".  Updated POST
+	to current practices.  Documented biffing macros for news article.
+
+	* agent/pl/actions.pl: Replaced calls to fake_date() by mta_date(). 
+	Rewrote the POST command, and added the -b switch.
+
+	* agent/pl/biff.pl: Added support for news article biffing.
+
+	* agent/pl/getdate.pl: Fixed wrong lexical attribute synthesis for
+	numbers.
+
+	* agent/pl/header.pl: New mta_date() routine replaces old
+	fake_date().  Added msgid_cleanup() and parsedate() routines.
+
+	* agent/pl/parse.pl: Allow direct IP numbers in Received fields.
+
+	* agent/pl/period.pl: Added relative_age().
+
+	* agent/pl/rfc822.pl: Dropped support of '_' and '.' stripping in
+	last_name().  Added gen_message_id().
+
+	* agent/pl/runcmd.pl: New -b switch for POST to request biffing.
+
+	* agent/test/actions: Fixed dates for the SELECT test to avoid
+	failures past 2001.
+
+	* agent/test/cmd/vacation.t: Changed "tome" settings due to dropping
+	of dot stripping.
+
+	* misc/news/newsgate, misc/news/ml.map: Created.
+
+Mon Jul 12 16:05:35 METDST 1999   Raphael Manfredi <Raphael_Manfredi@pobox.com>
+
+. Description:
+
+	Regenerated Configure with newest metaconfig: no longer ask to
+	send mail to the author
+
+	Updated my e-mail address and copyright line.
+
+	Will now install examples as well.
+
+	Added the UNLOCKED pattern to chkagent.sh
+
+	Was missing a trailing colon in getopt() declaration.
+
+	Variables are now propagated back and forth through APPLY
+
+	Use servshell instead of /bin/sh for commands
+
+	Make sure that we do not get an empty header when filtering
+
+	Fixed Y2K bugs
+
+	Added one extra char for filename in queue listings.
+
+	Added ~ substitution in locate_program().
+
+	Specialized <3> to mean <3,3> in mrange()
+	Fixed wrong semantics for <3>, and rewrote tests accordingly
+
+	Weird Received: logging moved to higher levels
+
+	Queue renaming logs now include filenames in 'quotes'
+
+	Added tests for variable propagation in APPLY
+	Added test for variable propagation
+	Added new test cases
+
+	Updated getcost documentation and added switches -a and -c
+
+	Two new files (makefiles)
+
+. Files changed:
+
+	* agent/Jmakefile: Will now install examples as well.
+
+	* agent/examples/Jmakefile: Created.
+
+	* agent/files/chkagent.sh: Added the UNLOCKED pattern.
+
+	* agent/filter/getopt.c: Was missing a trailing colon in getopt()
+	declaration.
+
+	* agent/filter/io.c: Renamed metaconfig obsolete symbol.  Now uses
+	say() when mail is DUMPED.
+
+	* agent/man/edusers.SH, agent/man/package.SH, agent/man/mailhelp.SH:
+	Updated my e-mail address.
+
+	* agent/man/mailagent.SH: Variables are now propagated back and forth
+	through APPLY.  Updated my e-mail address.
+
+	* agent/pl/actions.pl: Use servshell instead of /bin/sh for commands.
+	Make sure that we do not get an empty header when filtering.
+
+	* agent/pl/analyze.pl: Moved localization of the %Variable hash for
+	APPLY.
+
+	* agent/pl/cmdserv.pl: Factorized servshell handling in function.
+
+	* agent/pl/getdate.pl: Fixed Y2K bug.
+
+	* agent/pl/listqueue.pl: Added one extra char for filename in queue
+	listings.
+
+	* agent/pl/locate.pl: Added ~ substitution in locate_program().
+
+	* agent/pl/matching.pl: Specialized <3> to mean <3,3> in mrange().
+
+	* agent/pl/parse.pl: Weird Received: logging moved to higher levels.
+
+	* agent/pl/queue_mail.pl: Logs now include filenames in 'quotes'.
+
+	* agent/test/actions: Added tests for variable propagation in APPLY.
+
+	* agent/test/cmd/apply.t: Added test for variable propagation.
+
+	* agent/test/filter/list.t: Added new test cases.
+
+	* agent/test/rules: Fixed wrong semantics for <2>, and rewrote tests
+	accordingly.
+
+	* misc/mime/unmime: Added processing for ligatured "oe".
+
+Wed Jan 13 19:24:56 MET 1999   Raphael Manfredi <Raphael_Manfredi@grenoble.hp.com>
+
+. Description:
+
+	The agent.wait file is now stored in the spool rather than in
+	the queue.
+
+	Fixed wrong localization of variables in unique_filename() which
+	could cause filter to lock up. Thanks to Gerhard den Hollander
+	for spotting it!
+
+	Additions to agent.wait are more robust and use locking to guard
+	against concurrent accesses, rather than counting on proper
+	O_APPEND semantics and praying nobody (mailagent) renames the
+	file whilst generated ;-)
+
+	Only use last two digits from year in logfiles. I choose to
+	see "00/01/01" on Jan 1st 2000 in the logs.
+
+	Added tag-checking heuristic to say() in C filter to avoid
+	extra pre-pending of ERROR tags.
+
+	New %Y macro for 4-digit year, %y being year modulo 100
+
+	Resync of agent.wait now more robust and uses locking.
+	There may be empty lines in the agent.wait file, to reserve
+	space in the filesystem (minimal size is therefore 1 byte).
+
+	Test suite: Test for non-writable agent.wait file and cleanup
+	agent.wait file since now always produced.
+
+	Documented the -k option for getcost in misc/getcost.
+
+. Files changed:
+
+	* agent/files/filter.sh: Agent.wait is now stored in the spool rather
+	than in queue.
+
+	* agent/filter/io.c: Fixed wrong localization of variables in
+	unique_filename().  Additions to agent.wait are more robust and use
+	locking.
+
+	* agent/pl/actions.pl, agent/filter/logfile.c, agent/pl/add_log.pl:
+	Only use last two digits from year in logfiles.
+
+	* agent/filter/msg.c: Added tag-checking heuristic to say().
+
+	* agent/magent.sh: Changed agent_wait to AGENT_WAIT, now holding full
+	path.
+
+	* agent/man/mailagent.SH: Added %Y macro for 4-digit year output. 
+	Agent.wait file moved from Queue to Spool.
+
+	* agent/pl/emergency.pl: Only use last two digits from year in
+	logfiles.  Resync of agent.wait now more robust and uses locking.
+
+	* agent/pl/pqueue.pl, agent/pl/listqueue.pl: There may be empty lines
+	in the agent.wait file.
+
+	* agent/pl/macros.pl: New %Y macro for 4-digit year, %y being year
+	modulo 100.
+
+	* agent/pl/queue_mail.pl: Writing to agent.wait is now more robust
+	and uses locking.
+
+	* agent/test/basic/config.t: Test for non-writable agent.wait file.
+
+	* agent/test/basic/filter.t: Agent.wait file moved from queue to
+	spool dir.
+
+	* agent/test/pl/init.pl: Cleanup agent.wait file since now always
+	produced.
+
+Tue Jul 28 19:33:00 METDST 1998   Raphael Manfredi <Raphael_Manfredi@grenoble.hp.com>
+
+. Description:
+
+	unique_filename() could loop forever, abort if no locking
+
+. Files changed:
+
+	* agent/filter/io.c: unique_filename() could loop forever, abort if
+	no locking.
+
+Tue Jul 28 19:13:31 METDST 1998   Raphael Manfredi <Raphael_Manfredi@grenoble.hp.com>
+
+. Description:
+
+	Added new "servshell" configuration variable. Probably only
+	useful if your are running HP-UX 10.x and later.
+
+	Added setup information for the "hash" config variable (for
+	the purpose of mailagent -I) and fixed wrong (prefix)
+	indication from setup.cf.
+
+	Fixed race condition whilst electing queue filename that could
+	cause a total loss of mail when the mailagent queue was accessed
+	via NFS from within the C filter.
+
+	Fixed typo on .so line in maildist.1
+
+	Skip blank lines in included file (i.e. "file" in rules).
+
+	Become even more knowledgeable about Received lines.
+
+	RFC-822 address matcher now uses non-greedy pattern match to
+	avoid extra spaces at the end of the name.
+
+	Now explicitely log when too many symlink levels are found
+	during "secure" checks.
+
+. Files changed:
+
+	* agent/files/mailagent.cf: Added servshell variable.
+
+	* agent/files/setup.cf: Added setup information for the "hash" config
+	variable.
+
+	* agent/filter/io.c: Fixed race condition whilst electing queue
+	filename.
+
+	* agent/man/mailagent.SH: Documented new "servshell" variable.
+
+	* agent/man/maildist.SH: Fixed typo on .so line.
+
+	* agent/pl/cmdserv.pl: Shell used is now customized by the
+	"servshell" variable.
+
+	* agent/pl/include.pl: Skip blank lines in included file.
+
+	* agent/pl/install.pl: Was not processing (prefix) indication from
+	setup.cf.
+
+	* agent/pl/parse.pl: Become even more knowledgeable about Received
+	lines.
+
+	* agent/pl/rfc822.pl: Use non-greedy pattern match to avoid extra
+	spaces.
+
+	* agent/pl/secure.pl: Now explicitely log when too many symlink
+	levels are found.
+
+Tue Mar 31 17:48:35 METDST 1998   Raphael Manfredi <Raphael_Manfredi@grenoble.hp.com>
+
+. Description:
+
+	New configuration parameters "vacfixed" and "tofake".
+	The first one prevents any vacation message change through
+	usage of the VACATION directive, the other one prevents the
+	faking of a To: header line (for filtering purposes) when
+	such a line is missing from the message.
+
+	New ON command to issue commands on certain days only.
+	When combined with SELECT, this makes a powerful time-based
+	rule selection. For instance:
+
+		ON (Mon Tue Wed Thu) SELECT (18:30 .. 23:59) BOUNCE ram@home;
+		
+	would bounce to my home e-mail address the message if received
+	past 6.30 pm on weekdays (but Fridays) and before midnight.
+
+	Two NEW interesting directories under misc/:
+
+	. fakesend, showing an implementation of the FAKESEND
+      command I use to reply to messages bounced to my home
+	  e-mail address while pretending I replied from work.
+
+	. getcost: my contribution (with the help of a fellow from HP)
+	  to fighting SPAM with mailagent. This is a temporary solution,
+	  until I come up with a decent SCORE commandi, but it has
+	  helped me tremendously for the past 10 months.
+
+	The RFC822 parser now allows no space between address and comment.
+	I've not checked to see whether this is legal because it does not
+	hurt and improves robustness anyway.
+
+	Allow ~name expansion when specifying alternate rule files, via
+	the APPLY command.
+
+	The SERVER "set" command can now list defined variables when
+	invoked without any argument.
+
+	Allow for missing "host1" in the Received: line parsing, which
+	attempts to compute the chain of relaying hosts.
+
+	The misc/mime/unmime program has evolved: new -x and -X options to
+	cope with accentuated letters, and removal of ugly ?iso-8859-1?Q
+	escapes in subject lines that the HP router unfortunately adds
+	each time there is an accentuated letter in the Subject line!
+	(and From:, To: lines as well, although that's not frequent enough
+	for me to tackle yet).
+
+	There are 9 new files in the distribution.
+
+. Files changed:
+
+	* agent/files/help/release.SH: Fixed typos.
+
+	* agent/files/help/set.SH: Without parameters, list all the defined
+	variables.
+
+	* agent/files/mailagent.cf: Added "vacfixed" and "tofake"
+	configuration parameters.
+
+	* agent/man/mailagent.SH: Added "vacfixed" and "tofake" configuration
+	parameters.  New ON command to issue commands on certain days only. 
+	The SERVER "set" command can now list defined variables.  Added an
+	example of alternate VACATION message selection.
+
+	* agent/pl/cmdserv.pl: Changed "set" to dump variables when not given
+	any argument.
+
+	* agent/pl/filter.pl: When "vacfixed" is on, forbid any change of
+	vacation message.  New ON command to process commands on certain days
+	only.
+
+	* agent/pl/include.pl: Typo fix in comment.
+
+	* agent/pl/interface.pl: Added hook for the new ON command.
+
+	* agent/pl/parse.pl: When "tofake" is turned off, disable faking of
+	To:.  Allow for missing "host1" in the Received: line parsing.
+
+	* agent/pl/rfc822.pl: Parser now allows no space between address and
+	comment.
+
+	* agent/pl/rules.pl: Allow ~name expansion when specifying alternate
+	rule files.
+
+	* agent/pl/runcmd.pl: Declared the new "ON" command.
+
+	* agent/test/actions: Added regression tests for new "ON" command.
+
+	* misc/getcost/spamconfig, agent/test/cmd/on.t,
+	misc/fakesend/mh_profile: Created.
+
+	* misc/mime/unmime: New -x and -X options to cope with accentuated
+	letters.  Added removal of ugly ?iso-8859-1?Q escapes in subject.
+
+Mon Sep 15 17:31:05 METDST 1997   Raphael Manfredi <Raphael_Manfredi@grenoble.hp.com>
+
+. Description:
+
+	Internal changes to the C filter program, mainly for future
+	extensions I plan to add someday.
+
+	Mail messages in the queue are now *locked* before being processed,
+	thereby avoiding duplicate processing in some weird race conditions.
+	The 'mailagent -q' command now reports locked messages with a '*'.
+
+	Fixed typo in -r usage summary.
+
+	New -t and -f options for BEGIN and NOP:
+		BEGIN -f only occurs if the last command status is false.
+		BEGIN -t only occurs if the last command status is true.
+		NOP -f forces a false command status (i.e. a failure).
+		NOP -t forces a true command status (i.e. a success).
+	As a consequence NOP now returns a status or propagates the existing
+	one.
+
+	All command options should now be output in bold in the man page.
+
+	Documented _CALLOUT_ working state for callout queue triggers.
+
+	Annotation was not performed for value "0". The use of an
+		if $value;
+	instead of
+		if defined $value;
+	was the cause.
+	
+	The $lastcmd variabe is now global from analyze_mail() for BACK
+	processing. It was otherwise impossible to have success/failure
+	conditions propagate outside of the BACK execution environment.
+
+	Improved Received: line parsing logic.
+
+	Indication of relaying hosts (RELAYED log) now selectively emitted
+	only when the first relaying host is apparently not related to that
+	of the sended.
+
+	Fixed ASSGINED -> ASSIGNED typo in log message
+
+	Insert user e-mail address if no address is given for NOTIFY.
+
+	Some small fixes in the regression test suite.
+
+	PATBOUNCE can now handle bounced output from @SH package commands.
+
+	File misc/pbounce/rules now shows how I use PATBOUNCE in my
+	own ~/.rules.
+
+. Files changed:
+
+	* agent/filter/io.c: Factorized code to derive a unique filename.
+
+	* agent/filter/lock.c: Added more generic file_lock() and
+	file_unlock() routines.
+
+	* agent/filter/lock.h: New generic file_lock() and file_unlock()
+	routines.
+
+	* agent/filter/misc.c: Cosmetic change.
+
+	* agent/filter/parser.c: Changed ordering of include files.
+
+	* agent/magent.sh: Call new pmail() routine to process main message. 
+	Fixed typo in -r usage.
+
+	* agent/man/mailagent.SH: New -t and -f options for BEGIN and NOP. 
+	All command options should now be output in bold.  Documented
+	_CALLOUT_ working state for callout queue.
+
+	* agent/pl/acs_rqst.pl: Code factorized within acs_lock().
+
+	* agent/pl/actions.pl: Don't blindly chop command error message,
+	remove trailing \n.  Annotation was not performed for value "0".
+
+	* agent/pl/analyze.pl: $lastcmd now global from analyze_mail() for
+	BACK processing.  Indication of relaying hosts now selectively
+	emitted.
+
+	* agent/pl/filter.pl: Fixed ASSGINED -> ASSIGNED typo in log message.
+	Implemented new -t and -f flags for BEGIN and NOP.  Insert user
+	e-mail address if no address for NOTIFY.
+
+	* agent/pl/listqueue.pl: Now clearly spot locked files in queue with
+	a '*'.
+
+	* agent/pl/parse.pl: Improved Received: line parsing logic.
+
+	* agent/pl/pqueue.pl: Messages in the queue are now locked before
+	processing.  New pmail() routine to factorize locking/processing code.
+
+	* agent/pl/runcmd.pl: NOP now returns a status.  Added -t and -f
+	switches for BEGIN and NOP.  $lastcmd now global from analyze_mail().
+
+	* agent/test/cmd/split.t: Fixed overzealous unlinks.
+
+	* agent/test/option/c.t: Uses an empty file instead of /dev/null.
+
+	* agent/test/pl/mail.pl: Forgot to unlink mail.lock in cp_mail().
+
+	* misc/pbounce/patbounce.pl: Also handle bounced output from @SH
+	package.
+
+Thu Feb 20 12:55:50 MET 1997   Raphael Manfredi <Raphael_Manfredi@grenoble.hp.com>
+
+. Description:
+
+	Regenerated Configure for getopt() and dup2() checking.
+
+	Updated copyright notice to include year 1997.
+
+	New groupsafe, execskip and lockwarn variables. See the manual
+	page entries for a description. Roughly speaking, they
+	resepectively control group-writable secure checks, exec-safe
+	secure checks and locking warnings when too much time is spent
+	waiting for a lock.
+
+	New -o switch for the C filter to redirect output directly from
+	the .forward in case shell redirection is not available there...
+	See the man page for details.
+
+	The C filter now prefer open(O_APPEND) to fopen("a") for stdio
+	append bugs (reported on SUN platforms).
+
+	Made it explicit in the man page that /pattern/i is legal to
+	perform a case-insensitive match, as in Perl.
+
+	Made mailagent 'perl -cw' clean and fixed a couple of typos.
+
+	Improved Received: header parsing to avoid warnings.
+
+	The 'unmime -e' un-escape was overzealous for uuencoded parts...
+	Made unmime die if an error occurs to prevent feedback from
+	occurring in mailagent.
+
+. Files changed:
+
+	* agent/files/mailagent.cf: New groupsafe, execskip and lockwarn
+	variables.
+
+	* agent/filter/Jmakefile: Added getopt.c and dup2.c files.
+
+	* agent/filter/getopt.c, agent/filter/dup2.c: Created.
+
+	* agent/filter/io.c: New io_redirect() routine to handle the -o
+	switch.
+
+	* agent/filter/io.h: Declared io_redirect().
+
+	* agent/filter/logfile.c: Prefer open(O_APPEND) to fopen("a") for
+	stdio append bugs.
+
+	* agent/filter/main.c: Now uses getopt() to parse command line
+	switches.  New -o switch to redirect output.
+
+	* agent/filter/parser.c: Skip group-writable and exec-safe checks if
+	told to.
+
+	* agent/magent.sh: Used $* variable for no purpose.
+
+	* agent/man/mailagent.SH: Documents new execsafe, groupsafe and
+	lockwarn variables.  The C filter can now redirect output via -o. 
+	Made it explicit that /pattern/i is legal.
+
+	* agent/pl/acs_rqst.pl: Now supports the lockwarn variable.
+
+	* agent/pl/actions.pl: Made 'perl -cw' clean and fixed a couple of
+	typos.
+
+	* agent/pl/callout.pl: Ensure %Header and $wmode are localized in the
+	main package.
+
+	* agent/pl/cmdserv.pl: Made 'perl -cw' clean.
+
+	* agent/pl/context.pl: Removed the 'do' workaround for perl5.001.
+
+	* agent/pl/hook.pl: Used $wmode and $loglvl from the wrong package.
+
+	* agent/pl/install.pl: Missed a '$' in front of a variable in
+	create().
+
+	* agent/pl/interface.pl: Made use of local $lastcmd instead of main's.
+
+	* agent/pl/parse.pl: Improved Received: header parsing.
+
+	* agent/pl/secure.pl: Now honours groupsafe and execsafe
+	configuration variables.
+
+	* agent/pl/stats.pl: Typo fixes and print() call cleanup to avoid
+	run-time warnings.
+
+	* agent/test/basic/config.t: Avoid exec-safe checks and
+	group-writable directories.
+
+	* misc/mime/unmime: The -e un-escape was overzealous for uuencoded
+	parts...  Made the filter die if an error occurs to prevent feedback.
+
+Fri Jan 31 19:11:21 MET 1997   Raphael Manfredi <Raphael_Manfredi@grenoble.hp.com>
+
+. Description:
+
+	Filter also trap fatal SIGSEGV and SIGBUS signals in C filter.
+
+	Forgot one more get_confval vs get_confstr translation in filter.
+	This caused dreadful core dumps, a sure sign being the regression
+	test suite mysteriously failing...
+
+	Esacape metacharacter '{' in regexps for perl5.003_20. This
+	subversion has been really nitty picky on un-escaped '{'
+	without a '}' counterpart. Further subversions have backed-out
+	this strict checking however, but the deed is done and I have
+	escaped all the culprits!
+
+. Files changed:
+
+	* agent/filter/main.c: Also trap fatal SIGSEGV and SIGBUS signals.
+
+	* agent/filter/parser.c: Forgot one more get_confval vs get_confstr
+	translation.
+
+	* agent/pl/stats.pl, agent/pl/lexical.pl, agent/pl/rules.pl,
+	agent/pl/analyze.pl: Esacape metacharacter '{' in regexps for
+	perl5.003_20.
+
+Wed Jan  8 09:43:56 MET 1997   Raphael Manfredi <Raphael_Manfredi@grenoble.hp.com>
+
+. Description:
+
+	Must use get_confstr() to get at the execsafe variable.
+	Otherwise, the string value is converted into an integer (0)
+	and the following strcasecmp() core dumps.
+
+	It did not happen on my HP-UX machine because dereferencing
+	NULL is not a segfault unless some special compiler flag
+	is given!!
+
+. Files changed:
+
+	* agent/filter/parser.c: Must use get_confstr() to get at the
+	execsafe variable.
+
+Tue Jan  7 19:42:56 MET 1997   Raphael Manfredi <Raphael_Manfredi@grenoble.hp.com>
+
+. Description:
+
+	New execsafe configuration variable to disable extended exec()
+	checks when OFF.
+
+	Regenerated agent/filter/Makefile.SH with newer jmake.
+
+	The "no change" optimization was overzealous in package, when
+	dealing with 'badaddress' requests (via the new patbounce action).
+
+	Allow for @SH help to be understood, whatever the case.
+
+	Slight mis-parsing of user names with '-' in them could cause
+	'package' to not send correct closest addresses.
+
+	Now pre-extend memory in mailagent for large messages to avoid
+	many realloc() from stealing all the core! Patch contributed
+	by Thomas Richter <richter@chemie.fu-berlin.de>. Thanks!
+
+	Enhanced Received: lines parsing to be less strict on the
+	first line (inserted locally).
+
+	Strip out trailing > on addresses, since matching is greedy.
+	Patbounce would fail when dealing with <addr@somewhere> since
+	the pattern used was matching the trailing '>'.
+
+. Files changed:
+
+	* agent/files/mailagent.cf: New execsafe configuration variable.
+
+	* agent/filter/main.c: Don't use my_exit() when printing version
+	number.
+
+	* agent/filter/parser.c: Don't perform extended exec() checks when
+	execsafe is OFF.
+
+	* agent/filter/parser.h: New get_confstr() and get_confstr_opt().
+
+	* agent/man/mailagent.SH: Documented new execsafe configuration
+	variable.
+
+	* agent/package.SH: The "no change" optimization was overzealous.
+
+	* agent/pl/actions.pl: Allow for @SH help to be understood, whatever
+	the case.
+
+	* agent/pl/addr.pl: Slight mis-parsing of user names with '-' in them.
+
+	* agent/pl/emergency.pl: Now pre-extend memory by using existing
+	message size.
+
+	* agent/pl/parse.pl: Now pre-extend memory by using existing message
+	size.  Enhanced Received: lines parsing.
+
+	* agent/pl/read_conf.pl: New execsafe variable defaults to OFF when
+	missing.
+
+	* agent/pl/secure.pl: Now only perform extended exec() checks iff
+	execsafe is ON.
+
+	* agent/test/basic/config.t: Force execsafe to OFF when running tests.
+
+	* misc/pbounce/patbounce.pl: Strip out trailing > on addresses, since
+	matching is greedy.
+
+Thu Dec 26 11:52:50 MET 1996   Raphael Manfredi <Raphael_Manfredi@grenoble.hp.com>
+
+. Description:
+
+	Filter now includes <unistd.h> for R_OK and defines fallbacks
+	in case those constants are missing.
+
+	Declared strsave() in case it's not done in <string.h>.
+
+	Fixed an incredible typo while declaring progpath[]. What's
+	almost incredible is that my compiler never spotted this one,
+	and that the program ran fine with a critical mis-declaration.
+
+	Added undocumented 'badaddress' request for PATBOUNCE support
+	in the package command.
+
+	New misc/pbounce directory, containing the PATBOUNCE plug-in.
+	This command can be used to automatically remove from the
+	users distribution list all the addresses that bounce. You
+	cannot imagine how many bounces I've got whith my last patch
+	issue. Sure they were deleted, but it's pointless to send
+	big messages to people that cannot receive them.
+
+	Five new files (PATBOUNCE command).
+
+. Files changed:
+
+	* agent/filter/io.c: Include <unistd.h> for R_OK and define
+	fallbacks.  Declared strsave() in case it's not done in <string.h>. 
+	Fixed an incredible typo while declaring progpath[].
+
+	* agent/filter/parser.c: Include <unistd.h> for X_OK and define
+	fallbacks.
+
+	* agent/package.SH: Added undocumented 'badaddress' request for
+	PATBOUNCE.
+
+	* misc/pbounce/patbounce.pl: Created.
+
+Tue Dec 24 16:34:55 MET 1996   Raphael Manfredi <Raphael_Manfredi@grenoble.hp.com>
+
+. Description:
+
+	This patch is my Christmas gift to you all, agent-users. I took
+	some time to collect, apply, checkin and put together all the
+	changes I have been making for more than a year (since last patch).
+
+	I hope this will not introduce any problems and it will probably
+	be the last set of patches (modulo possible emergency bug fixes
+	following this patch set) before the mailagent-4.0 rewrite, which
+	will be runnable only by perl5. I don't think I broke perl4
+	compatibility at this point, though I don't know for sure, as I've
+	been using perl version 5 for a long time now.
+
+	Okay. Here is the list of changes:
+
+	Important grammatical fix in the Artistic License
+	(thanks Tom Christiansen).
+
+	Configure regenerated with newer metaconfig and updated
+	my e-mail address
+
+	Filter now read incoming messages in a pool, instead of one big
+	chunk. This avoids many realloc() that could get exponentially
+	big with large messages.
+
+	Attempt to locate mailagent and perl from the C filter, and
+	croak if we cannot find them anywhere in the configured PATH.
+
+	Mailagent and filter now perform basic security checks on
+	exec()ed programs. This includes server commands and all the
+	programs launched via RUN and friends.
+
+	Filter will log onto stderr if logfile not opened correctly.
+
+	Use more portable real uid/gid setting, i.e. select one
+	of the setuid() and setruid() routine, as appropriate.
+
+	The _ character was not correctly parsed in variables, which
+	could lead to problem when using $ substitution on them.
+
+	Rule file path is now absolute, so rule caching can be safe,
+	even when the same basename is used from two distinct directories.
+	This was specially tricky when the '-r rulefile' option was used!
+
+	Changed queue processing/sleeping logic for better interactivity,
+	as discussed on the agent-users list, and following an interesting
+	e-mail exchange between Randal L. Schwartz and myself.
+
+	Maildist commands and friends now silently discard hostile
+	return addresses.
+
+	Added command forwarding support, which allows a package maintainer
+	to auto-forward mailagent Command messages to some third party,
+	when maintainance of a package is transferred.
+
+	New Relayed: and Envelope: pseudo header computations. The Relayed:
+	header is a list of all the mail gateways, as gathered from the
+	Received: lines, whilst Envelope refers to the message envelope
+	address (first From line).
+
+	Documented the %-H biffing macro with more details.
+
+	Don't use expanded manpath in .so directives. I used to do so,
+	but it lead to problems on some platforms. Since that was more
+	than a year ago, maybe all the vendors fixed this, hence we
+	revert to the initial settings...
+
+	All power-sensitive actions from the server can now be logged
+	separately to a file (powerlog in ~/.mailagent).
+
+	Launch sendmail only when the server session is done to avoid
+	timeouts on the down side of the pipe!
+
+	Don't dataload the emergency routine to avoid malloc problems
+	(since we're probably in a signal handler) and log signal trapping
+	even when invoked manually.
+
+	Now correctly initializes @cc to be the Cc: field in for mail hooks.
+	Also added @relayed, $lines and $length variables.
+
+	Protect all un-escaped @ in patterns, for perl5.
+
+	Processing of MH profile is now case-insensitive, by popular
+	request.
+
+	Allow '-' in package names, distributed through mailagent.
+
+	Default for locksafe is now OFF.
+
+	Fixed some regression tests for perl5 or fast CPUs and added new
+	tests for Relayed processing.
+
+	Added the misc/mime subdirectory, containing a set of rules and
+	a perl program to un-MIME all those nasty little messages carrying
+	MIME attributes where they shouldn't or needn't...
+
+	Four new files, if I trust the MANIFEST :-)
+
+. Files changed:
+
+	* agent/files/setup.cf: Can now say that a file is expected under
+	some directory.  Applied that to mailbox, which is a file expected
+	under maildrop.
+
+	* agent/filter/environ.c: New get_env() routine, plus typo fixes. 
+	Make sure new environment lines are smaller than MAX_STRING.
+
+	* agent/filter/environ.h: Declared get_env().
+
+	* agent/filter/io.c: Message is now read in a pool, instead of one
+	big chunk.  Attempt to locate mailagent and perl.  Perform basic
+	security checks on exec()ed programs.
+
+	* agent/filter/logfile.c: Log onto stderr if logfile not opened
+	correctly.
+
+	* agent/filter/main.c: Use more portable real uid/gid setting.
+
+	* agent/filter/misc.c: New my_exit() to allow exit code tracing for
+	debugging.
+
+	* agent/filter/msg.c: Call my_exit() instead of exit().
+
+	* agent/filter/parser.c: Enhanced security checks performed on files.
+	The _ character was not correctly parsed in variables.
+
+	* agent/filter/parser.h: Declared exec_secure().
+
+	* agent/magent.sh: Rule file path is now absolute, so caching can be
+	safe.  Changed queue processing/sleeping logic for better
+	interactivity.  New stat constants, and updated usage line.
+
+	* agent/mailpatch.SH, agent/maildist.SH: Silently discard hostile
+	addresses.  Added command forwarding support.
+
+	* agent/mailhelp.SH: Silently discard hostile addresses.
+
+	* agent/maillist.SH: Silently discard hostile addresses.  Knows about
+	command forwarding.
+
+	* agent/man/edusers.SH: Examples are now shown in constant-width font
+	if possible.
+
+	* agent/man/mailagent.SH: Examples are now shown in constant-width
+	font if possible.  Big emphasis about security issues, for RUN
+	commands & filter.  New Relayed: pseudo header computations. 
+	Documented the %-H biffing macro with more details.  Updated my
+	e-mail address.
+
+	* agent/man/mailpatch.SH, agent/man/maildist.SH,
+	agent/man/maillist.SH: Don't use expanded manpath in .so directives.
+
+	* agent/man/mailhelp.SH: Documented command forwarding.
+
+	* agent/man/package.SH: Examples are now shown in constant-width font
+	if possible.  Mentions command forwarding.
+
+	* agent/package.SH: Added command forwarding support.
+
+	* agent/pl/actions.pl: Now reads 'help' as 'mailhelp' in command
+	messages.  Locate and perform security checks on launched executables.
+
+	* agent/pl/analyze.pl: Forgot to return 0 at the end of
+	special_user().
+
+	* agent/pl/biff.pl: Long header lines are now trimmed to 79 chars max.
+
+	* agent/pl/cmdserv.pl: All power-sensitive actions can now be logged
+	separately.  Launch sendmail only when session is done to avoid
+	timeouts.  Perform security checks on all server commands.
+
+	* agent/pl/emergency.pl: Don't dataload the emergency routine to
+	avoid malloc problems.  Now log the signal trapping even when invoked
+	manually.
+
+	* agent/pl/filter.pl: Added initial logging of the SELECT command.
+
+	* agent/pl/forward.pl, misc/mime/unmime: Created.
+
+	* agent/pl/hook.pl: Perform security checks on hook programs.
+
+	* agent/pl/install.pl: New prefix() routine.
+
+	* agent/pl/locate.pl: New locate_program() routine.
+
+	* agent/pl/mailhook.pl: Correctly initializes @cc to be the Cc:
+	field.  Added @relayed and $lines, $length.
+
+	* agent/pl/matching.pl: New Envelope and Relayed selectors.  Protect
+	all un-escaped @ in patterns, for perl5.
+
+	* agent/pl/mh.pl: Processing of MH profile is now case-insensitive.
+
+	* agent/pl/parse.pl: New relay_list() routine to parse Received
+	lines.  Now creates two pseudo headers: Envelope and Relayed.
+
+	* agent/pl/unpack.pl, agent/pl/plsave.pl: Allow '-' in package names.
+
+	* agent/pl/queue_mail.pl: Add as many trailing 'x' as necessary for
+	unique queue file.
+
+	* agent/pl/read_conf.pl: Default for locksafe is now OFF.
+
+	* agent/pl/rules.pl: Forgot to unlock rulecache on errors.  Don't
+	dataload hashkey(), used as a sort routine.
+
+	* agent/pl/secure.pl: Extended security checks and created
+	exec_secure().
+
+	* agent/test/basic/config.t: Added locksafe, set to OFF.
+
+	* agent/test/basic/mailagent.t: Ensure we quote upper path properly,
+	in case @ is there!.
+
+	* agent/test/cmd/umask.t: Fixed test for perl5.
+
+	* agent/test/filter/list.t: Added new tests for Relayed processing.
+
+	* agent/test/filter/pattern.t: Added Relayed to the list of returned
+	headers.
+
+	* agent/test/option/I.t: Fixed test for fast CPUs.
+
+	* agent/test/rules: Added test cases for new Relayed selector.
+
+Fri Sep 15 16:17:30 METDST 1995   Raphael Manfredi <ram@hptnos02.grenoble.hp.com>
+
+. Description:
+
+	The email address listed in the README was wrong.
+
+	Folder compression can now deal with various compressors.
+	You may now compress folders using gzip if you want, or
+	any other performant compression tool. This is configured
+	via a compressors file listing the available compression tools,
+	which are referred to by tags. You may choose the default tag
+	to be used when compression a new folder. See the man page...
+	Thanks to Kevin Johnson <kjj@pondscum.phx.mcd.mot.com> for
+	contributing this code.
+
+	Now escapes shell metacharacters for popen() on FORWARD and BOUNCE.
+	This bug was reported by Larry W. Virden.
+
+	It is now possible to force a strict locking procedure on
+	folders by setting locksafe to ON. Mailagent will not attempt
+	to deliver to a folder when it cannot grab the lock after
+	the amount of retries you have configured. Alternatively,
+	if you do both .lock and flock() locking, you can set locksafe
+	to PARTIAL to let it go if at least one lock has been taken.
+	Feature suggested by Larry W. Virden.
+
+	New locksafe, compspecs and comptag config variables.
+
+	Mailagent will now warn if it has been configured to do flock()
+	but can't actually perform the operation because the system
+	call is missing.
+
+	Likewise, it will now make a note in the log when delivering to an
+	unlocked folder, provided you have allowed it.
+
+	Many typo fixes in the mailagent manual page, another contribution
+	from Larry W. Virden.
+
+	The &main'internet_info routine now assumes local user when facing
+	a single login in the address. Otherwise, %A, %I and %O macros
+	would not expand properly. Another set of thanks to Larry W. Virden
+	for reporting this bug.
+
+	One new file (compressors) installed in mailagent's private lib.
+
+. Files changed:
+
+	* agent/files/Jmakefile: New compressors file installed in the
+	private library.
+
+	* agent/files/compressors: Created.
+
+	* agent/files/mailagent.cf: Added locksafe, compspecs and comptag
+	config variables.  New "folder compression" section.
+
+	* agent/files/setup.cf: Maildrop now defaults to the configured value
+	at first install.  New compspecs optional file in configuration.
+
+	* agent/magent.sh: Rewrote mbox_lock routine to deal with new
+	locksafe variable.  Will now warn if configured to do flock() but
+	can't actually.  Can now be configured to do safe or allow partial
+	mbox locking.
+
+	* agent/man/mailagent.SH: Folder compression can now deal with
+	various compressors.  Added locksafe, compspecs and comptag config
+	variables.  Many typo fixes.
+
+	* agent/pl/actions.pl: Now escapes shell metacharacters for popen()
+	on FORWARD and BOUNCE.  Will now make a note when delivering to an
+	unlocked folder.  Saving will fail if mbox_lock returns an undefined
+	value.
+
+	* agent/pl/compress.pl: Can now handle compression with various
+	compressors.  (code contributed by Kevin Johnson
+	<kjj@pondscum.phx.mcd.mot.com>).
+
+	* agent/pl/read_conf.pl: Added suitable defaults for compspec,
+	comptag and locksafe.
+
+	* agent/pl/rfc822.pl: Internet_info now assumes local user when
+	facing a single login.
+
+Thu Aug 31 18:35:41 METDST 1995   Raphael Manfredi <ram@hptnos02.grenoble.hp.com>
+
+. Description:
+
+	Fixed a nasty hole in the error recovery C filter program.
+	Thanks to Rosina Bignall <bigna@leopard.cs.byu.edu> for
+	having spotted it out.
+
+	When facing an incorrect configuration causing the C filter
+	to exit on a fatal error, the emergency saving routine was
+	unable to save the message since it had not been read at
+	that point. So we explicitely read the message now if it
+	has not been done yet at that point!
+
+	Following that fix, I have also arranged for the C filter
+	output into .bak to be prefixed with the filter pid number,
+	so that we can figure out where the message came from.
+
+	Lastly, if the emergency saving is impossible, the message
+	will be dumped on stdout. This was done in the shell filter,
+	but not in the C filter. Hopefully, something catches the
+	output from filter, if you set up your .forward according
+	to the documentation.
+
+	Internal C filter changes:
+	. new routine write_fd() to write mail onto an opened file
+	. write_file() now relies on new write_fd() to do its main job
+	. read_stdin() was made a once routine
+	. emergency_save() now attempts to read mail if not done already
+	. emergency_save() will dump message on stdout as a fall back
+	. now uses say() to print messages onto stderr
+	. all messages on stderr now also include the filter pid
+	. fatal() now prefixes its supplied reason with FATAL
+
+	Forced numeric value when reading the Length header or mailagent
+	could print an empty string instead of '0' when fed with an
+	empty mail message (such as /dev/null).
+
+	Escaped various dollars to avoid shell substitution in the
+	mailagent.SH manual page. For those worried about that,
+	mailagent-4.0 will probably have its documentation PODified,
+	so this will become useless, hopefully.
+
+. Files changed:
+
+	* agent/filter/io.c: New routine write_fd() to write mail onto an
+	opened file.  write_file() now relies on new write_fd() to do its
+	main job.  read_stdin() was made a once routine.  emergency_save()
+	now attempts to read mail if not done already.  emergency_save() will
+	dump message on stdout as a fall back.
+
+	* agent/filter/main.c: Now uses say() to print messages onto stderr.
+
+	* agent/filter/msg.c: New routine say() to print messages onto
+	stderr.  All messages on stderr now also include the filter pid. 
+	Fatal() now prefixes its supplied reason with FATAL.
+
+	* agent/filter/msg.h: Added declaration for new say() routine.
+
+	* agent/filter/parser.c: Now uses say() to print messages on stderr.
+
+	* agent/magent.sh: Forced numeric value when reading the Length
+	header.
+
+	* agent/man/mailagent.SH: Escaped various dollars to avoid shell
+	substitution, grrr...
+
+Mon Aug  7 19:24:41 METDST 1995   Raphael Manfredi <ram@hptnos02.grenoble.hp.com>
+
+. Description:
+
+	Forgot to return value in agent_lockfile(). Since the returned
+	value is grabbed from whatever there is on the C stack at that
+	point, you may get into trouble or go through this unharmed
+	(which is what happened for me!).
+
+. Files changed:
+
+	* agent/filter/io.c: Forgot to return value in agent_lockfile().
+
+Mon Aug  7 18:46:14 METDST 1995   Raphael Manfredi <ram@hptnos02.grenoble.hp.com>
+
+. Description:
+
+	Regenerated Configure with metaconfig 3.0 PL58.
+
+	Updated my e-mail address in various manual patches, since it
+	still pointed to my previous workplace.
+
+	Signal that perl5.001m is known to work with that version of
+	mailagent.
+
+	Added support for locking on filesystems with short filenames.
+	On flexible filesystems, locking is done with the standard
+	.lock extension. On others, it is done by appending a '!'.
+	Updating of .mh_sequences also knows about this limitation
+	when constructing the new file.
+
+	Avoid forking of a new mailagent if one is sitting in background.
+	This is a trial fix for a seldom problem, which should not
+	impact anyone. If you run many Command mail processing, this
+	might improve things a little bit, on the occasion...
+
+	Now remove mailagent's lock as soon as possible before exiting,
+	to limit possible race conditions due to the above optimization.
+	Note that a race condition did exist in previous versions, although
+	it was very unlikely to occur in real life!
+
+	New biffing configuration variables and new biffing features:
+	It is now possible to remove leading comments in the body
+	to only present new material, and also to perform a compaction
+	on the body to present more of it in a limited space, sacrifying
+	the original indentation of the message.
+
+	New BIFF filtering command to dynamically configure biffing.
+
+	Code fixes in the C filter:
+	. Removed useless local variable declaration in C code.
+	. Exported check_lock() for external mailagent lock checks in io.c
+	. Commented and re-organized fatal code for emergency saving
+
+	Forgot to define phostname, needed for NFS-secure locks in
+	two mailagent utilities.
+
+	Fixed syntax error when restoring previous option values.
+	This should prevent the usual set of .bak errors that
+	occurred only when perl5 was used. **NOTE**: This was fixed
+	by an unofficial patch on the agent-users list. If you
+	applied that patch, don't forget to restore the original
+	file(s) before applying this official patch!
+
+	Skip possible spaces before trailing command ';' terminator.
+	This avoids syntax errors or problems when writing things
+	like:
+		SOME_COMMAND "argument"  ;
+	i.e. when there are spaces after the final argument.
+
+	New BIFF and BEEP regression testing
+
+	One new file.
+
+. Files changed:
+
+	* agent/man/package.SH, agent/man/mailhelp.SH, agent/man/edusers.SH,
+	FAQ: Updated my e-mail address.
+
+	* agent/test/basic/filter.t, agent/test/option/s.t,
+	agent/test/basic/mailagent.t, agent/edusers.SH, agent/test/TEST,
+	agent/test/pl/init.pl: Added support for locking on filesystems with
+	short filenames.
+
+	* agent/files/filter.sh: Avoid forking of a new mailagent if one is
+	sitting in background.
+
+	* agent/files/mailagent.cf: New biffing configuration variables.
+
+	* agent/filter/environ.c, agent/filter/parser.c: Removed useless
+	local variable declaration.
+
+	* agent/filter/io.c: Avoid forking of a new mailagent if one is
+	sitting in background.  Added support for locking on filesystems with
+	short filenames.
+
+	* agent/filter/lock.c: Exported check_lock() for external mailagent
+	lock checks in io.c.  Added support for locking on filesystems with
+	short filenames.
+
+	* agent/filter/lock.h: Exported check_lock() for external mailagent
+	lock checks in io.c.
+
+	* agent/filter/msg.c: Commented and re-organized fatal code for
+	emergency saving.
+
+	* agent/magent.sh: Now remove mailagent's lock as soon as possible
+	before exiting.  Added support for locking on filesystems with short
+	filenames.
+
+	* agent/maillist.SH: Forgot to define phostname, needed for
+	NFS-secure locks.
+
+	* agent/man/mailagent.SH: New biffing features and configuration
+	variables.  New BIFF filtering command to dynamically configure
+	biffing.
+
+	* agent/man/mailpatch.SH, agent/man/maildist.SH,
+	agent/man/maillist.SH: Use mansrcexp on the .so line to get full
+	expanded path.
+
+	* agent/package.SH: Added support for locking on filesystems with
+	short filenames.  Forgot to define phostname, needed for NFS-secure
+	locks.
+
+	* agent/pl/actions.pl: Now use env::biff instead of cf:biff for
+	dynamic configuration.  Added protection around &interface::reset
+	calls for perl5.
+
+	* agent/pl/biff.pl: Added support for biffing regression testing. 
+	New biffing features for compact biff messages and trimming.
+
+	* agent/pl/cmdserv.pl: Fixed symbol table lookups for perl5 support.
+
+	* agent/pl/context.pl: Fixed parsing bug in perl5.001.
+
+	* agent/pl/filter.pl, agent/pl/runcmd.pl: New BIFF command.
+
+	* agent/pl/interface.pl: New BIFF command interface routine for PERL
+	hooks.  Fixed symbol table lookups for perl5 support.
+
+	* agent/pl/mh.pl: Now beware of filesystems with limited filename
+	lengths.
+
+	* agent/pl/options.pl: Fixed syntax error when restoring previous
+	option values.
+
+	* agent/pl/read_conf.pl: Added comment explaining why mailboxes are
+	locked with a .lock.
+
+	* agent/pl/rulenv.pl: New support for biff and biffmsg variable
+	environment.  Fixed environment setup code.
+
+	* agent/pl/rules.pl: Skip possible spaces before trailing command ';'
+	terminator.
+
+	* agent/test/actions: New BIFF regression testing.
+
+	* agent/test/cmd/beep.t: Added regression testing for BEEP.
+
+	* agent/test/cmd/biff.t: Created.
+
+	* agent/test/pl/logfile.pl: Simplified matching by removing spurious
+	eval.
+
+Tue Mar 21 14:08:38 MET 1995   Raphael Manfredi <ram@hptnos02.grenoble.hp.com>
+
+. Description:
+
+	Regenerated Configure to reflect my email address change. I moved
+	from ACRI to HP, and my email is now: <ram@hptnos02.grenoble.hp.com>.
+	The "critical" nature of this patch is due to that mere fix.
+
+	Configure can now handle HP-UX broken WIFEXITED() macros. Indeed,
+	on HP-UX, WIFEXITED(status) tries to cast the 'union wait status'
+	into an int, which fails miserably. The new metaconfig symbol
+	USE_WIFSTAT is now being used to avoid that.
+
+	The README now reports that perl 5.0 PL1 does not work with
+	mailagent, at least on my machine. For those adventurous enough
+	to try it. Beware!!
+
+	Added a Precedence: header to the sample vacation message.
+	Mailagent does not add that to the header by default, since
+	it is not mandatory at all. However, it is better to include
+	one to avoid cascade of automatic replies after a vacation.
+
+	Now creates the private library directory before installing,
+	so that filter can be properly installed.
+
+	Now allows spaces between header field name and the ':' delimiter.
+	Strict RFC-822 does not forbid people from writing things like:
+		From   : ram
+		To     : ram
+		Subject: test
+	and therefore mailagent allows them and parses these fields
+	correctly.
+
+	Symbolic directories are now correctly followed. The new
+	agent/pl/cdir.pl file is now used to derive relative paths
+	from the symbolic directory location to follow links correctly.
+	Previous versions were not following relative symbolic links,
+	hence forcing people to have 'linkdirs: OFF' in their config.
+
+	Fixed rename() syntax for perl 4.0 in the cmd/save.t test.
+
+	One new file.
+
+. Files changed:
+
+	* agent/mailpatch.SH, agent/maildist.SH, agent/maillist.SH,
+	agent/package.SH, agent/mailhelp.SH, agent/magent.sh,
+	agent/edusers.SH: Added pl/cdir.pl to the list of appended files.
+
+	* agent/filter/Jmakefile: Now creates the private library directory
+	before installing.
+
+	* agent/filter/io.c: Now relies on USE_WIFSTAT to use WIFEXITED() and
+	friends.
+
+	* agent/man/mailagent.SH: Sample vacation message now contains a
+	Precedence: header.
+
+	* agent/pl/cdir.pl: Created.
+
+	* agent/pl/parse.pl: Now allows spaces between header field name and
+	the ':' delimiter.
+
+	* agent/pl/secure.pl: Symbolic directories are now correctly followed.
+
+	* agent/test/cmd/save.t: Fixed rename() syntax for perl 4.0.
+
+Thu Feb 16 15:56:50 MET 1995   Raphael Manfredi <ram@acri.fr>
+
+. Description:
+
+	Added new file setup.cf for initial configuration setup, via
+	the -I switch. That new option greatly simplifies the initial
+	configuration setup. If you run 'mailagent -I' with an
+	existing ~/.mailagent, it will be "merged" with the current set
+	of configuration variables (that is, new variables that were
+	added after you initially configured mailagent, in subsequent
+	patches). Your configuration is also checked for, to avoid
+	nasty surprises at run-time...
+
+	Forgot to add interfaces for BEEP and PROTECT, hence making
+	it impossible to invoke those commands from a perl escape.
+
+	Can now fake a missing From: line in header, unless prevented
+	to do so by the new 'fromfake' config variable. That way, messages
+	can be saved in MH folders even if the (local) sendmail did not
+	bother adding a From: header, relying on the leading From envelope
+	to identify the sender...
+
+	Was not properly propagating rule-file variable definitions.
+	Variables defined in rule files are dynamically scoped, as stated
+	by the new paragraph in the manual page.
+
+	New regression tests:
+	. added test for the new -I switch
+	. one more test for SAVE to check new fromfake feature
+	. added checks for new fromfake config variable
+
+	Regenerated Configure and config_h.SH with metaconfig 3.0 PL51.
+
+	Three new files.
+
+. Files changed:
+
+	* agent/files/Jmakefile: Added new file setup.cf for initial
+	configuration setup.
+
+	* agent/pl/actions.pl: Now uses new header_append and header_prepend
+	routines.
+
+	* agent/pl/add_log.pl: New routine stdout_log for -I switch usage.
+
+	* agent/test/option/I.t, agent/pl/install.pl: Created.
+
+	* agent/pl/interface.pl: Forgot to add interfaces for BEEP and
+	PROTECT.
+
+	* agent/pl/parse.pl: New routines header_prepend and header_append. 
+	Can now fake a missing From: line in header.
+
+	* agent/pl/rules.pl: Was not properly propagating rule-file variable
+	definitions.
+
+	* agent/pl/sendfile.pl: Indentation fix.
+
+	* agent/test/actions: One more test for SAVE to check new fromfake
+	feature.
+
+	* agent/test/cmd/save.t: Added checks for new fromfake config
+	variable.
+
+Fri Feb  3 19:16:07 MET 1995   Raphael Manfredi <ram@acri.fr>
+
+. Description:
+
+	Detab-ed the FAQ file for easier reading on terminals. I have
+	resent a new version of it to Nancy for inclusion in her FAQ.
+
+	Minor changes in FAQ wording. I added the Star Trek example to
+	help understanding how filtering with regexps works.
+
+	The C filter now avoids closing stdio files when they are not
+	connected to a tty but rather redirected to a file. Otherwise,
+	perl warnings and errors could never make it to the ~/.bak file,
+	or whatever file you are redirecting errors to in ~/.forward.
+
+	Mailagent was wrongly biffing when delivering to a mail hook.
+
+	Avoid perl core dumps in &perl by localizing @_ on entry.
+	When using the PERL command, I used to undef the @_ variable
+	to ensure the perl script would get no garbage from there.
+	However, Brian Dickson has found out that was a case of
+	variable suicide, causing core dumps on SUNs. He proposed
+	using local() to avoid the nasty side effect.
+
+	Ensure domain name matches are made after the '@' delimiter
+	when looking for "close" addresses. It used to think that
+	addresses like ram@soft.user.acri.fr and ram@soft.user.acri
+	where equivalent, because the match was not anchored to '@'.
+
+	Order of arguments was wrong when calling &spawn, to run
+	the callout queue. Also, it could loop forever in &run when
+	flushing the whole queue and the value of first_callout time
+	was not set right the first time a callout is queued. All
+	those bugs nailed down thanks to a bug report from 
+	Randal L. Schwartz on agent-users.
+
+	Rule parsing could end-up prematurely when facing hook files,
+	because the parser was testing for an empty string instead
+	of undefinedness, which would abruptly end the parsing when
+	facing a blank line in a hook since final \n are chopped off.
+
+	Avoid blank printing when the default rule was never applied
+	in mailagent stastistics summary printing.
+
+	Fixed regexp bug that could lead the UMASK test to fail when
+	the word 'mail' was appearing in the path leading to the
+	place where mailagent sources are stored! Again, thanks to
+	Brian Dickson and Eric M. Carroll for reporting it and
+	nailing it down, at last!
+
+. Files changed:
+
+	* FAQ: Detab-ed the FAQ file for easier reading on terminals.  Minor
+	changes in wording and added the Star Trek example.
+
+	* agent/filter/io.c: Avoid closing stdio files if not connected to a
+	tty.
+
+	* agent/filter/parser.c: Moved definition of S_IWOTH and S_IWGRP to
+	the top.
+
+	* agent/magent.sh: Also select hot piping on stderr to avoid problems
+	on fork.
+
+	* agent/pl/actions.pl: Was wrongly biffing when delivering to a mail
+	hook.  Avoid perl core dumps in &perl by localizing @_ on entry.
+
+	* agent/pl/addr.pl: Ensure domain name matches are made after the '@'
+	delimiter.
+
+	* agent/pl/callout.pl: Order of arguments was wrong when calling
+	&spawn.  Could loop forever in &run when flushing the whole queue. 
+	Value of first_callout time was not set right the first time.  Added
+	more debugging information.
+
+	* agent/pl/lexical.pl: Rule parsing could end-up prematurely when
+	facing hook files.
+
+	* agent/pl/rules.pl: Added tracing of alternate rules to help debug
+	their parsing.
+
+	* agent/pl/stats.pl: Avoid blank printing when the default rule was
+	never applied.
+
+	* agent/test/cmd/umask.t: Fixed regexp bug that could lead the test
+	to fail.
+
+Wed Jan 25 16:44:40 MET 1995   Raphael Manfredi <ram@acri.fr>
+
+. Description:
+
+	Regenerated Configure with metaconfig 3.0 PL48 for install
+	binary lookup.
+
+	Regenerated most Makefile.SH files with jmake 3.0 PL48 to
+	benefit from the install lookup.
+
+	Extended copyright notice to include year 1995.
+
+	Mailagent now works with perl 5.0. It has been fully tested on
+	my DEC OSF/1 3.0 machine and passes all its regression tests.
+	However, this perl 5.0 is a version patched with early
+	patches from the perl5-porters list. See the README file for
+	instructions about how to get those patches.
+
+	New option letter 't' for mailagent -s. The 'mailagent -surat'
+	command will only deliver statistics for the top-level rule file.
+	Indeed, each time your rule file changes, mailagent normally
+	starts a new set of statistics on top of older ones.
+
+	New commands BEEP and PROTECT. The BEEP command controls the new
+	%a macro for biffing message, which is expanded into the matching
+	amount of ^G characters. The PROTECT commands lets you define
+	file protections for newly created folders.
+
+	I also added support for the Msg-Protect MH profile component
+	when saving into an MH folder, at Eric M. Carroll's request.
+	However, the new PROTECT command can override the default Msg-Protect
+	specification from your ~/.mh_profile.
+
+	Added support for NFS bug on remote read-only folders. Indeed, SUN's
+	NFS running on SUN 4.1.2 was allowing a remote write to a read-only
+	folder lying on my DEC OSF/1 3.0 machine...
+
+	Destination address for PROCESS is now parsed correctly, by using
+	the RFC822 parser instead of a local hacked parsing.
+
+	Ported many files to perl 5.0 PL0. This included workarounds for
+	perl 5.0 bugs, and lots of @ escaping in strings and patterns,
+	mainly in the regression test suite.
+
+	Avoid problems on slow machines in test mode for queue timestamps.
+	Some slow machines were reported to fail some tests in option/l.
+	I made sure those will not occur any more by twiddling with the
+	queue output string in test mode.
+
+	UNSEEN mark in log has the home directory stripped via &tilda.
+
+	Two new files.
+
+. Files changed:
+
+	* agent/man/mailagent.SH: New option letter 't' for mailagent -s. 
+	New commands BEEP and PROTECT.  New macro %a for biff messages.
+
+	* agent/pl/actions.pl: Added support for NFS bug on remote read-only
+	folders.  Destination address for PROCESS is now parsed correctly. 
+	Added support for folder mode change, as defined by PROTECT.
+
+	* agent/pl/biff.pl: New macro %a for variable bells, under the
+	control of BEEP.
+
+	* agent/pl/filter.pl: New commands BEEP and PROTECT.
+
+	* agent/pl/getdate.pl: Fixed a typo in &yyerror and various code
+	clean-up.  Ported to perl 5.0 PL0.
+
+	* agent/pl/lexical.pl: Added automatic @ escape in patterns for perl
+	5.0.
+
+	* agent/pl/listqueue.pl: Avoid problems on slow machines in test mode
+	for queue timestamps.
+
+	* agent/test/cmd/vacation.t, agent/test/cmd/notify.t,
+	agent/pl/parse.pl, agent/pl/queue_mail.pl, agent/test/misc/compress.t,
+	, agent/test/cmd/message.t, agent/pl/macros.pl: Ported to perl 5.0
+	PL0.
+
+	* agent/pl/mh.pl: Added support for the Msg-Protect MH profile
+	component.  Allows new PROTECT command to override default
+	Msg-Protect.  UNSEEN mark in log has the home directory stripped via
+	&tilda.
+
+	* agent/pl/mmdf.pl: New routine &chmod for folder permission settting.
+
+	* agent/pl/read_conf.pl: Escape all @ in config file for perl 5.0.
+
+	* agent/pl/rulenv.pl: New routines &unset and &undef.  Added default
+	values for PROTECT and BEEP.  Added logs in case of eval errors for
+	perl 5.0.
+
+	* agent/pl/runcmd.pl: New commands PROTECT and BEEP.
+
+	* agent/pl/signals.pl: Put signal handler names into double quotes
+	for perl 5.0.
+
+	* agent/pl/stats.pl: Now supports 't' to track only top-most rule
+	file stats.
+
+	* agent/pl/usrmac.pl: Ported to perl 5.0 PL0.  Added eval error
+	tracking for perl 5.0.
+
+	* agent/test/actions: Extended rules for the PROTECT command tests.
+
+	* agent/test/basic/config.t: Now sets a default umask in the
+	configuration.
+
+	* agent/test/cmd/protect.t, agent/test/cmd/beep.t: Created.
+
+	* agent/test/misc/mh.t: Added checks for Msg-Protect and PROTECT.
+
+Tue Jan 03 19:36:49 MET 1995   Raphael Manfredi <ram@acri.fr>
+
+. Description:
+
+	Upgraded Configure with metaconfig 3.0 PL44
+
+	C filter now correctly includes <sys/fcntl.h> as a last option only.
+
+	Added a -V option to filter to print out the version and patchlevel.
+	This is not documented anywhere but in the code. Sorry, but there is
+	no manual page for filter. This is only for the C filter though, the
+	shell filter can be "edited" to get its version number.
+
+	No longer uses agent/pl/umask.pl. This file is to be removed from
+	your local copy if you still have it around.
+
+	New -u option for ANNOTATE: the annotation will only be performed
+	if the specified header is not already present in the message.
+
+	Fixed example on the shell server command: power checking was too
+	restrictive by requiring the user to only hold the 'shell' power
+	where he may hold many others at the same time...
+
+	Removed quotes for the argument of SERVER -d to accomodate new option
+	parsing. Be careful! You must now say SERVER -d cmd1,cmd2 etc.., with
+	no spaces around the separating commas.
+
+	Added a -l switch to VACATION and extended its arguments. When -l
+	is used, modification are only made within the scope of the rule.
+	It is also possible to specify an alternate vacation file, and even
+	change the vacation period, locally or for the remaining of the
+	parsing...
+
+	New section in the man page documenting Rule Environment variables.
+
+	Removed old broken umask handling (now a part of rule env). The new
+	code should work much better and is more generic.
+
+	The %=config variables were not properly substituted. They were
+	probably expanded into spaces instead.
+
+	It is no longer possible to get at the vacation variable from
+	a new user-defined command. You must get at the $env'vacation
+	variable instead (see the Rule Environment section in the manual
+	page).
+
+	Mailagent no longer tries to read the rule cache when none was
+	configured from ~/.mailagent...
+
+	Added generic option parsing code for easier extensions. As a matter
+	of fact, the code was simplified internally. Routines implementing
+	actions now have the leading action name chopped of the $cms string,
+	as well as possible options. The action routine also directly get
+	at the resulting argument string, which simplifies processing for
+	most of the commands... This should not impact performances, and
+	may in fact degrade them a little since we now make use of eval()
+	more heavily.
+
+	Make sure old utmp list is gone when reloading from /etc/utmp.
+
+	Added new tests for ANNOTATE -u and VACATION -l.
+
+	Removed agent/pl/umask.pl from distribution, as stated before.
+
+	Three new files, including an FAQ document, an exerpt of the
+	"Filtering Mail FAQ" posting from Nancy McGough.
+
+. Files changed:
+
+	* FAQ, agent/pl/rulenv.pl, agent/pl/options.pl: Created.
+
+	* agent/pl/umask.pl: Removed from the distribution.
+
+	* agent/filter/lock.c: Now correctly includes <sys/fcntl.h> as a last
+	option only.
+
+	* agent/filter/main.c: Added a -V option to print out the version and
+	patchlevel.
+
+	* agent/magent.sh: New library files pl/rulenv.pl and pl/options.pl
+	included.  No longer uses pl/umask.pl.
+
+	* agent/man/mailagent.SH: New -u option for ANNOTATE documented. 
+	Fixed example on the shell server command (power checking).  Removed
+	quotes for SERVER -d to accomodate new option parsing.  Added a -l
+	switch to VACATION and extended its arguments.  New section
+	documenting Rule Environment variables.
+
+	* agent/pl/actions.pl: Removed a here-doc string to workaround a bug
+	in perl 4.0 PL36.  Simplified action codes to use new opt'sw_xxx
+	option vars.  &execute_command no longer sleeps before resuming
+	parent process.
+
+	* agent/pl/analyze.pl: Now makes use of rule environment vars from
+	the env package.  Removed old broken umask handling (now a part of
+	rule env).
+
+	* agent/pl/eval.pl: Simplified hash table initialization -- code
+	still unused.
+
+	* agent/pl/filter.pl: Commands now get a string with the command name
+	chopped off.  Modified &alter_execution to accomodate new option
+	parsing.
+
+	* agent/pl/hook.pl: Routine &perl now calls &main'perl directly to do
+	its job.  No longer pre-extend variable when reading top 128 bytes.
+
+	* agent/pl/macros.pl: The %=config variables were not properly
+	substituted.
+
+	* agent/pl/newcmd.pl: It is no longer possible to get at the vacation
+	variable.
+
+	* agent/pl/rules.pl: Don't try to read the rule cache when none was
+	configured.
+
+	* agent/pl/runcmd.pl: Added generic option parsing code for easier
+	extensions.  Chops off the action name and options before calling
+	handler.
+
+	* agent/pl/utmp/utmp_pl.sh: Make sure old utmp list is gone when
+	reloading from /etc/utmp.
+
+	* agent/test/actions: Added new tests for ANNOTATE -u and VACATION -l.
+
+	* agent/test/basic/config.t: Temporary directory is now local, don't
+	clobber /tmp.
+
+	* agent/test/cmd/annotate.t: Added tests for new -u option.
+
+	* agent/test/cmd/vacation.t: Added tests for new -l option and
+	extended parameters.
+
+	* misc/shell/shell: Power checking was not correctly performed (was
+	too restrictive).
+
+	* misc/unkit/unkit.pl: Now uses cf'email for the notification
+	address.  Fixed a typo in sv_kfrom variable spelling.
+
+Mon Oct 31 12:20:39 MET 1994   Raphael Manfredi <ram@acri.fr>
+
+. Description:
+
+	File magent.sh now replaces magent.SH to avoid auto-extraction
+	by Configure. Indeed, magent.sh relies on the presence of the
+	agent/pl/utmp.pl file, which is not available at Configure
+	time, usually. Since Configure only extacts .SH files automagically,
+	this is a way to ensure the file will be built according to make
+	rules, i.e. only once agent/pl/utmp.pl has been created will we
+	attempt to run /bin/sh magent.sh.
+
+. Files changed:
+
+	* agent/Jmakefile: File magent.sh now replaces magent.SH to avoid
+	auto-extraction.
+
+Sat Oct 29 19:35:00 MET 1994   Raphael Manfredi <ram@acri.fr>
+
+. Description:
+
+	The shell filter now behaves more like the C filter. It will
+	print roughly the same messages in the log under normal conditions,
+	which includes QUEUED-like messages that did not appear before.
+	[I don't normally use the shell filter on my machine but I did test
+	it for a while to make sure it was not broken. That's why I decided
+	to make its output similar to the C filter to avoid surprises
+	when glancing at the log file].
+
+	Added built-in biffing support, by popular demand. Actually, no,
+	it is to please my officemate who wrote a set of scripts to achieve
+	the same thing, only to see that they were failing when he was not
+	logged in. It's really straightforward to set up and to configure.
+	Please refer to the new MAIL BIFFING section on the manual page
+	for details.
+
+	Notifications sent by the package command are now directed to the
+	user specified on the command, not to the return address since it
+	is not an error, and the two might differ.
+
+	Internet numbers in message IDs are now allowed. If you don't use
+	UNIQUE nor RECORD commands, then you don't care about that
+	anyway.
+
+	Added support for local (internal) macro overriding, which is used
+	by the biffing mechanism to override macros like %f or %D. It is
+	possible for the overrider to let the user get to the standard
+	macro set by providing:
+		:	\02!
+	at the end of the string passed to &macro'overload. This will allow
+	%:f to be taken as the "standard" %f macro. Note that this is an
+	internal feature and is not documented in the manual page. I'm merely
+	mentionning it here in case you wish to use that in your own commands.
+
+	Updated Configure with metaconfig 3.0 PL43, merely to fix a vicious
+	'tr' bug when attempting to translate case to/from lower to upper on
+	machines with a non-ascii character set. This was reported to me by
+	Andreas Sahlbach <a.sahlbach@tu-bs.de>.
+
+	From now on, the ChangeLog file will record changes made to the
+	distribution. The text you are reading now is also part of the
+	ChangeLog file, as well as the list of changed files, with their
+	RCS logs. That should help users track modifications better.
+
+	8 new files in the distribution, for utmp.pl support and biffing.
+
+. Files changed:
+
+	* agent/Jmakefile: Directory pl added to subdirs and depend lists.
+
+	* agent/files/filter.sh: Made it behave more like the C filter.
+
+	* agent/files/mailagent.cf: Six new configuration variables for
+	biffing support.
+
+	* agent/magent.SH: Added built-in biffing support.
+
+	* agent/man/mailagent.SH: Documents the six new config variables for
+	biffing.  New section dedicated to built-in mail biffing.
+
+	* agent/package.SH: Notifications now sent to the user, not the
+	return address.
+
+	* agent/pl/utmp/Jmakefile, agent/pl/Jmakefile, agent/pl/biff.pl,
+	agent/pl/utmp/utmp_ph.c, agent/pl/utmp/utmp_pl.sh: Created.
+
+	* agent/pl/actions.pl: Added biffing support in &save.
+
+	* agent/pl/history.pl: Now supports internet numbers in message IDs.
+
+	* agent/pl/macros.pl: Now uses ^B! characters in macro substitution
+	for %.  Added support for local (internal) macro overriding.
+

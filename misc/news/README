@@ -1,0 +1,43 @@
+This directory contains the 2nd half of a news <=> mail gateway system.
+
+The 1st half is the mail -> news gateway, which is already implemented
+in mailagent via the POST comamnd.
+
+The 2nd half is the news -> mail gateway, and it is implemented by
+the newsgate program held in this directory.
+
+WARNING: you will need the Log::Agent module, which you can get
+from http://search.cpan.org.
+
+Files:
+
+	rules         mailagent rules examples for the mail -> news part
+    newsgate      a news article redispatcher, according to ml.map
+    ml.map        configures the newsgroup / list addresses mappings
+
+----------------------------------------------------------------------
+
+In order for newsgate to operate correctly, it needs to be plugged
+the same way mailagent is plugged in the mail system via .forward.
+Here, newsgate needs to be plugged as one of the "feeds" for the
+ml.* hierarchy (or whatever hierarchy you wish to gateway).  Doing
+this will probably require "news" rights on the news server.
+
+Also, to allow newsgate to properly set the envelope of the message
+being sent, the "news" user (the user under which newsgate is called
+by the news server) should be declared as a "trusted user" in
+sendmail's configuration.
+
+Newsgate is written with sendmail's interface.  MTAs providing a
+sendmail-like wrapper should work fine, provided it implements the
+following switches:
+
+	-f      sets the envelope address (needs to be "trusted user")
+	-t      determine recipients by parsing message's To and Cc
+    -odb    delivery in background
+    -oi     a single "." is not the end of a message
+
+Have fun!
+
+Raphael Manfredi <Raphael_Manfredi@pobox.com>
+Grenoble, France, January 2001.

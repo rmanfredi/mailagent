@@ -1,0 +1,567 @@
+: # use perl
+	eval 'exec perl -S $0 ${1+"$@"}'
+		if $running_under_some_shell;
+
+###############################################################################
+#
+# File:         getcost
+# RCS:          $Header: /home/ram/home/projects/mailagent/misc/getcost/RCS/getcost,v 3.0.1.2 1999/07/12 13:59:33 ram Exp ram $
+# Description: SPAM scoring program
+#		Version 3.0
+# Authors:      Darryl Okahata (with additions from Raphael Manfredi)
+# Created:      Wed Jan 15 10:44:56 1997
+# Modified:     Mon May  5 14:06:09 1997 (Darryl Okahata) darrylo@sr.hp.com
+# Modified:     Wed Sep 10 16:09:09 1997 Raphael_Manfredi@grenoble.hp.com
+# Language:     Perl
+# Package:      N/A
+# Status:       Experimental (Do Not Distribute)
+#
+# (C) Copyright 1997, Hewlett-Packard, all rights reserved.
+#
+# Permission to redistribute this file as part as mailagent-3.0 kindly granted
+# by Darryl, under the express condition that it cannot be spearated and
+# redistributed separately.	-- RAM, 11/03/98
+#
+###############################################################################
+
+$my_name = getlogin . "\\@";
+
+$production = '';
+
+$config_file = $ENV{'HOME'} . "/.spamconfig";
+
+###############################################################################
+
+require 'getopts.pl';
+&Getopts('acBDLbdf:mokMT:') || warn "getcost: bad switch usage\n";
+$debug = 1 if ($opt_d);
+$dump_scanners = 1 if ($opt_D);
+$config_file = $opt_f if ($opt_f);
+$stop_suppressed_recipients_spam = 1 if ($opt_S);
+$ding_binary_characters = 1 if ($opt_B);
+$ding_long_lines = 1 if ($opt_L);
+$allow_openmail = 1 if ($opt_o);
+$allow_any_body_contents = 1 if ($opt_b);
+
+# Added by RAM
+$apply_all = $opt_a;
+$collect_line = $opt_c;
+$threshold = $opt_T;
+$mailagent = $opt_M;
+$keep_going = $opt_k;			# Don't stop when cost <= -100000
+$TO_SIZE = 1000;				# To header longer than this is suspect
+$match_all = $opt_m;			# Apply patterns with //g and count occurences
+
+# If debugging, test whether we're emitting to a terminal or a file...
+# Matches will be outlined with _ escapes when logging into a file, but
+# with terminal escapes otherwise...
+if ($debug) {
+	$to_tty = -t STDERR;
+	$tty_underline = `tput smul 2>/dev/null` || '[4m';
+	$tty_normal = `tput rmul 2>/dev/null` || '[0m';
+}
+
+&read_config($config_file);
+
+$number_of_uppercase_lines = 0;
+$lines = 0;
+$cost = 0;
+$in_header = 1;
+$from_processed = '';
+$pending_score = 0;
+$collecting_to = '';
+$collecting_line = '';
+$is_a_reply = 0;
+loop: while (<>) {
+    if ($cost <= -100000 || $cost >= 1000000) {
+	last loop unless $keep_going;
+    }
+    if ($in_header) {
+      HEADER_SWITCH: {
+	  /^\s*$/ &&
+	      do {
+		  $in_header = '';
+		  last HEADER_SWITCH;
+	      };
+	  if ($collecting_to) {
+	      if (/^(\s+.+)$/) {
+		  $token = $1;
+		  $token =~ s/^\s+/ /;
+		  $to_header = $to_header . $token;
+		  last HEADER_SWITCH;
+	      } else {
+		  $collecting_to = '';
+		  # fall through
+	      }
+	  }
+	  (/^From:\s+(.+)$/ || /^Reply-To:\s+(.+)$/i
+	   ) && !$from_processed &&
+	       do {
+		   $token = $1;
+		   if ($token !~ /@.*@/ &&
+		       $token !~ /mailer-daemon/i) {
+		       #
+		       # There can't be two "@"s in the address
+		       #
+		       foreach $item (@good_sites) {
+			   if ($token =~ /$item/i) {
+			       # It's a good site -- do no more.
+			       &update($_, 100000000);
+			       last loop;
+			   }
+		       }
+		   }
+		   foreach $sender (@senders) {
+		       if ($token =~ /$sender/i) {
+			   &update($_, $sender_scores{$sender});
+			   $from_processed = 1;
+			   last HEADER_SWITCH;
+		       }
+		   }
+		   last HEADER_SWITCH;
+	       };
+	  (/^Sender:\s+(.+)$/) &&
+	       do {
+		   $token = $1;
+		   foreach $sender (@senders) {
+		       if ($token =~ /$sender/i) {
+			   &update($_, $sender_scores{$sender});
+			   last HEADER_SWITCH;
+		       }
+		   }
+		   last HEADER_SWITCH;
+	       };
+	  (/^To:\s+(.+)$/ || /^Cc:\s+(.+)$/i
+	   ) &&
+	      do {
+		  $to_header = $1;
+		  $collecting_to = 1;
+		  last HEADER_SWITCH;
+	      };
+	  (
+	   /^Received:\s+from\s+[-a-z0-9_.]+\s+\(([-a-z0-9_.]+)\s+/i ||
+	   /^Received:\s+from\s+([-a-z0-9_.@]+)\b/i ||
+	   /^Received:\s+\(from\s+([-a-z0-9_.\@]+)\b/i ||
+	   /^\s+\(peer\s+crosschecked\s+as:\s+([-a-z0-9_.]+)\s+/i) &&
+	      do {
+		  $token = $1;
+		  last HEADER_SWITCH 
+		      if ($token =~ /^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$/ ||
+			  $token =~ /\d{3}-\d{3}-\d{4}\b/ ||
+			  $token !~ /[\.\@]/
+			  );
+		  foreach $relay (@relays) {
+		      if ($token =~ /$relay/i) {
+			  &update($_, $relay_scores{$relay});
+			  last HEADER_SWITCH;
+		      }
+		  }
+		  last HEADER_SWITCH;
+	      };
+	  (/^Newsgroups:\s(.+)$/ ||
+	   /^Xref:\s(.+)$/
+	   ) &&
+	      do {
+		  $token = $1;
+		  if (length($token) > 200) {
+		      &update($_, -1000000);
+		      last HEADER_SWITCH;
+		  }
+		  # Fall through ...
+	      };
+	  (/^References:\s/i || /^In-Reply-To:\s/i) && do {
+		$is_a_reply = 1;		# Probably a reply, don't scan quoted material
+		# Fall through...
+	  };
+	  (/^References:\s/i || /^In-Reply-To:\s/i || /^Newsgroups:\s/i ||
+	   /^X-Also-Posted-To:\s/i || /^X-URL:/i) &&
+	       do {
+		   &update($_, 500);
+		   last HEADER_SWITCH;
+	       };
+	  /^X-Mailer:\s+(.+)$/ &&
+	      do {
+		  $token = $1;
+		  print STDERR "Mailer: $token\n" if ($debug);
+		  if ($token =~ /flood/i) {
+		      &update($_, -1000000);
+		      last loop;
+		  } elsif ($token =~ /\bEudora\b/i) {
+		      $is_eudora = 1;
+		  }
+		  last HEADER_SWITCH;
+	      };
+	  /^Subject:\s+(.+)$/ &&
+	      do {
+		  $token = $1;
+		  foreach $subject (@subjects) {
+		      if ($token =~ /$subject/i) {
+			  &update($_, $subject_scores{$subject});
+			  last HEADER_SWITCH;
+		      }
+		  }
+		  # This is CASE SENSITIVE:
+		  if ($token =~ /^[-A-Z_=!?<>,.]{5,}$/) {
+		      &update($_, -10000);
+		      last HEADER_SWITCH;
+		  }
+		  last HEADER_SWITCH;
+	      };
+	  /^X-Openmail-Hops:\s/i && $allow_openmail &&
+	      do {
+		  &update($_, 100000000);
+		  last loop;
+	      };
+      }
+    } else {
+      BODY_SWITCH: {
+		if (!$to_header_processed) {
+			$debug = '' if ($production);
+			if (length($to_header) > $TO_SIZE) {
+				&update("Long To: $to_header\n", 
+					$TO_SIZE - length($to_header));
+			} elsif ($to_header =~ /\blist\s+suppressed\b/i &&
+				$stop_suppressed_recipients_spam) {
+				&update("<recipients suppressed>\n", -1000000);
+				last loop;
+			}
+			$to_header_processed = 1;
+			last loop if ($allow_any_body_contents);
+		}
+	  last loop if ($cost >= 1000000);
+
+	  $is_a_reply && /^\s*[>:|]/ && next loop;		# Quoted body, hopefully
+	  $lines++ unless /^\s*$/;						# Don't count blank lines
+	  $ding_binary_characters && /[\r\200-\377]/ &&
+	      do {
+		  &update("Binary: $_", -100);
+	      };
+	  $ding_long_lines && length($_) >= 90 &&
+	      do {
+		  &update("Long line: $_", -(10 + length($_)));
+	      };
+
+	  $_ .= '. ' if $collect_line && eof();			# Finish last sentence
+	  $result = &check_body_line($_);
+	  last loop if ($result == 3);
+	  last BODY_SWITCH if ($result != -1);
+
+	  /^[-A-Z_ \d\t,.<>?!()]*[A-Z][-A-Z_ \d\t,.<>?!()]*$/ &&
+	      do {
+		  if (length($_) > 10) {
+		      if ($debug) {
+			  print STDERR "Upper:", $_;
+		      }
+		      ++$number_of_uppercase_lines;
+		  }
+	      };
+      }
+  }
+}
+
+# Flush input pipe, if in "mailagent" mode, to avoid "broken pipe"
+# (exiting early when mailagent has not yet written all the message)
+if ($mailagent && !eof) {
+	while (<>) {}
+}
+
+if ($cost > -10000) {
+    $cost += $pending_score;
+    if ($debug && $pending_score != 0) {
+	print STDERR "$pending_score: <pending score>\n";
+    }
+}
+
+if ($number_of_uppercase_lines >= 10) {
+    $cost += -10000;
+    if ($debug) {
+	print STDERR "-10000: <too many uppercase lines>\n";
+    }
+} elsif ($lines && $number_of_uppercase_lines / $lines > .15 ) {
+	# Trap short, loud and to the point messages
+    $cost += -10000;
+    if ($debug) {
+	print STDERR "-10000: <more than 15% of uppercase lines>\n";
+    }
+}
+
+if ($debug) {
+    print STDERR "Cost = $cost\n";
+}
+if ($mailagent) {
+	print "ASSIGN cost $cost; ";
+	if ($cost < $threshold) {
+		print "NOP -f\n";
+	} else {
+		print "NOP -t\n";
+	}
+} else {
+	print $cost, "\n";
+}
+
+exit 0;
+
+###############################################################################
+
+sub update
+{
+    local($line, $delta) = @_;
+
+    $cost += $delta;
+    if ($debug) {
+		my ($before, $match, $after) = ($`, $&, $');
+		($before, $match, $after) = ($`, $&, $')
+			if $line ne "$before$match$after" && $line =~ /\Q$match\E/;
+		if ($to_tty) {
+			$match = "$tty_underline$match$tty_normal";
+		} else {
+			$match =~ s/(.)/_\b$1/g;
+		}
+		$line = "$before$match$after";
+		printf STDERR "%10s: %s", $delta, $line;
+    }
+}
+
+sub collect_line {
+	return 1 unless $collect_line;
+	my ($lref) = @_;
+
+	# Identify the part of the line that goes up to the end of a sentence,
+	# which is a punctuation sign, followed by a space. When a full sentence
+	# has been recognized, it is put back into $lref, and the residual part
+	# is left in $collecting_line.
+
+	my $line = $$lref;
+	$line =~ tr/\n/ /;
+	$collecting_line .= $line;
+
+	my $sentence;
+	$sentence = $1 if $collecting_line =~ s/^((?:.*?)[.?!:]+)\s//;
+
+	return 0 if $sentence eq '';	# No full sentence yet
+
+	$$lref = $sentence . "\n";
+	return 1;						# Full sentence recognized, held in $$lref
+}
+
+###############################################################################
+
+sub read_config
+{
+    local($config_file) = @_;
+    local(*IN, $phase, $name, $cost);
+
+    if (open(IN, "<$config_file")) {
+	$phase = -1;
+	while (<IN>) {
+	    chop;
+	    next if (/^[ \t]*(\#.*)?$/);
+	    if (/^\s*\[\s*([a-z0-9 \t]+)\]/) {
+		$name = $1;
+		$name =~ s/\s+$//;
+		($name =~ /^name$/i) && do {
+		    $phase = 0;
+		    next;
+		};
+		($name =~ /^domain$/i) && do {
+		    $phase = 1;
+		    next;
+		};
+		($name =~ /^good\s+sites$/i) && do {
+		    $phase = 10;
+		    next;
+		};
+		($name =~ /^sender\s+scores$/i) && do {
+		    $phase = 11;
+		    next;
+		};
+		($name =~ /^subject\s+scores$/i) && do {
+		    $phase = 12;
+		    next;
+		};
+		($name =~ /^relay\s+scores$/i) && do {
+		    $phase = 13;
+		    next;
+		};
+		($name =~ /^body\s+text$/i) && do {
+		    $phase = 100;
+		    next;
+		};
+		print STDERR "Warning: Unknown config block name: \"$name\"\n";
+		next;
+	    }
+	    ($phase == 0) && do {
+		# my name
+		s/^\s+//;
+		s/\s+$//;
+		$my_name = $_;				## NO LONGER USED
+		next;
+	    };
+	    ($phase == 1) && do {
+		# my domain
+		s/^\s+//;
+		s/\s+$//;
+		$my_domain = $_;			## NO LONGER USED
+		next;
+	    };
+	    ($phase == 10) && do {
+		# good sites
+		if (!/^\s*(.+)$/) {
+		    print STDERR
+			"Warning: unknown good site line: \"$_\"\n";
+		    next;
+		}
+		$name = $1;
+		$name =~ s/\s+$//;
+		push(@good_sites, $name);
+		next;
+	    };
+	    ($phase == 100) && do {
+		s/^\s+//;
+		s/\s+$//;
+		$line = $_;
+		push(@body_scores, $line);
+		next;
+	    };
+	    if (!/^\s*(.+)\s+([-+0-9]+)\s*$/) {
+		print STDERR
+		    "Warning: unknown score line: \"$_\"\n";
+		next;
+	    }
+	    $name = $1;
+	    $cost = $2;
+	    $name =~ s/\s+$//;
+	    ($phase == 11) && do {
+		# sender scores
+		push(@senders, $name);
+		$sender_scores{$name} = $cost;
+		next;
+	    };
+	    ($phase == 12) && do {
+		# subject scores
+		push(@subjects, $name);
+		$subject_scores{$name} = $cost;
+		next;
+	    };
+	    ($phase == 13) && do {
+		# relay scores
+		push(@relays, $name);
+		$relay_scores{$name} = $cost;
+		next;
+	    };
+	    print STDERR "Unknown phase for line: \"$_\"\n";
+	}
+	close(IN);
+	if (@body_scores) {
+	    $body_scanner = &build_scanner("scanner", @body_scores);
+	    $procedure = <<EOF;
+sub check_body_line
+{
+    local(\$line) = \@_;
+    local(\$result);
+
+	return unless collect_line(\\\$line);
+	study \$line;
+    $body_scanner
+    return (\$result);
+}
+EOF
+	    print STDERR "Body scanner:\n$procedure\n" if ($dump_scanners);
+	    eval $procedure;
+	    die "Problem in body scanner: $@" if ($@);
+	}
+    } else {
+    }
+}
+
+sub build_scanner
+{
+    local($switch_name, @scores) = @_;
+    local($scanner);
+
+    $scanner = <<EOF_SCANNER;
+$switch_name: {
+    # \$result is (largely unimplemented):
+    #        -1 for no match
+    #        1 for match
+    #        2 for exit header/body loop
+    #        3 to stop scanning completely
+    \$result = -1;
+	my \$copy;
+	my \$stripped;
+EOF_SCANNER
+    foreach $line (@scores) {
+	if ($line !~ /^\s*(.+)\s+([-+0-9]+)\s*$/) {
+	    print STDERR
+		"Warning: unknown score line: \"$line\"\n";
+	    next;
+	}
+	$pattern = $1;
+	my $cost = $2;
+	$pattern =~ s/\s+$//;
+	if ($cost == 0) {
+		$newcode = <<EOF
+    (\$line =~ $pattern) && do {
+	&update(\$line, $cost);
+	\$result = 3;
+	last $switch_name;
+    };
+EOF
+	} else {
+	    if ($pattern eq "free") {
+		$newcode = <<EOF
+    (\$line =~ /\\bfree\\b/i &&
+     \$line !~ /free[ \\t]*\\(/ &&
+     \$line !~ /free\\'d/ &&
+	\$line !~ /\\bto\\s+free\\s+\\w+/i &&	# to free smth -> verb
+     \$line !~ /free\\s+software/) && do {
+	&update(\$line, $cost);
+	\$result = 1;
+	last $switch_name unless \$apply_all;
+    };
+EOF
+	    } else {
+			my $attempt_match_all = 0;
+			if ($pattern !~ m!^(?:/|m\W)\^!) {	# Not an anchored match at start
+				$attempt_match_all = 1 if $match_all;
+			}
+			if ($attempt_match_all) {
+				# Match pattern as many times as possible, removing
+				# the leading matched part and trying again, and again...
+				$newcode = <<EOF;
+	\$copy = \$line;
+	\$stripped = 0;
+	while (\$copy =~ $pattern) {
+		last unless length \$copy;
+		my (\$before, \$match, \$after) = (\$`, \$&, \$');
+		&update(
+			\$stripped ? "...\$before\$match\$after" : \$line,
+			$cost);
+		\$copy = substr(\$copy, length(\$before) + length(\$match));
+		\$stripped++;
+	}
+	\$result = \$stripped ? 1 : \$result;
+	last $switch_name if \$result == 1 && !\$apply_all;
+EOF
+			} else {
+				# Match pattern once
+				$newcode = <<EOF;
+	(\$line =~ $pattern) && do {
+		&update(\$line, $cost);
+		\$result = 1;
+		last $switch_name unless \$apply_all;
+	};
+EOF
+			}
+		}
+	}
+	$scanner .= $newcode;
+    }
+    $scanner .= "}\n";
+    return ($scanner);
+}
+
+sub check_body_line
+{
+}
+

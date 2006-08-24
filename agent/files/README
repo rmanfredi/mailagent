@@ -1,0 +1,39 @@
+This directory holds the shell version of the filter, and some other
+sample files which will be installed in the public mailagent directory.
+
+agenthelp:
+	The generic help message used by the @SH mailhelp command. You may
+	of course rewrite this completely to fit your taste.
+
+chkagent.sh:
+	A small script I am using to monitor the whole mailagent installation.
+	This is run by cron every night, and mails me problems logged in the
+	log file, or unusual messages from my ~/.bak, etc...
+	(The name chkagent.sh was chosen to leave room for the RCS ,v extension
+	on some old systems with 14 characters limit in the file names.)
+	Here is my crontab entry:
+
+		# Check the mailagent log file for the current day
+		55 23 * * *		$HOME/etc/checkagent
+
+commands:
+	This file holds the allowed commands for @SH hooks.
+
+distribs:
+	A description table which states where each program is located,
+	whether it is archived or not, or has patches, etc... This is
+	used by the @SH commands.
+
+filter.sh:
+	The shell version of the filter program. Note that this script is
+	not tested by the automatic regression tests and needs some tailoring
+	before it can be used. It is provided only as a guideline for people
+	who cannot use the C version.
+
+mailagent.cf:
+	A template for your ~/.mailagent.
+
+proglist:
+	A list of program description which will be used by the 'maillist'
+	command.
+

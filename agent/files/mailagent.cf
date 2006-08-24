@@ -1,0 +1,211 @@
+#
+# Configuration file for mailagent
+#
+
+# $Id: mailagent.cf,v 3.0.1.13 2001/03/17 18:03:59 ram Exp ram $
+#
+#  Copyright (c) 1990-2006, Raphael Manfredi
+#  
+#  You may redistribute only under the terms of the Artistic License,
+#  as specified in the README file that comes with the distribution.
+#  You may reuse parts of this distribution only within the terms of
+#  that same Artistic License; a copy of which may be found at the root
+#  of the source tree for mailagent 3.0.
+#
+# $Log: mailagent.cf,v $
+# Revision 3.0.1.13  2001/03/17 18:03:59  ram
+# patch72: added two variables: domain and hidenet
+#
+# Revision 3.0.1.12  1998/07/28  16:56:21  ram
+# patch62: added servshell variable
+#
+# Revision 3.0.1.11  1998/03/31  14:35:29  ram
+# patch59: added "vacfixed" and "tofake" configuration parameters
+#
+# Revision 3.0.1.10  1997/02/20  11:33:49  ram
+# patch55: new groupsafe, execskip and lockwarn variables
+#
+# Revision 3.0.1.9  1997/01/07  18:26:06  ram
+# patch52: new execsafe configuration variable
+#
+# Revision 3.0.1.8  1995/09/15  13:39:50  ram
+# patch43: added locksafe, compspecs and comptag config variables
+# patch43: new "folder compression" section
+#
+# Revision 3.0.1.7  1995/08/07  16:07:48  ram
+# patch37: new biffing configuration variables
+#
+# Revision 3.0.1.6  1995/02/16  14:21:47  ram
+# patch32: new config variable 'fromfake' for mail without From: lines
+#
+# Revision 3.0.1.5  1994/10/29  17:39:44  ram
+# patch20: six new configuration variables for biffing support
+#
+# Revision 3.0.1.4  1994/10/04  17:15:20  ram
+# patch17: new email and mboxlock config parameters
+#
+# Revision 3.0.1.3  1994/09/22  13:44:11  ram
+# patch12: new config parameters callout and linkdirs
+#
+# Revision 3.0.1.2  1994/07/01  14:51:36  ram
+# patch8: eleven new config variables for better tuning
+#
+# Revision 3.0.1.1  1994/04/25  15:11:03  ram
+# patch7: added new 'fromesc' config variable for From line escapes
+#
+# Revision 3.0  1993/11/29  13:48:02  ram
+# Baseline for mailagent 3.0 netwide release.
+#
+
+#
+# Configuration section
+#
+
+# Paramters likely to change
+home     : /lyon/ram			# Home directory (must be correctly set)
+level    : 9					# Logging level
+tmpdir   : /tmp					# Temporary directory to be used
+emergdir : ~/tmp/lost+mail		# Emergency directory (for dumps)
+track    : OFF					# Track matches on stdout (on/off)
+
+# Minimum path to ensure and path depending on the machine
+path     : /bin:/usr/bin:/usr/ucb
+p_york   : ~/bin:~/bin/rs2030
+p_lyon   : ~/bin:~/bin/rs2030
+p_rome   : ~/bin:~/bin/sun4:/base/common/GENERAL/sun4/bin
+
+# User running mailagent
+user     : ram
+name     : Raphael
+email    : you@your.domain.top	# Your accurate e-mail address
+domain   : domain.top			# Your domain name (no leading '.')
+hidenet  : OFF					# Prefix domain with hostname when OFF
+
+# Vacation mode (on/off), vacation file and period
+vacation : OFF					# Vacation mode on/off
+vacfile  : ~/.vacation			# File to be sent back
+vacperiod: 1d					# Period between two vacation messages
+vacfixed : OFF					# Turn to on to solely allow vacfile message
+
+# Mail and news transport agents
+# By default, values for sendmail and sendnews are determined at configuration
+# time. The default mailopt is -odq when sendmail is used. The -h option is
+# always added to the sendnews program to indicate headers are already present.
+sendmail : /usr/lib/sendmail
+sendnews : /usr/lib/news/inews
+mailopt  : -odq
+newsopt  :
+
+
+#
+# Parameters which should not change very often
+#
+
+# Define main configuration parameters
+umask    : 077					# Default umask
+spool    : ~/var/mailagent		# Spool directory
+queue    : $spool/queue			# Queue directory (must exist)
+logdir   : ~/var/log			# Where logfile is stored
+context  : $spool/context		# Mailagent's context file
+callout  : $spool/callout		# Callout queue
+log      : agentlog				# Log file is in $logdir
+seq      : .seq					# Seq file is in $spool
+timezone : PST8PDT				# Time zone location
+statfile : $spool/mailagent.st	# Statistics file
+rules    : ~/.rules				# Filter's rules location (optional)
+rulecache: $spool/rulecache		# Cache for compiled rules (optional)
+
+# Security checks
+secure   : ON					# Make extended checks on sensitive files
+linkdirs : ON					# Also carefully check symlinks to dirs
+groupsafe: ON					# Allow group-writable files when OFF
+execsafe : OFF					# Make extended checks on exec()ed files
+execskip : OFF					# Turn to ON to avoid all checks on exec()
+
+# Mailbox parameters
+maildrop : /usr/mail			# System mail drop directory (optional)
+mailbox  : $user				# Mailbox file name (optional)
+mboxlock : %f.lock				# Lock mailbox with .lock file
+mmdf     : OFF					# Allow MMDF-style mailbox delivery
+mmdfbox  : OFF					# Force new folders to MMDF format
+fromesc  : ON					# Escape leading From into >From
+fromall  : OFF					# Escape all From, even within paragraph
+fromfake : ON					# Attempt creation of From: header when missing
+tofake   : ON					# Fake a To: line when missing
+
+# Biffing support
+biff     : ON					# Whether biff is wanted
+biffhead : From, To, Subject	# Which header fields should be printed
+bifflen  : 560					# Maximum body length printed anyway
+bifflines: 7					# Maximum body lines printed
+biffnl   : ON					# Turn to OFF to avoid blank body lines
+biffmsg  : ~/.biffmsg			# Template format for biff (optional)
+bifftrim : ON					# Whether trim info should be part of biffing
+bifftrlen: 2					# Minimal trimming length, in lines
+biffquote: ON					# Whether the attribution line should be shown
+biffmh   : OFF					# Compact biffing message ala MH
+biffnice : OFF					# Whether compacted body should be reformatted
+
+# MH-style folders
+mhprofile: ~/.mh_profile		# Name of the MH profile file (optional)
+msgprefix: .msg_prefix			# File containing message name prefix
+
+# Locking parameters
+lockmax  : 20					# Maximum number of locking attempts
+lockdelay: 2					# Amount of seconds between two lock attempts
+lockhold : 3600					# Amount of seconds before breaking lock
+locksafe : ON					# Locking style on mailboxes
+lockwarn : 20,300				# Warn on busy locks after 20s, then every 300
+nfslock  : OFF					# NFS-secure locking (optional)
+
+# Timeout parameters
+queuewait: 60					# Delay for filter before calling mailagent
+queuehold: 1800					# Amount of seconds queued mail remains skipped
+queuelost: 86400				# Timeout before flagging old queued mail
+runmax   : 3600					# Timeout for RUN command and friends
+
+# Folder compression
+#compress : ~/.compress			# Folder compression list
+compspecs: $spool/compressors	# Compression progs config file
+comptag  : compress				# Default compression tag
+
+# Optional parameters (for experts...)
+#newcmd   : $spool/newcmd		# Definition of new filtering commands
+#perlib   : pl					# Extended perl library search path
+#tome     : also-me				# Alternate logins for me
+#rulemac  : ON					# Macro substitution in rule patterns
+
+# Database hashing directory (in $spool) and other controls
+hash     : dbr					# Hashing directory
+cleanlaps: 1M					# Laps between cleanings
+autoclean: ON					# Turn periodic cleaning on/off
+agemax   : 1y					# Maximum lifetime for entries
+
+#
+# Parameters for SERVER
+#
+
+comserver: $spool/server		# Valid server commands
+servdir  : $spool/cmds			# Default path for perl server commands
+servshell: /bin/sh				# Shell used to spawn shell commands (optional)
+maxerrors: 10					# Allow at most ten errors before flushing
+maxcmds  : 10					# Allow maximum of ten commands in one request
+scriptcc : ON					# Send copy of sesssion transcripts to user?
+bqueue   : $spool/batch			# Batch queue (not implemented yet)
+powers   : $spool/powers		# Directory for power administration
+powerlog : $logdir/powerlog		# Log requests for new powers
+powerlist: $powers/aliases		# Mapping of powers to filename in powerdir
+powerdir : $powers/clearance	# Directory listing user clearances for powers
+passwd   : $powers/passwd		# Power passwords
+helpdir  : $spool/help			# Help directory for server commands
+
+#
+# Parameters for PROCESS
+#
+
+comfile  : $spool/commands		# Valid commands
+distlist : $spool/distribs		# Distribution list
+proglist : $spool/proglist		# Program description list
+maxsize  : 150000				# Maximum size before kiting
+plsave   : $spool/plsave		# Where patchlevels are saved
+authfile : $spool/auth			# Remote sending authorizations (not yet)

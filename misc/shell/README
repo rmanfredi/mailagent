@@ -1,0 +1,32 @@
+The following command allows the remote execution of arbitrary shell commands.
+This may compromise the security of your account and/or system, so be very
+careful when setting it up. Only someone with a 'shell' power will be allowed
+to use that command.
+
+To install, add the server.cf lines to your 'comserver' file, as defined in
+your ~/.mailagent, then copy the 'shell' script to your 'servdir'.
+
+To create the 'shell' power, become 'root' or 'system' and then do:
+
+newpower shell PASSWORD
+... fill in security clearance ...
+... (your e-mail address) ...
+EOF
+
+Do not forget to select a good password for this power.
+
+Here is an example:
+
+set shell /bin/ksh
+power shell PASSWORD
+shell
+pwd
+ls -l
+cat ~/.profile
+EOF
+
+The transcript session will return you the output from the shell. If you
+do not select a shell via 'set shell', then /bin/sh will be used.
+
+At any time, you may remove this remote shell access by commenting out or
+removing the shell command from 'comserver'.

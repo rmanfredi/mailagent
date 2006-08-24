@@ -1,0 +1,59 @@
+#
+# Mailing lists gateway-ed to local ml.* newsgroups
+#
+# We don't post directly to newsgroups, to avoid rejects when a duplicate is
+# found because of a posting sent locally and going to the list via newsgate,
+# then back to us.
+#
+# Depending on the To/Cc lines, we assign the desired newsgroup to the "group"
+# variable, using 'quotes' because the "." is a concat operator in perl, and
+# ASSIGN tries to eval() its operator unles put in 'quotes'.
+#
+# We then move to the POST or POST_B state, depending on whether we wish to be
+# biffed for each article posted or not.  We can thus factorize the trapping
+# of loops via the X-Mailer token newsgate leaves in each outgoing message
+# it gateways.
+#
+
+To Cc:
+    amanda-hackers      { ASSIGN group 'ml.softs.amanda.hackers'; REJECT POST }
+    amanda-*            { ASSIGN group 'ml.softs.amanda.users'; REJECT POST }
+    ;
+To Cc: suck-ml          { ASSIGN group 'ml.softs.suck'; REJECT POST };
+To Cc:
+    debian-french               { ASSIGN group 'ml.debian.fr'; REJECT POST }
+    debian-security-announce    {
+                                    ASSIGN group 'ml.debian.security.announce';
+                                    SAVE debian-sec;
+                                    REJECT POST;
+                                }
+    ;
+To Cc:
+    linux-abit          { ASSIGN group 'ml.linux.abit'; REJECT POST_B }
+    linux-kernel        { ASSIGN group 'ml.linux.kernel'; REJECT POST }
+    ;
+To Cc: perl5-porters    { ASSIGN group 'ml.lang.perl.porters'; REJECT POST_B };
+
+#
+# Prevent loops via newsgate -- can DELETE if you're brave enough
+# Change "lyon.ram.loc" which is my private news server to your own name
+#
+
+<POST,POST_B> X-Mailer: /newsgate .*\bat lyon\.ram\.loc\b/  { LEAVE };
+
+#
+# The news server will reject duplicate articles.  Since we have means to
+# reject duplicates beforehand, we'll avoid a failed posting.
+#
+
+<POST,POST_B>           { UNIQUE -a; REJECT };
+
+#
+# Posting happens with the -l flag, to force a "Distribution: local" header.
+# Although my INN newsfeed is configured to never propagate the ml.* hierarchy
+# to anyone else, it's a safety net.
+#
+
+<POST>                  { POST -l  %#group };
+<POST_B>                { POST -lb %#group };
+

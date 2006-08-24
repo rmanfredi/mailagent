@@ -1,0 +1,68 @@
+This directory contains the implemetation for a new filtering action FAKESEND.
+
+The purpose of that command is to let me send messages from home to work,
+where they are resent locally. I do this because I usually forward my
+private mail to home during nights and week-ends, but I don't actually
+wish to make my home address public.
+
+The way I use this is simple. I run Linux at home, and use MH to handle my
+mail. I have a very special repl alias which configures the header to:
+
+	Subject: Re: blabla
+	References: <whatever>
+	In-Reply-To: as appropriate
+	To: Raphael_Manfredi@hp.com
+	X-trigger: fakesend
+                                    (blank line, end-of-real-header)
+	To: real-to-header
+	Cc: whomever
+	X-Additional-Info: as appropriate (Organization, whatever)
+                                    (blank line, end-of-additional-header)
+	The body of my message start here.
+
+Then, at work, I have this simple rule:
+
+	X-Trigger: /^fakesend/		{ FAKESEND; DELETE };
+
+And the FAKESEND command extract only some pre-arranged fields from the
+real header (Subject, Date, References, and In-Reply-To), then gets
+the additional header information, generates new From line from the
+user information in ~/.mailagent if none was supplied in the additional
+header, and passes the whole thing to sendmail -t.
+
+WARNING: Don't use this X-Trigger rule as-is. Use something of your own
+and don't tell anyone about it, otherwise other people will be able
+to send you e-mail with this header and trigger FAKESEND, causing you
+to appear to say something you would have not said otherwise, which
+could be embarrassing. The mere existence of FAKESEND is yet another
+proof that non PGP-signed e-mail cannot ever be taken as an evidence
+in court that you said something.
+
+NOTE: This version does not use the mailer configured in ~/.mailagent.
+It hardwires the sendmail path, and currently relies on the -t option to
+parse the new To and Cc header to know whom this message is to be sent
+to. A possible improvement would be to do the parsing ourselves, which
+would allow to honour the configured mailer from ~/.mailagent.
+
+All this is automated. I don't actually generate the faked header by hand,
+because I would make mistakes otherwise (like forgetting the X-Trigger line)
+and that would be painful anyway.
+
+Instead, I use MH... The local mh_profile file reproduces the relevant
+settings for 'frepl' and 'freplq', aliases to 'repl' for "fake reply" and
+"fake reply with quoting". The freplcomps file lies in my ~/mh directory.
+When I want to send a faked quoted reply, all I do is 'freplq'. I then
+proceed as usual. Isn't that magic?
+
+NOTE: The freplcomps file is written in such a way as-to ignore the Reply-To:
+field in the header. That's because some of the mailing lists I forward
+are broken and set the Reply-To: to the list explicitely, which is bad.
+Read http://garcon.unicom.com/FAQ/reply-to-harmful.html to know why.
+
+The only thing that bothers me is that the local folder copy is made with
+the "faked" form, not the real form the user will get (i.e. with the extra
+header removed in place and inserted as part of the real header). I don't
+know how to let MH do that. Any MH expert reading this and having a clue?
+
+	Raphael Manfredi <Raphael_Manfredi@hp.com>
+	Grenoble, France, March 30th 1998.

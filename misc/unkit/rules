@@ -1,0 +1,7 @@
+# This rule will process any message containing the word 'kit #' in the subject
+# and that is not a reply. Indded, each kit message has a subject looking like:
+#   package - kit #1 / 5
+# The UNKIT command can be configured from the ~/.mailagent file, but defaults
+# values are hardwired and should be ok most of the time.
+
+!Subject: /^Re:/, !/kit #/		{ UNKIT; ABORT -t; LEAVE };

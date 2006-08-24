@@ -1,0 +1,20 @@
+This is the root directory for mailagent.
+
+If you choose to install the mailagent, you will enable people to
+ask for patches and eventually distributions. You need kit 2.0
+(at least PL 9) and cshar 3.0 for the mailagent's PROCESS command to
+work properly. If you miss one of those, you can grab them my
+CPAN directory: http://search.cpan.org/search?author=RAM
+
+You will also have access to filtering abilities, specified using
+lex-like rules. The mailagent will delete all those mails you do not
+wish to read, forward others (e.g. rebroadcasting a mailing list),
+and file mail into folders for delayed reading.
+
+Instructions for configuring and setting your mailagent are found
+in the manual page. Once all is installed, run "man mailagent".
+You can also go to the man/ subdirectory and run the following:
+"nroff -man mailagent.1 | more -s".
+
+Look at the README file in the filter/ directory for hints on choosing
+between the C or the shell version of the filter.

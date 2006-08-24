@@ -1,0 +1,139 @@
+			  getcost, version 3.0
+			    Sun May  4, 1997
+
+==============================================================================
+Forward by RAM:
+
+	This version of getcost CANNOT be redistributed separately from the
+mailagent it came with. As part of the mailagent distribution, it may be
+copied freely.
+
+	Darryl Okahata kindly granted me the permission to redistribute it as
+well as a stripped-out sample of the spamconfig file. This is what lies
+within this directory, along with the README file.
+==============================================================================
+
+     Getcost is a (somewhat kludgy) Perl script designed to detect SPAM.
+It reads in a single, incoming mail message from standard input, and
+prints a "cost", or message score, to stdout.  Its purpose is to assign
+a "cost" to the mail message; if the cost is less than zero, it's
+considered to be SPAM.  If the cost is greater than or equal to be zero,
+it's not considered to be SPAM.
+
+     Getcost is designed to be used in conjunction with mail filtering
+programs like deliver(8) or procmail(1).  Basically, if getcost returns
+a negative number, the message is considered to be SPAM, and deliver(8)
+or procmail(1) should file the message into a "junkmail" folder.  It is
+recommended that the message *NOT* be deleted, as getcost can
+incorrectly classify a valid message as SPAM (this is known as a "false
+positive").
+
+     The cost is computed from various "scores", which are stored in a
+configuration file in the user's $HOME directory.  The configuration
+file contains a list of pattern/score pairs.  Basically, if an header
+field or line in the message body matches a pattern, the corresponding
+score is added to the "cost".  After processing all of the header and
+body lines (body scanning can stop prematurely, to help with long
+messages), the total cost is printed to stdout.
+
+     Patterns can be matched against the following headers:
+
+	From: & Reply-To:
+	Sender:
+	To: & Cc:
+	Received
+	Subject:
+
+In addition, special kludgy code exists to handle the headers:
+
+	X-Openmail-Hops:
+	Newsgroups: & Xref:
+	References: & In-Reply-To:\s/i & X-Also-Posted-To:
+
+     Also, if 10 or more all-uppercase lines exist in the body, a score
+of -10000 is added to the cost.  Each all-uppercase line must be more
+than 10 characters long, *AND* no patterns must have matched for this
+line, in order for it to be counted.  [ Yes, this is a bit kludgy, but,
+believe it or not, the code has greatly improved since it was first
+conceived. ]
+
+     Questionable code also exists to automatically mark the message as
+SPAM if the To: header is more than 1000 characters long.  This code
+should probably be deleted/modified.
+
+     Scanning stops as soon as the cost goes above 1000000 or below
+-100000.
+
+     This distribution includes three files:
+
+	getcost		-- The SPAM-detecting engine.
+	getcost.README	-- This file.
+	spamconfig	-- A sample configuration file, with comments.
+			   To use this file, either copy it to
+			   $HOME/.spamconfig, or use getcost with the
+			   "-f" option (see below).
+
+     For debugging a configuration file, "-d" and "-D" options are
+provided (see below).
+
+     Note that $HOME should be set when this script is executed, so that
+getcost can locate its config file.  If $HOME is not set, the "-f"
+option (see below) must be used.
+
+
+***** Options:
+
+	-a	Apply all body rules, i.e. do not stop scoring for a body line
+	    at the first match.  Scoring always stops when the delta cost
+		associated with a pattern match is 0.
+
+	-B	Penalize binary characters.  Each line that contains a
+		character with bit 7 set gets a score of -100.  This is
+		done only if no other patterns matched.
+
+	-b	Don't do any score processing on the message body.
+		Scoring is done only upon the message header.
+
+	-c	Collect sentences and only apply patterns on full ones. This
+		is useful in conjunction with -a, and also fights spam messages
+		with a word on each line, to specifically defeat scoring filters
+		which rely on consecutive words. This has no impact on -L, which
+		still focuses on physical lines in the message, not logical ones.
+
+	-D	(For debugging)  Dump scanner code.  For performance
+		reasons, the scanner for the message body is converted
+		into Perl code at runtime.  This option dumps out the
+		converted Perl code, in case syntax errors occur (which
+		can be common, as the regular expressions are taken
+		directly from the configuration file).
+
+	-d	(For debugging)  Debug mode.  Prints out how each line
+		is assigned a score.  This option is invaluable for
+		seeing how getcost arrives at a cost.
+
+	-f  configfile
+		Use "configfile" instead of $HOME/.spamconfig
+
+	-k  Keep going applying the rules, even when the -1000000
+		threshold is reached. Useful in conjunction with -d on a
+		tty to debug a set of patterns.
+
+	-L	Penalize long lines.  Lines greater than 90 characters get
+		assigned a cost of: -(10 + line_length).  For example, a
+		110-character long line is assigned a cost of -(10 + 110)
+		or -120.  This is done only if no other patterns
+		matched.
+
+	-m	Multiple matches: apply pattern everywhere on the line, not
+		just once. Useful with -c, to keep counting everything.
+		NB: this re-uses the deprecated "-m" flag which was adding
+		500 to the cost when your name appeared in the To: line.
+
+	-o	If the X-Openmail-Hops: header line exists, assign a
+		cost of 10000000 to the line.  Generally used to allow
+		all openmail messages through.
+
+	-S	If the To: header contains the phrase "list suppressed",
+		a cost of -1000000 is assigned.  This is of questionable
+		use (but, messages from spammers who use Eudora often
+		have this).

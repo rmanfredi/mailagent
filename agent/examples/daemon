@@ -1,0 +1,18 @@
+#
+# Rule file for mailagent
+#
+
+maildir = ~/mail;
+
+To Cc: ram		{ BEGIN RAM; REJECT };
+
+<RAM> From: root, mailer-daemon, uucp	{ BEGIN INITIAL; REJECT };
+<RAM> { ONCE (%r,vacation,1d) MESSAGE ~/.vacation; REJECT };
+
+{ LEAVE; BOUNCE ram@eiffel.fr };
+
+<_SEEN_>	{ DELETE };
+
+#
+# End of mailagent rules
+#

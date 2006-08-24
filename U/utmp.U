@@ -1,0 +1,28 @@
+?RCS: $Id$
+?RCS:
+?RCS:  Copyright (c) 1990-2006, Raphael Manfredi
+?RCS:  
+?RCS:  You may redistribute only under the terms of the Artistic License,
+?RCS:  as specified in the README file that comes with the distribution.
+?RCS:  You may reuse parts of this distribution only within the terms of
+?RCS:  that same Artistic License; a copy of which may be found at the root
+?RCS:  of the source tree for mailagent 3.0.
+?RCS:
+?RCS: $Log
+?MAKE:utmp:Loc Getfile
+?MAKE:	-pick add $@ %<
+?S:utmp:
+?S:	The path of the utmp file where logins are recorded on the system.
+?S:	Typically something like '/etc/utmp' or '/var/adm/utmp'.
+?S:.
+: determines where the utmp file lies
+echo " "
+case "$utmp" in
+'') dflt=`./loc utmp /etc/utmp /etc /var/adm /usr/etc`;;
+*) dflt="$utmp";;
+esac
+fn='l/:utmp'
+rp="Where is the utmp file recording logins?"
+. ./getfile
+utmp="$ans"
+

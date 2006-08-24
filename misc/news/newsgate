@@ -1,0 +1,278 @@
+# feed this into perl
+	eval 'exec perl -S $0 ${1+"$@"}'
+		if $running_under_some_shell;
+
+#
+# $Id: newsgate,v 3.0.1.2 2001/03/13 13:17:03 ram Exp ram $
+#
+#  Copyright (c) 1990-2006, Raphael Manfredi
+#  
+#  You may redistribute only under the terms of the Artistic License,
+#  as specified in the README file that comes with the distribution.
+#  You may reuse parts of this distribution only within the terms of
+#  that same Artistic License; a copy of which may be found at the root
+#  of the source tree for mailagent 3.0.
+#
+# $Log: newsgate,v $
+# Revision 3.0.1.2  2001/03/13 13:17:03  ram
+# patch71: the in-reply-to field is now computed via a regexp
+#
+# Revision 3.0.1.1  2001/01/10 16:59:58  ram
+# patch69: created
+#
+
+#
+# This program is meant to be run by INN upon reception of a message
+# on any of the local ml.* groups, which is where I spool some of
+# mailing lists I selectively read.
+#
+# It takes an article on stdin, looks at its Newsgroups line, check
+# the ones we know how to forward to a mailing list by consulting
+# an ml.map file, and builds a mail message sent to all the lists at
+# once (when crossposting).
+#
+# The program leaves an X-Mailer trace to be able to trace errors back to
+# that program, and also to prevent loops: the server name where the article
+# is processed is inserted in the X-Mailer line.
+#
+
+use strict;
+
+(my $me = $0) =~ s|.*/(.*)|$1|;
+
+my $VERSION = "1.0";
+my $ML_MAP = "/etc/news/ml.map";			# Mailing list map
+my $SENDMAIL = "/usr/sbin/sendmail";		# Change flags if changing MTA
+my $LEVEL = "info";
+my $LOG = "";
+
+use Getopt::Long;
+&usage unless GetOptions(
+	'level=s'	=> \$LEVEL,
+	'map=s'		=> \$ML_MAP,
+	'logfile=s'	=> \$LOG,
+	'h|help'	=> \&usage,
+);
+
+sub usage {
+	print STDERR <<EOM;
+Usage: $me [-h] [-level dbglevel] [-logfile path] [-map file] <article
+  -h      : show this help message
+  -level  : set debugging level (syslog priority name, default is "$LEVEL")
+  -logfile: write logs to file, not to syslog
+  -map    : map file (defaults to $ML_MAP)
+EOM
+	exit 1;
+}
+
+use Log::Agent;
+my $driver;
+
+if (length $LOG) {
+	require Log::Agent::Driver::File;
+	$driver = Log::Agent::Driver::File->make(
+		-prefix		=> $me,
+		-showpid	=> 1,
+		-file		=> $LOG,
+	);
+} else {
+	require Log::Agent::Driver::Syslog;
+	$driver = Log::Agent::Driver::Syslog->make(
+		-prefix		=> $me,
+		-facility	=> "news",
+		-showpid	=> 1,
+		-logopt		=> "ndelay",
+	);
+}
+
+logconfig(
+	-driver => $driver,
+	-level => lc($LEVEL),
+);
+
+use Sys::Hostname;
+
+#
+# Parse header
+#
+
+my $header;
+my $skipping_header = 0;
+my %header;
+my $field;
+
+while (<>) {
+	last if /^$/;
+	if (
+		/^Path:/i			||
+		/^Distribution:/i	||
+		/^Followup-To:/i	||
+		/^Xref:/i			||
+		/^X-Server-.*:/i	||
+		/^Originator:/i		||
+		/^Expires:/i		||
+		/^Summary:/i		||
+		/^Keywords:/i		||
+		/^Lines:/i			||
+		/^Resent-\w+:/i		||
+		/^To:/i				||
+		/^Cc:/i
+	) {
+		$skipping_header = 1;
+		next;
+	}
+	if (/^\s/) {
+		next if $skipping_header;
+		s/^\s+/ /;
+		chop;
+		$header{$field} .= $_ if $field ne '';
+		logwarn "bad continuation in header, line $." if $field eq '';
+	} elsif (($field, my $value) = /^([\w-]+)\s*:\s*(.*)/) {
+		$skipping_header = 0;
+		$field =~ s/(\w+)/\u\L$1/g;		# Normalize spelling
+		$header{$field} .= " " if exists $header{$field};
+		$header{$field} .= $value;
+	} else {
+		chop;
+		logerr "ignoring bad header line $.: $_";
+		next;
+	}
+
+	# Those are recorded in %header but not propagated through mail
+	next if
+		$field eq 'Newsgroups'		||
+		$field =~ /^Nntp-.*/		||
+		$field eq 'Sender';
+
+	$header .= $_;
+}
+
+my ($from) = (parse_address($header{From} || $header{Sender}))[0];
+logsay "from $from";
+logdie "hostile address $from" if $from =~ /'`";<>&\|/;
+
+my @newsgroups = map { lc($_) } split(/,\s*/, $header{Newsgroups});
+logdie "no Newsgroups line found" unless @newsgroups;
+logsay "newsgroups @newsgroups";
+
+#
+# Last reference is the replied-to message, if it's a reply at all
+#
+
+my ($in_reply_to) = $header{References} =~ /(<[^>]+>)\s*$/;
+
+#
+# Parse newsgroup mapping file
+#
+
+my %addr;
+
+open(MAP, $ML_MAP) || logdie "can't open map file $ML_MAP: $!";
+while (<MAP>) {
+	chop;
+	next if /^#/ || /^\s*$/;
+	my ($ng, $addr) = split(/\s+/);
+	$addr{lc($ng)} = $addr;
+}
+close MAP;
+
+#
+# Determine destinations.
+#
+
+my @to;
+foreach my $ng (@newsgroups) {
+	push @to, $addr{$ng} if exists $addr{$ng};
+}
+
+unless (@to) {
+	logtrc 'info', "no mailing list target found";
+	exit 0;
+}
+logsay "sending to @to";
+
+#
+# Open mailer, now that we know we have something to send
+#
+
+my $host = hostname;
+my ($cname, $ip) = hostinfo($host);
+my $now = mta_date();
+my $phost = $header{'Nntp-Posting-Host'};
+my $origin = $phost ? "[NNTP at $phost]" : "<origin unknown>";
+
+open(MAILER, "|$SENDMAIL -t -odb -oi -f $from") || logdie "cannot fork: $!";
+print MAILER <<EOH;
+Received: from $cname [$ip]
+	via news $origin ($me $VERSION);
+	$now
+EOH
+print MAILER "To: ", join(", ", @to), "\n";
+print MAILER $header;
+print MAILER "In-Reply-To: $in_reply_to\n" if length $in_reply_to;
+print MAILER "X-Mailer: $me $VERSION at $cname\n\n";	# To prevent loops
+while (<>) {
+	print MAILER;
+}
+close MAILER;
+logdie "mailer error while sending to @to" if $?;
+
+exit 0;		# All done
+
+# Compute cname and IP address of host
+sub hostinfo {
+	my ($host) = @_;
+	my ($name, $aliases, $addrtype, $length, @addr) = gethostbyname($host);
+	my $addr = join ".", unpack("C4", $addr[0]);
+	return ($name, $addr);
+}
+
+# Return date in MTA format -- stolen from mailagent
+sub mta_date {
+	my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
+	my ($gmmin, $gmhour, $gmyday) = (gmtime(time))[1,2,7];
+	my @days   = qw(Sun Mon Tue Wed Thu Fri Sat);
+	my @months = qw(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec);
+
+	# Compute delta in minutes between local time and GMT
+	$yday = -1 if $gmyday == 0 && $yday >= 364;
+	$gmyday = -1 if $yday == 0 && $gmyday >= 364;
+	$gmhour += 24 if $gmyday > $yday;
+	my $dhour = ($gmyday < $yday) ? $hour + 24 : $hour;
+	my $dmin = ($dhour * 60 + $min) - ($gmhour * 60 + $gmmin);
+
+	# Must convert delta into +/-HHMM format
+	my $d = 100 * int($dmin / 60) + (abs($dmin) % 60) * ($dmin > 0 ? 1 : -1);
+
+	sprintf "%s, %2d %s %4d %02d:%02d:%02d %+05d",
+		$days[$wday], $mday, $months[$mon], 1900+$year, $hour, $min, $sec, $d;
+}
+
+# Parse RFC822 address -- stolen from mailagent
+# Returns (address, comment)
+sub parse_address {
+	local ($_) = @_;						# The address to be parsed
+	my $comment;
+	my $internet;
+	if (/^\s*(.*?)\s*<(\S+)>[^()]*$/) {		# comment <address>
+		$comment = $1;
+		$internet = $2;
+		$comment =~ s/^"(.*)"/$1/;			# "comment" -> comment
+		($internet, $comment);
+	} elsif (/^\s*([^()]+?)\s*\((.*)\)/) {	# address (comment) 
+		$comment = $2;
+		$internet = $1;
+		# Construct '<address> (comment)' is invalid but... priority to <>
+		# This will also take care of "comment" <address> (other-comment)
+		$internet =~ /<(\S+)>/ && ($internet = $1);
+		($internet, $comment);
+	} elsif (/^\s*<(\S+)>\s*(.*)/) {		# <address> ...garbage...
+		($1, $2);
+	} elsif (/^\s*\((.*)\)\s*<?(.*)>?/) {	# (comment) [address or <address>]
+		($2, $1);
+	} else {								# plain address, grab first word
+		/^\s*(\S+)\s*(.*)/;
+		($1, $2);
+	}
+}
+

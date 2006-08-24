@@ -1,0 +1,92 @@
+?RCS: $Id$
+?RCS:
+?RCS:  Copyright (c) 1991, Syd Weinstein
+?RCS:  Copyright (c) 1991, Raphael Manfredi
+?RCS:
+?RCS:  You may redistribute only under the terms of the GNU General Public
+?RCS:  Licence as specified in the README file that comes with dist.
+?RCS:
+?RCS: $Log
+?MAKE:d_lockflock d_flockonly lock_by_flock flock_only: cat contains d_flock Myread +usrinc Setvar Oldconfig
+?MAKE:	-pick add $@ %<
+?S:d_lockflock:
+?S:	This variable conditionally defines the LOCK_BY_FLOCK symbol, which
+?S:	indicates that the mailbox should be locked by flock.
+?S:.
+?S:d_flockonly:
+?S:	This variable conditionally defines the FLOCK_ONLY symbol, which indicates
+?S:	that the mailbox should be locked only by flock. Be sure this will not
+?S:	introduce any conflict with other mail-related programs.
+?S:.
+?S:lock_by_flock:
+?S:	This variable holds 'true' if the mailbox should be locked by flock.
+?S:.
+?S:flock_only:
+?S:	This variable holds 'true' when the mailbox is to be locked by flock only.
+?S:.
+?C:LOCK_BY_FLOCK:
+?C:	This symbol, if defined, indicates that the flock mailbox locking should
+?C:	be used.
+?C:.
+?C:FLOCK_ONLY:
+?C:	This symbol, if defined, indicates that only flock mailbox locking should
+?C:	be used. Be sure that this will never conflict with other utilities.
+?C:.
+?H:#$d_lockflock	LOCK_BY_FLOCK		/**/
+?H:#$d_flockonly	FLOCK_ONLY		/**/
+: see which mailbox locking should be used
+echo " "
+lock_by_flock=''
+flock_only=''
+case "$d_flock" in
+"$define")
+	if $contains EWOULDBLOCK $usrinc/errno.h > /dev/null 2>&1; then
+		echo 'EWOULDBLOCK found, will use flock type mailbox locking.'
+		val="$define"
+	elif $contains EWOULDBLOCK $usrinc/sys/errno.h > /dev/null 2>&1; then
+		echo 'EWOULDBLOCK found, will use flock type mailbox locking.'
+		val="$define"
+	else
+		echo 'Will use .lock type mailbox locking.'
+		val="$undef"
+	fi
+	;;
+*)
+	echo 'Will use .lock type mailbox locking.'
+	val="$undef"
+	;;
+esac
+set d_lockflock; eval $setvar
+
+case "$d_lockflock" in
+"$define")
+	lock_by_flock='true'
+	case "$d_flockonly" in
+	"$define") dflt=y;;
+	*) dflt=n;;
+	esac
+	$cat <<EOM
+ 
+Some sites wish to use flock style locking only. This allows $package to be
+installed without the setgid bit being set on some systems that would otherwise
+require it.
+
+Note: Be sure no other mail utility that needs to lock the mail spool file
+uses .lock type locking before using only flock style locking.
+
+EOM
+	rp="Would you like to use flock style mail spool locking only?"
+	. myread
+	case "$ans" in
+	y*|Y*) val="$define";;
+	*) val="$undef";;
+	esac
+	;;
+*) val="$undef";;
+esac
+set d_flockonly; eval $setvar
+
+case "$d_flockonly" in
+"$define") flock_only='true';;
+esac
+

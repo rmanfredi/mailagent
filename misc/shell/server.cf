@@ -1,0 +1,6 @@
+#
+# Add the following to your 'comserver' file to allow shell processing.
+#
+
+shell		shell	-	y	shell
+shell		var		-	-	-

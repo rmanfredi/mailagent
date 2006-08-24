@@ -1,0 +1,485 @@
+#
+# Mailagent rules for action regression tests
+#
+
+# $Id: actions,v 3.0.1.15 2001/03/17 18:15:08 ram Exp ram $
+#
+#  Copyright (c) 1990-2006, Raphael Manfredi
+#  
+#  You may redistribute only under the terms of the Artistic License,
+#  as specified in the README file that comes with the distribution.
+#  You may reuse parts of this distribution only within the terms of
+#  that same Artistic License; a copy of which may be found at the root
+#  of the source tree for mailagent 3.0.
+#
+# $Log: actions,v $
+# Revision 3.0.1.15  2001/03/17 18:15:08  ram
+# patch72: fixed test rules for UNIQUE, removing spurious REJECT -f
+#
+# Revision 3.0.1.14  2001/03/13 13:15:56  ram
+# patch71: added test cases for SUBST/TR on header fields
+#
+# Revision 3.0.1.13  2001/01/10 16:58:28  ram
+# patch69: fixed dates for the SELECT test to avoid failures past 2001
+#
+# Revision 3.0.1.12  1999/07/12  13:56:28  ram
+# patch66: added tests for variable propagation in APPLY
+#
+# Revision 3.0.1.11  1998/03/31  15:28:55  ram
+# patch59: added regression tests for new "ON" command
+#
+# Revision 3.0.1.10  1995/08/07  16:26:55  ram
+# patch37: new BIFF regression testing
+#
+# Revision 3.0.1.9  1995/02/16  14:37:50  ram
+# patch32: one more test for SAVE to check new fromfake feature
+#
+# Revision 3.0.1.8  1995/01/25  15:31:32  ram
+# patch27: extended rules for the PROTECT command tests
+#
+# Revision 3.0.1.7  1995/01/03  18:19:14  ram
+# patch24: added new tests for ANNOTATE -u and VACATION -l
+#
+# Revision 3.0.1.6  1994/09/22  14:40:32  ram
+# patch12: added regression tests for DO
+#
+# Revision 3.0.1.5  1994/07/01  15:06:56  ram
+# patch8: added exit status test for PERL command
+# patch8: added new test for vacation message with tome config variable
+# patch8: new set of tests for the new UMASK command
+#
+# Revision 3.0.1.4  1994/04/25  15:24:12  ram
+# patch7: check bug reported by Andy Seaborne <afs@hplb.hpl.hp.com>
+#
+# Revision 3.0.1.3  1994/01/26  09:35:08  ram
+# patch5: added new tests for UNIQUE and RECORD tags
+# patch5: ensure header-added recipients looked for in messages
+#
+# Revision 3.0.1.2  1993/12/17  08:13:20  ram
+# patch4: one spurious single quote still remained after patch3
+#
+# Revision 3.0.1.1  1993/12/15  09:05:21  ram
+# patch3: extra closing single quote removed (was there since 2.9 PL0)
+#
+# Revision 3.0  1993/11/29  13:49:23  ram
+# Baseline for mailagent 3.0 netwide release.
+#
+
+maildir = ~;
+
+X-Tag: /abort/
+{
+	ABORT -f;
+	SAVE always;
+	ABORT;
+	SAVE %u.1;
+}
+
+X-Tag: /annotate/
+{
+	ANNOTATE X-Anno-1: first;
+	ANNOTATE X-Anno-2 second;
+	ANNOTATE X-Anno-3;
+	ANNOTATE -d X-Anno-Error;
+	ANNOTATE -d X-Anno-4 fourth;
+	ANNOTATE -du X-Anno-4 fourth;
+	REJECT -f ANNOTATE;
+	ANNOTATE -d -u X-Anno-5 fith; RESYNC;
+	ANNOTATE -d -u X-Anno-5 fith;
+	ANNOTATE -du X-Anno-5 fith;
+	REJECT -t ANNOTATE;
+};
+<ANNOTATE>		{ SAVE never };
+
+X-Tag: /apply #1/	{ APPLY apply.1; REJECT -t APPLY; SAVE never };
+<IMPOSSIBLE>		{ SAVE never; REJECT APPLY };
+<APPLY>				{ APPLY apply.2; REJECT -f; SAVE always };
+<APPLY>				{ SAVE never };
+
+X-Tag: /apply #2/
+{
+	ASSIGN folder folder;
+	APPLY apply.1;
+	REJECT -f APPLY;
+	SAVE %#folder;
+};
+<APPLY>				{ SAVE never };
+
+X-Tag: /assign #1/,
+To: /^(\w+)@/
+{
+	ASSIGN ram %1;
+	ASSIGN other try;
+	ASSIGN final '%#other.2';
+	ASSIGN :ram 1 + 2;
+	RUN /bin/echo '%#ram,%#other,%#final' > output;
+}
+
+X-Tag: /assign #2/
+{
+	ASSIGN :ram %#:ram + 4;
+	ASSIGN other '1+2';
+	ASSIGN final %#other + 4;
+	RUN /bin/echo '%#:ram,%#other,%#final' > output;
+}
+
+X-Tag: /back/
+{
+	BACK RUN ~/pgm;
+}
+
+X-Tag: /beep 1/	{ BIFF bfmt; BEEP 4; BEEP -l 3; REJECT BIFF };
+<BIFF>			{ LEAVE };
+X-Tag: /beep 2/	{ BIFF bfmt; BEEP -l 0; LEAVE };
+
+X-Tag: /begin/
+{
+	BEGIN ONE;
+	BEGIN TWO;
+	REJECT;
+}
+
+<ONE> { SAVE one };
+<ONE,TWO,THREE> { SAVE two; BEGIN THREE; REJECT };
+<THREE> { SAVE three };
+
+X-Tag: /biff 1/ 	{ BIFF off; LEAVE; BIFF on; SAVE ok };
+X-Tag: /biff 2/ 	{ BIFF bfmt; SAVE ok; BIFF -l off; LEAVE };
+
+X-Tag: /bounce 1/			{ BOUNCE nobody };
+X-Tag: /bounce 2/			{ BOUNCE "list" };
+
+X-Tag: /delete/				{ DELETE };
+
+X-Tag: /do\b/
+{
+	REQUIRE perl.1 __test__;
+	DO __test__'perl_1('always');
+	DO perl.2:__test__'perl_2("DO");
+	SAVE never;
+};
+<DO>	{ SAVE always.2; DO __foo__'perl_3; SAVE never; };
+
+X-Tag: /feed/
+{
+	FEED grep -v To:;
+	SAVE ok;
+	REJECT;
+}
+
+X-Tag: /feed/, To: ram		{ SAVE no_resync };
+
+X-Tag: /forward 1/			{ FORWARD nobody };
+X-Tag: /forward 2/			{ FORWARD "list" };
+
+X-Tag: /give/				{ GIVE wc > output };
+
+X-Tag: /keep/
+{
+	KEEP From: To Subject X-None X-Long-* U*;
+	KEEP To Subject X-Long-* From X-None U*;
+	KEEP X-Long-*: Unu*-Head* X-None: To: Subject: From:;
+	KEEP "header-list" From;
+	SAVE ok;
+	REJECT;
+}
+X-Tag: /keep/, To: ram		{ SAVE no_resync };
+
+X-Tag: /message 1/			{ MESSAGE msg; DELETE };
+X-Tag: /message 2/			{ MESSAGE msg.2; DELETE };
+
+X-Tag: /macro/
+{
+	MACRO first It seems to;
+	MACRO first Another instance;
+	MACRO -p first;
+	MACRO second null;
+	MACRO -r second = ('work fine', EXPR);
+	MACRO third toto;
+	MACRO -d third;
+	RUN /bin/echo %-(first) %-(second)%-(third). > ok;
+	DELETE;
+}
+
+X-Tag: /nop/				{ NOP; DELETE };
+
+X-Tag: /notify 1/			{ NOTIFY msg nobody; DELETE };
+X-Tag: /notify 2/			{ NOTIFY msg "list"; DELETE };
+X-Tag: /notify 3/			{ NOTIFY msg.2 some@random.ctry %u; DELETE };
+
+X-Tag: /^on$/
+{
+	ON (Mondays Tuesdays Wednesdays Thursdays Fridays Saturdays Sundays) LEAVE;
+	ON (mon) SAVE days;
+	ON (tue) SAVE days;
+	ON (wed) SAVE days;
+	ON (thu) SAVE days;
+	ON (fri) SAVE days;
+	ON (sat) SAVE days;
+	ON (sun) SAVE days;
+	ON (Mn Ts Wd Th Fr Sa Su) SAVE days;
+	ON (mno tsx wda tuh frd sam sum) SAVE days;
+}
+
+X-Tag: /once/
+{
+	ONCE (ram,tag,1w) SAVE one;
+	ONCE (ram,tag,1w) SAVE two;
+	ONCE (mars,tag,1w) SAVE three;
+	ONCE (other,tag,0m) SAVE four;
+}
+
+X-Tag: /pass/
+{
+	PASS grep -v and;
+	PASS perl -p -e 's/^\>From /From /';
+	SAVE output;
+}
+
+X-Tag: /perl/	{ REJECT PERL };
+<PERL>			{ PERL perl.2 exit_1; REJECT -t; SAVE exit_ok; REJECT };
+<PERL>			{ PERL perl.1; SAVE never };
+<PERL>			{ PERL perl.2 'arg 1' "arg 2"; SAVE never };
+<PERL>			{ PERL perl.1; SAVE never };
+<PERL>			{ PERL no_such_file; ABORT -f; SAVE never };
+
+X-Tag: /pipe/			{ PIPE wc > output };
+
+X-Tag: /post 1/			{ POST alt.test comp.others };
+X-Tag: /post 2/			{ POST -l "list" };
+
+X-Tag: /purify/
+{
+	PURIFY grep -v Subject:;
+	SAVE output;
+};
+
+X-Tag: /protect/
+{
+	SAVE dflt;
+	PROTECT 0444; SAVE fold.1; SAVE dflt;
+	PROTECT -l 0666; SAVE fold.2;
+	PROTECT -lu; SAVE fold.3;
+	REJECT PROTECT;
+};
+<PROTECT>		{ SAVE fold.4; PROTECT -u; SAVE fold.5; };
+
+X-Tag: /queue/	{ QUEUE; QUEUE; QUEUE; QUEUE };
+
+X-Tag: /record #1/				{ RECORD; SAVE %u.1 };
+X-Tag: /record #1/				{ SAVE %u.1 };
+<_SEEN_> X-Tag: /record #1/		{ SAVE %u.2 };
+<RECORD> X-Tag: /record #2/		{ SAVE %u.3 };
+X-Tag: /record #2/				{ RECORD -r RECORD; SAVE %u.1 };
+X-Tag: /record #3/				{ RECORD -a; SAVE %u.1 };
+X-Tag: /record #4/				{ RECORD -c; REJECT -f RECORD; SAVE %u.1 };
+<RECORD> X-Tag: /record #4/		{ SAVE %u.2 };
+<RECORD_CATCH> X-Tag: /record/	{ DELETE };
+X-Tag: /record #5/				{ RECORD (tag1,tag2); SAVE %u.1; REJECT };
+X-Tag: /record #5/				{ RECORD INITIAL (tag2); SAVE %u.2; REJECT };
+X-Tag: /record #5/				{ RECORD -r RECORD_CATCH; SAVE %u.3 };
+X-Tag: /record #6/				{ RECORD (tag); SAVE %u.1; REJECT };
+X-Tag: /record #6/				{ RECORD (other); SAVE %u.2; REJECT };
+X-Tag: /record #6/				{ RECORD -r RECORD_CATCH; SAVE %u.3 };
+
+X-Tag: /require/		{ REJECT REQUIRE; };
+<REQUIRE>				{ REQUIRE non_existent; REJECT -f; SAVE never };
+<REQUIRE>				{ REQUIRE perl.1; REJECT -t; SAVE never };
+<REQUIRE>				{ REQUIRE perl.1; REJECT -t; SAVE never };
+<REQUIRE>				{ REQUIRE perl.2 test_pack; REJECT -t; SAVE never };
+<REQUIRE>
+{
+	MACRO perl_1 = (newcmd'perl_1, FN);
+	MACRO perl_2 = (&test_pack'perl_2, EXPR);
+	RUN /bin/echo We got %-(perl_1) and %-(perl_2) here > ok;
+	DELETE;
+};
+
+X-Tag: /reject/			{ REJECT REJ; SAVE %u.1 };
+<REJ> X-Tag: /reject/	{ SAVE always; REJECT -t REJ; SAVE never };
+
+<INITIAL> X-Tag: /restart/	{ RESTART -t RES; SAVE %u.1; REJECT };
+<RES> X-Tag: /restart/		{ RESTART no_such_mode; SAVE never };
+
+X-Tag: /resync/,
+To: ram
+{
+	PURIFY grep -v To:;
+	RESYNC;
+	REJECT;
+}
+
+X-Tag: /resync/, To: ram	{ SAVE %u.1 };
+X-Tag: /resync/				{ SAVE output };
+
+X-Tag: /run/		{ RUN /bin/echo Works. > ok; DELETE };
+
+X-Tag: /save #1/	{ SAVE mbox };
+X-Tag: /save #2/	{ SAVE path/another/third/mbox };
+X-Tag: /save #3/	{ SAVE ok };
+
+X-Tag: /select/
+{
+	SELECT (Jan 2 1970 .. Dec 31 2037) SAVE one;
+	SELECT (last month .. last minute) SAVE two;
+	SELECT (last minute .. next minute) SAVE three;
+	SELECT (now - 10 seconds .. now + 5 minutes) SAVE four;
+	SELECT (Dec 31 2037 .. Jan 2 1970) SAVE five;
+}
+
+X-Tag: /unknown #1/	{ unknown_command; DELETE };
+X-Tag: /unknown #2/	{ DELETE; unknown_command };
+
+X-Tag: /split #1/	{ SPLIT here; SAVE here };
+X-Tag: /split #2/	{ SPLIT -ida here };
+X-Tag: /split #3/	{ SPLIT -iew here };
+X-Tag: /split #4/	{ SPLIT -iew };
+X-Tag: /split #5/	{ SPLIT -iew here };
+X-Tag: /digest/		{ SAVE here };
+
+X-Tag: /store #1/	{ STORE mbox };
+X-Tag: /store #2/	{ STORE path/another/third/mbox };
+
+X-Tag: /strip/
+{
+	STRIP X-N* Received:;
+	STRIP Received;
+	STRIP X-N* "header-list";
+	SAVE ok;
+	REJECT;
+}
+X-Tag: /strip/, To: ram		{ SAVE no_resync };
+
+X-Tag: /subst #1/,
+To: /(.*)/
+{
+	SUBST 1 /com/fr/g;
+	ASSIGN subject %[Subject];
+	ASSIGN :persistent '%#subject';
+	SUBST #subject /^Re:\s+//;
+	SUBST #:persistent /^Re:\s+//;
+	RUN /bin/echo '%1,%#subject,%#:persistent' >output;
+	DELETE;
+}
+
+X-Tag: /subst #2/
+{
+	SUBST to /eiffel\.com/chram.org/;
+	SUBST Subject: /^Re:\s+//i;
+	SUBST Received /eiffel\.com/chram.org/g;
+	SAVE subst;
+	REJECT SUBST;
+};
+<SUBST> To: /^ram@chram\.org$/		{ SAVE never; REJECT };
+<SUBST>								{ RESYNC; REJECT };
+<SUBST> To: /^ram@chram\.org$/		{ SAVE always };
+<SUBST> 							{ SAVE never2 };
+
+X-Tag: /tr #1/,
+To: /(.*)/
+{
+	TR 1 /a-z/A-Z/;
+	ASSIGN subject %[Subject];
+	ASSIGN :persistent '%#subject';
+	TR #subject /ice/ICE/;
+	TR #:persistent /ice/ICE/;
+	RUN /bin/echo '%1,%#subject,%#:persistent' >output;
+	DELETE;
+}
+
+X-Tag: /tr #2/
+{
+	TR To: /a-z/A-Z/;
+	TR received /A-Z/a-z/;
+	SAVE subst;
+	REJECT TR;
+}
+<TR> To: /^RAM@EIFFEL.COM$/			{ SAVE never; REJECT };
+<TR>								{ RESYNC; REJECT };
+<TR> To: /^RAM@EIFFEL.COM$/			{ SAVE always };
+<TR> 								{ SAVE never2 };
+
+X-Tag: /umask #1/		{ REJECT UMASK; };
+<UMASK>	{
+	UMASK -l 0444;
+	PERL umask_is 0444;
+	REJECT -f UMASKF;
+	SAVE ok.1;
+	REJECT;
+};
+<UMASK> {
+	PERL umask_is %=umask;
+	REJECT -f UMASKF;
+	SAVE ok.2;
+	UMASK 0555;
+	REJECT;
+};
+<UMASK> {
+	PERL umask_is 0555;
+	REJECT -f UMASKF;
+	DELETE;
+};
+
+X-Tag: /umask #2/		{ REJECT UMASK; };
+<UMASK> {
+	UMASK 0444;
+	PERL umask_is 0444;
+	REJECT -f UMASKF;
+	SAVE ok.1;
+	UMASK -l 0555;
+	PERL umask_is 0555;
+	REJECT -f UMASKF;
+	REJECT;
+};
+<UMASK> {
+	PERL umask_is 0444;
+	REJECT -f UMASKF;
+	SAVE ok.2;
+};
+
+X-Tag: /umask #3/		{ REJECT UMASK; };
+<UMASK> {
+	PERL umask_is 0555;
+	REJECT -t UMASKF;
+	PERL umask_is %=umask;
+	REJECT -f UMASKF;
+	SAVE ok.3;
+};
+
+<UMASKF>	{ SAVE never; };
+
+X-Tag: /unique #1/				{ UNIQUE; SAVE %u.1 };
+<_SEEN_> X-Tag: /unique #1/		{ SAVE %u.1 };
+X-Tag: /unique #1/				{ SAVE %u.2 };
+<UNIQUE> X-Tag: /unique #2/		{ SAVE %u.3 };
+X-Tag: /unique #2/				{ UNIQUE -r UNIQUE; SAVE %u.1 };
+X-Tag: /unique #3/				{ UNIQUE -a; SAVE %u.1 };
+X-Tag: /unique #4/				{ UNIQUE -c; REJECT -f UNIQUE; SAVE %u.1 };
+<UNIQUE> X-Tag: /unique #4/		{ SAVE %u.2 };
+X-Tag: /unique #5/			{ UNIQUE -a (tag1,tag2); SAVE %u.1; REJECT };
+X-Tag: /unique #5/			{ UNIQUE (tag2); SAVE %u.2; REJECT };
+X-Tag: /unique #5/			{ UNIQUE -a; SAVE %u.3 };
+X-Tag: /unique #6/			{ UNIQUE (tag); SAVE %u.1; REJECT };
+X-Tag: /unique #6/			{ UNIQUE (other); SAVE %u.2; REJECT };
+X-Tag: /unique #6/			{ UNIQUE -a; SAVE %u.3 };
+
+X-Tag: /vacation #2/		{ DELETE };
+X-Tag: /vacation #3/		{ VACATION -l ~/.vacfile 3w; REJECT };
+X-Tag: /vacation #3/		{ DELETE };
+X-Tag: /vacation #4/		{ VACATION ~/.vacfile 3h; REJECT };
+X-Tag: /vacation #4/		{ DELETE };
+
+X-Tag: /write #1/	{ WRITE mbox };
+X-Tag: /write #2/	{ WRITE path/another/third/mbox };
+
+X-Tag: /compress/	{ LEAVE; SAVE always; SAVE another };
+X-Tag: /mmdf/		{ LEAVE; SAVE always; SAVE always };
+X-Tag: /newcmd/		{ FIRST_CMD arg1 arg2; SECOND_CMD; DELETE };
+X-Tag: /usrmac/		{ PERL script; ABORT -f; DELETE };
+X-Tag: /mh/
+{
+	SAVE +tmp;
+	PROTECT 0567; SAVE +new; SAVE dir;
+	PROTECT -u; SAVE simple;
+};
+

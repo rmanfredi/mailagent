@@ -1,0 +1,211 @@
+#
+# Rule file for mailagent
+#
+
+# The 'maildir' variable tells the mailagent where the folders are located.
+# By default, it is set to ~/Mail (because it is a convention used by other
+# mail-related programs), but the author prefers to use ~/mail.
+
+maildir = ~/mail;
+
+# The 'mailfilter' variable points to the place where all the loaded files
+# are stored (e.g. loaded patterns or addresses) and is used only when a
+# relative path is specified.
+
+mailfilter = ~/mail;
+
+# This set of rules catches command mails early in the process.
+# Currently, only the author, whose login name is 'ram', is allowed to use
+# this feature. All others get a message explaining why their command was
+# rejected (random reasons), and then the message is processed normally
+# by the other set of rules. Note how the BEGIN and REJECT commands
+# inefficiently replace the missing if/else structure.
+
+All: /^Subject:\s*[Cc]ommand/	{ BEGIN CMD; REJECT };
+<CMD> From: ram			{ STRIP Received; SAVE cmds; PROCESS };
+<CMD> *					{ BEGIN INITIAL; MESSAGE ~/tmp/nocmds; REJECT };
+
+# Here, I am turning a mailing list into a newsgroup by locally posting the
+# messages I get, so that others can read them too. I have configured inews to
+# mail me any follow-up made into this group, and those are caught with the
+# next rule and bounced directly to the mailing list... which will of course
+# resend the message to me. But the BOUNCE operation left an ``X-Filter'' field
+# in the message and the mailagent enters in the special seen mode, recognizing
+# an already filtered message. The third rule then simply deletes those
+# duplicates.
+
+To Cc: gue@eiffel.fr			{ POST -l mail.gue };
+Apparently-To: ram,
+Newsgroups: mail.gue			{ STRIP Apparently-To; BOUNCE gue@eiffel.fr };
+<_SEEN_> Newsgroups: mail.gue	{ DELETE };
+
+# The MH users mailing list. I am the sole reader of this list. In the past,
+# I used to get some duplicate messages, but since I've added the UNIQUE
+# command, I havn't seen any... weird! :-)
+
+To Cc: /^mh-users@ics.uci.edu$/i
+	{ STRIP Received; UNIQUE -a; SAVE comp.mail.mh };
+
+# This mailing list is a digest version of the comp.unix.wizards newsgroups.
+# It is not perfectly RFC-934, but close, so I simply discard the original
+# message and delete the header which is only the table of contents... Well,
+# I'm not sure there hasn't been any changes...
+
+To Cc: /^unix-wizards@.*brl.mil$/i
+	{ STRIP Received; SPLIT -id unix-wiz };
+
+# Those are news from the French embassy, which are forwarded to us "froggies".
+# I am forwarding this list to all the French people who are working in this
+# company (they are all listed in the file ~/mail/frog-list) and I keep a
+# copy for myself, of course.
+
+To Cc: /^.*frog:;@guvax.georgetown.edu$/i
+	{ FORWARD "frog-list"; STRIP Received; SAVE frog };
+
+# This mailing list is not at all RFC-934, but it usually has no headers. The
+# moderator prefers to add some comments at the end of the digest, hence the
+# -w flag, mainly to keep the trailing garbage.
+
+To Cc: /^magic@crdgw1.ge.com$/i
+	{ STRIP Received; SPLIT -eiw magic };
+
+# The following mailing list used to forward messages from many newsgroups,
+# but not all of them are valid now, and Paul Vixie is talking about moving
+# the src list to pa.dec.com. Anyway, I am filtering the messages according
+# to the ``Newsgroups'' field.
+
+To Cc: /^unix-sources.*@.*brl.mil$/i
+	{ STRIP Received; BEGIN SRC; REJECT };
+
+<SRC> Newsgroups:
+		comp.sources.unix,
+		comp.sources.misc		{ SAVE unix-src/src }
+		comp.sources.games		{ SAVE unix-src/games }
+		comp.sources.x			{ SAVE unix-src/x }
+		comp.sources.bugs		{ SAVE unix-src/bugs }
+		comp.sources.wanted		{ SAVE unix-src/wanted };
+<SRC> *							{ SAVE unix-src/other };
+
+# Other mailing list, with nothing particular. Ftpmail is not really a mailing
+# list, nor is it a valid user name, hence the regular not anchored regular
+# expression.
+
+To Cc: rdb-interest		{ STRIP Received; SAVE rdb };
+From: /ftpmail/i		{ STRIP Received; SAVE ftp.mail };
+
+# I am working with Harlan Stenn on the dist 3.0 release, and I automatically
+# forward to him every mail with the word ``metaconfig'' in the subject.
+# I avoid mailing him back his own mails though.
+
+From: harlan, To Cc: ram	{ SAVE dist };
+Subject: /metaconfig/i		{ BEGIN DIST; REJECT };
+<DIST> From: harlan			{ SAVE dist };
+<DIST>						{ SAVE dist; FORWARD harlan@mumps.pfcs.com };
+
+# This is administrative stuff. I am a system administrator here, among other
+# things, and we have several MIPS machine with a verbose cron daemon. I have
+# set up a /.forward on all those machines (which redirect all the root mail
+# to me) and I filter the output according to the machine name.
+
+From: root, To: root			{ BEGIN ROOT; REJECT };
+<ROOT> Subject: /host (\w+)/	{ ASSIGN host %1; REJECT };
+<ROOT> /^Daily run output/		{ WRITE ~/var/log/%#host/daily.%D };
+<ROOT> /^Weekly run output/		{ WRITE ~/var/log/%#host/weekly };
+<ROOT> /^Monthly run output/	{ WRITE ~/var/log/%#host/monthly };
+
+# I have a cron job every day a 5:00 a.m. which cleans up my mail folders. I
+# am using the cron program from Paul Vixie, hence the rule testing against
+# the ``X-Cron-Cmd'' header. This is a nice feature from Paul's cron.
+
+To: ram, X-Cron-Cmd: /mhclean/	{ WRITE ~/var/log/mh/mh.%D };
+
+# I belong to multiple internal mailing lists at ISE, and when I send a mail
+# to this list, I do not wish to get a copy of it, as I already saved mine
+# via the ``Fcc' field provided by MH. Therefore, I delete everything which
+# comes from me and is not explicitely directed to me, with the exception of
+# the mailgent error messages which I receive as ``Bcc''.
+
+From: ram		{ BEGIN RAM; REJECT };
+<RAM> To: ram	{ LEAVE };
+<RAM> X-Mailer: /mailagent/i	{ LEAVE };
+<RAM>			{ DELETE };
+
+# Every system-related mail is saved in a special folder. Note that the pattern
+# matching is done in a case insensitive manner because all these patterns are
+# implicit matches on the ``login name'' of the sender.
+
+To Cc:
+	postmaster,
+	newsmaster,
+	usenet, news,
+	mailer-daemon,
+	uucp, daemon,
+	system,
+	unknown-user	{ SAVE admin };
+
+# Mail about the mailagent (sometimes called mail filter, hence the double
+# pattern) is handled specially. I have a special pattern file held in
+# ~/mail/auto-msg/agent.key. Every message which is NOT a reply and has one
+# of those patterns in its body will be automatically replied to, once a week,
+# by sending the message held in ~/mail/auto-msg/agent.msg. In order for me
+# to know that this message has been already "replied-to", I annotate it.
+# Ultimately, the message is dropped in a dedicated folder.
+
+Subject:
+	/mail\s*agent/i,
+	/mail\s*filter/i		{ BEGIN AGENT; REJECT };
+<AGENT>
+	Subject: !/^Re:/,
+	Body: "~/mail/auto-msg/agent.key"
+		{
+			ONCE (%r, agent, 1w) REJECT AGENT_MSG;
+			SAVE agent;
+		};
+<AGENT_MSG>
+		{
+			MESSAGE ~/mail/auto-msg/agent.msg;
+			ANNOTATE Auto-Replied: %r;
+			SAVE agent;
+		};
+<AGENT> { SAVE agent };
+
+# Here, I am detecting mails sent by someone at ISE, i.e. mails with the
+# domain name ``eiffel.com'' appended or simply mails with no domain name.
+# I also turn off vacation messages, for when I am away, people at ISE usually
+# know about it :-).
+
+From:
+	/^\w+@.*eiffel\.com$/i
+	/^\w+@\w+$/i
+		{ BEGIN ISE; STRIP Received; VACATION off; REJECT };
+
+# A mail explicitely sent to me, leave it in the mailbox.
+
+<ISE> To: ram			{ LEAVE };
+
+# Various internal mailing list. Note the ``*eiffel*'' pattern which takes care
+# of various aliases including the word ``eiffel'', as in eiffel, eiffelgroup,
+# ueiffel, etc...
+
+<ISE> To Cc:
+	compiler	{ SAVE ise/compiler }
+	*eiffel*	{ SAVE ise/eiffel }
+	local		{ SAVE ise/local };
+
+# Take care of all the "junk" mails. Usually, I check this mailbox once a week.
+# There is never anything interesting in there, trust me...
+
+<ISE>			{ SAVE ise/other };
+
+# Finally, mails coming from the outside world are also filtered into specific
+# folders. This ends the rule file. Anything not matched past this point will
+# simply be left in the mailbox.
+
+To Cc:
+	*eiffel*,
+	users		{ SAVE ise/extern }
+	everyone	{ SAVE ise/local };
+
+#
+# End of mailagent rules
+#

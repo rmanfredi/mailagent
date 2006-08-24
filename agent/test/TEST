@@ -1,0 +1,259 @@
+: # feed this into perl
+	eval 'exec perl -S $0 "$@"'
+		if $running_under_some_shell;
+
+# $Id: TEST,v 3.0.1.4 2001/03/17 18:14:23 ram Exp ram $
+#
+#  Copyright (c) 1990-2006, Raphael Manfredi
+#  
+#  You may redistribute only under the terms of the Artistic License,
+#  as specified in the README file that comes with the distribution.
+#  You may reuse parts of this distribution only within the terms of
+#  that same Artistic License; a copy of which may be found at the root
+#  of the source tree for mailagent 3.0.
+#
+# $Log: TEST,v $
+# Revision 3.0.1.4  2001/03/17 18:14:23  ram
+# patch72: try to run tests as nobody when super-user -- from Debian
+#
+# Revision 3.0.1.3  1995/08/07  16:26:39  ram
+# patch37: added support for locking on filesystems with short filenames
+#
+# Revision 3.0.1.2  1994/09/22  14:40:10  ram
+# patch12: new -m option to monitor agentlog changes via atail
+#
+# Revision 3.0.1.1  1993/12/15  09:04:45  ram
+# patch3: now force . into PATH for msend/nsend
+#
+# Revision 3.0  1993/11/29  13:49:22  ram
+# Baseline for mailagent 3.0 netwide release.
+#
+
+if ($> == 0) {
+	print "Oh, you naughty person. You are superuser!\n";
+	my $uid = (stat('.'))[4];
+	$uid = (getpwnam('nobody'))[2] unless $uid;
+	$uid || die "Cannot run tests as super-user.[$<,$>]\n";
+	$> = $uid;
+	$< = $uid;
+	my $whom = (getpwuid($uid))[0];
+	print "Trying to run as user $whom [$uid]\n";
+}
+
+chop($pwd = `pwd`);
+$ENV{'HOME'} = "$pwd/out";
+chop($host = `(hostname 2>/dev/null || uname -n) 2>/dev/null`);
+$host =~ s/^([^.]*)\..*/$1/;	# Trim domain name
+$ENV{'HOST'} = $host;
+$ENV{'USER'} = 'nobody';	# In case we get mails back from RUN and friends
+$ENV{'PWD'} = $pwd;
+$ENV{'LEVEL'} = 0;			# Default loglvl for filter and cmd tests
+delete $ENV{'ENV'};			# For ksh
+&read_config_sh;			# Load configuration into package cfsh
+$ENV{'LOCKEXT'} = $cfsh'd_flexfnam eq 'define' ? '.lock' : '!';
+
+@tests = ('basic', 'option', 'filter', 'cmd', 'misc');
+$failed = 0;
+$how_many = 0;
+
+require 'getopt.pl';
+&Getopt;
+
+$mailagent = 'mailagent';			# Default program (dataloaded version)
+$mailagent = 'magent' if $opt_n;	# Use non-dataloaded version
+$ENV{'MAILAGENT'} = $mailagent;
+$ENV{'PATH'} = "$pwd/..:.:" . $ENV{'PATH'};
+
+-f "../$mailagent" && -x _ || die "No $mailagent.\n";
+-f '../filter/filter' && -x _ || die "No filter.\n";
+$> || die "Cannot run tests as super-user. [$<,$>]\n";
+
+&load_ok;		# Don't rerun successful tests if up to date
+
+# A level file indicates default loglvl
+if (-f 'level') {
+	chop($level = `cat level`);
+	$ENV{'LEVEL'} = int($level);
+}
+
+# Launch atail if -m to monitor the agentlog file
+if ($opt_m) {
+	$atail_pid = fork;
+	unlink 'out/agentlog';
+	if (defined $atail_pid && $atail_pid == 0) {
+		# Child process
+		exec 'perl ./atail';
+		die "TEST: could not launch atail: $!\n";
+	}
+}
+
+unless (-f 'OK') {
+	%Ok = ();
+	`rm -rf out` if -d 'out';
+}
+
+umask 022;		# Ensure none of the files are world writable
+
+`mkdir out` unless -d 'out';
+
+select(STDOUT);
+$| = 1;
+open(OK, ">>OK");
+select(OK);
+$| = 1;		# We may safely interrupt
+select(STDOUT);
+
+foreach $dir (@tests) {
+	next unless -d $dir;
+	&run($dir);
+}
+
+# Summarize what happened
+
+close OK;
+
+if ($failed == 0) {
+	print "All tests successful.\n";
+} else {
+	print "Failed $how_many test", $how_many == 1 ? '' : 's';
+	print " from $failed file", $failed == 1 ? '' : 's', ".\n";
+}
+
+&clean_up;
+&exit(0);		# End of tests
+
+#
+# Subroutines
+#
+
+sub exit {
+	local($code) = @_;
+	kill(15, $atail_pid) if $atail_pid;
+	exit $code;
+}
+
+sub clean_up {
+	return if $failed || $opt_i;	# -i asks for incrementality
+	unlink 'OK';
+	`rm -rf out` if -d 'out';
+}
+
+sub print {
+	local($dir, $file) = @_;
+	$file =~ s/\.t$//;
+	local($len) = 1 + length($dir) + length($file);
+	print "$dir/$file", '.' x (17 - $len);
+}
+
+sub num { $a <=> $b; }
+
+sub result {
+	local($test, $output) = @_;
+	local($now) = time;
+	local(@res) = split(/\n/, $output);	# Failed test numbers
+	if ($res[0] eq '') {
+		print "FAILED (no test run)\n";
+		++$failed;
+	} elsif ($res[$#res] == 0 && $#res > 0 && $res[$#res -1] == $#res) {
+		print "FAILED (all tests)\n";
+		++$failed;
+		$how_many += $#res;
+	} elsif ($res[0] == 0) {
+		print "ok\n";
+		print OK "$test $now\n";
+	} elsif ($res[0] == -1) {
+		print "untested\n";
+	} else {
+		# Program outputs the number of each test failed, and last must be 0
+		local($last) = pop(@res);
+		push(@res, $last) unless $last == 0;
+		local($n) = @res + 0;
+		local($s) = $n == 1 ? '' : 's';
+		print "FAILED ($n test$s:";
+		@res = sort num @res;
+		print ' ', join(',', @res);
+		print " and aborted" unless $last == 0;
+		print ")\n";
+		++$failed;
+		$how_many += $n;
+	}
+	if ($failed && $opt_s) {	# Stop at first error if -s
+		print "Aborted tests.\n";
+		&exit(0);
+	}
+}
+
+sub run {
+	local($dir) = @_;
+	chdir $dir || die "Cannot chdir to $dir: $!\n";
+	local(@files) = <*.t>;
+	local($test);
+	local($output);
+	foreach $file (@files) {
+		&print($dir, $file);
+		$test = "$dir/$file";
+		if ($Ok{$test} >= ((stat($file))[9])) {	# Check time stamp
+			print "done\n";
+			next;
+		}
+		$output = `perl $file`;
+		&result($test, $output);
+		&basic_failed if $dir eq 'basic' && $failed;
+	}
+	chdir '..' || die "Cannot chdir back to ..: $!\n";
+}
+
+sub basic_failed {
+	print "Failed a basic test, cannot continue.\n";
+	unlink 'OK';
+	&exit(0);
+}
+
+sub load_ok {
+	return unless -f 'OK';
+
+	# Make sure the OK file is up to date, unless -o (outdated)
+	unless ($opt_o) {
+		local($ok_mtime) = (stat('OK'))[9];
+		local($ma_mtime) = (stat("../$mailagent"))[9];
+		local($fi_mtime) = (stat('../filter/filter'))[9];
+		local($restart) = 0;
+		if ($ma_mtime > $ok_mtime) {
+			warn "Mailagent has changed, restarting tests...\n";
+			++$restart;
+		} elsif ($fi_mtime > $ok_mtime) {
+			warn "Filter has changed, restarting tests...\n";
+			++$restart;
+		}
+		unlink 'OK' if $restart;
+	}
+
+	return unless -f 'OK';
+	local($file, $when);
+	open(OK, 'OK') || return;
+	while (<OK>) {
+		chop;
+		($file, $when) = /^(\S+)\s+(\d+)/;
+		$Ok{$file} = $when if $when;
+	}
+	close OK;
+
+}
+
+# Read configuration information from config.sh
+sub read_config_sh {
+	open(CONFIG, '../../config.sh') ||
+		die "No config.sh at the toplevel directory! Did you run Configure?\n";
+	local($_);
+	local($config) = "package cfsh;\n";
+	local($var, $value);
+	while (<CONFIG>) {
+		next unless ($var, $value) = /^(\w+)='([^']*)'/;
+		$config .= "\$$var = '$value';\n";
+	}
+	close CONFIG;
+	eval($config);
+	warn $@ if $@;
+	die "Can't create config from config.sh\n" if $@;
+}
+

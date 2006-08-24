@@ -1,0 +1,81 @@
+# Put those at the near end of your ~/.rules file, so those are run only
+# when mailing list checks and other rules have failed to match.
+
+### Begin SPAM filtering section ###
+
+#
+# KILL rules for junk mailers
+#
+
+<!SPAM> Relayed From Reply-To: "KILL"		{ REJECT SPAM };
+<!SPAM> Return-Path Message-Id: "KILL-id"	{ REJECT SPAM };
+<!SPAM> X-[0-9]: /\bcyber.*\.com\b/i		{ REJECT SPAM };
+<!SPAM> Received: /^from --- unknown host/i	{ REJECT SPAM };
+<!SPAM> Message-Id: /^<\s*>/				{ REJECT SPAM };
+<!SPAM> X-Advertisement: /www\.iemmc\.org/	{ REJECT SPAM };
+<!SPAM> X-Advertisement: /\bremoval\b/		{ REJECT MAY_SPAM };
+<!SPAM> Received: /\(may be forged\)\)/		{ REJECT MIGHT_SPAM };
+
+<LOST> X-Uidl: /^\w+$/i						{ REJECT MAY_SPAM };
+<LOST> Comments: /^Authenticated sender/i	{ REJECT MAY_SPAM };
+
+#
+# Definite spam goes to /dev/null immediately.
+#
+# We're more tolerent for lost mail and give them a higher chance.
+# Still, they end up in a low priority folder...
+#
+
+<SPAM>			{ VACATION off; DELETE };
+<MAY_SPAM>		{ ASSIGN spam_cost 500; REJECT GETCOST };
+<MIGHT_SPAM>	{ ASSIGN spam_cost 300; REJECT GETCOST };
+<LOST>			{ ASSIGN spam_cost 0; REJECT GETCOST };
+<GETCOST> 		{ ASSIGN ok_state LOST; REJECT };
+
+#
+# Coming here in the INITIAL state means we have not identified spam yet,
+# and the message is To: or Cc: for me. Still filter it for spam but with a
+# lower threshold (-2000) to avoid false spam positives as much as possible.
+# Also the ok_state is set to INITIAL, not LOST.
+#
+
+<INITIAL> { ASSIGN ok_state INITIAL; ASSIGN spam_cost -2000; REJECT GETCOST };
+
+#
+# Adjust spam_cost by decreasing it (meaning we're more tolerant) if there
+# is an In-Reply-To: line.
+#
+
+<GETCOST> In-Reply-To: /\S{4}/	{ ASSIGN spam_cost %#spam_cost - 500; REJECT };
+
+#
+# If it may be spam, then be harsh and compute the cost using the
+# getcost program, configured from ~/.spamlist. If the cost is <0,
+# the program will return "NOP -f", thereby causing a REJECT in
+# mode held in %#spam_cost, where the file is finally deleted.
+#
+
+<GETCOST>
+{
+	BACK PIPE getcost -L -M -T %#spam_cost;
+	BEGIN -f SPAM;
+	BEGIN -t %#ok_state;
+	ANNOTATE -d X-getcost: %#cost;
+	REJECT;
+};
+
+# It's possible to get here with message for me if header indicated
+# possible spam and we entered MAY_SPAM. Identified SPAM remains
+# spam though, even if sent to me directly!!
+<LOST> To Cc:
+		ram, manfredi, rmanfredi, /^raphael_manfredi@/
+				{ REJECT INITIAL };
+
+# Regular case, handle getcost results...
+<LOST,SPAM>		{ VACATION off; BIFF off; REJECT };
+<LOST>			{ SAVE lost };
+<SPAM>			{ DELETE };
+
+### End of SPAM filtering section ###
+
+# Proceed here with default rules, like leaving into your mailbox.

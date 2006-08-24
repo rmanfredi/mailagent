@@ -1,0 +1,197 @@
+#
+# Mailagent rules for filter regression tests
+#
+
+# $Id: rules,v 3.0.1.5 2001/03/17 18:16:21 ram Exp ram $
+#
+#  Copyright (c) 1990-2006, Raphael Manfredi
+#  
+#  You may redistribute only under the terms of the Artistic License,
+#  as specified in the README file that comes with the distribution.
+#  You may reuse parts of this distribution only within the terms of
+#  that same Artistic License; a copy of which may be found at the root
+#  of the source tree for mailagent 3.0.
+#
+# $Log: rules,v $
+# Revision 3.0.1.5  2001/03/17 18:16:21  ram
+# patch72: added new filter/address tests
+#
+# Revision 3.0.1.4  1999/07/12  13:58:02  ram
+# patch66: fixed wrong semantics for <2>, and rewrote tests accordingly
+#
+# Revision 3.0.1.3  1996/12/24  15:03:48  ram
+# patch45: added test cases for new Relayed selector
+#
+# Revision 3.0.1.2  1994/07/01  15:12:23  ram
+# patch8: added test rules for macro substitution in patterns
+#
+# Revision 3.0.1.1  1994/04/25  15:26:12  ram
+# patch7: added three more tests in filter/group
+#
+# Revision 3.0  1993/11/29  13:50:27  ram
+# Baseline for mailagent 3.0 netwide release.
+#
+
+maildir = ~;
+mailfilter = ~;
+
+Subject: /test/		{ DELETE };
+
+# filter/address
+X-Tag: /address #1/				{ BEGIN ADDR; REJECT };
+<ADDR> To: ram					{ SAVE ok.1; REJECT };
+<ADDR> To: ramx					{ SAVE bad.1; REJECT };
+<ADDR> To: am					{ SAVE bad.2; REJECT };
+<ADDR> To: /^ram@/				{ SAVE ok.2; REJECT };
+<ADDR> To: ram@eiffel.com		{ SAVE ok.3; REJECT };
+<ADDR> To: am@eiffel.com		{ SAVE bad.3; REJECT };
+<ADDR> To: xram@eiffel.com		{ SAVE bad.4; REJECT };
+<ADDR> To: ramx@eiffel.com		{ SAVE bad.5; REJECT };
+<ADDR> To: RAM@eiffel.COM		{ SAVE ok.4; REJECT };
+<ADDR> To: ram@eiffe..com		{ SAVE bad.6; REJECT };
+<ADDR> To: ram@eiffel			{ SAVE bad.7; REJECT };
+<ADDR> To: ram@eif				{ SAVE bad.8; REJECT };
+<ADDR> To: ram*					{ SAVE ok.5; REJECT };
+<ADDR> To: ra*					{ SAVE ok.6; REJECT };
+<ADDR> To: ra*@eif*				{ SAVE ok.7; REJECT };
+<ADDR>							{ DELETE };
+
+# filter/default
+X-Tag: /default #1/ { DELETE };
+X-Tag: /default #2/ { NOP };
+X-Tag: /unknown/ 	{ UNKNOWN };
+
+# filter/loop
+X-Tag: /loop #1/			{ BEGIN LOOP; RESTART };
+X-Tag: /loop #2/			{ DELETE };
+
+# filter/multiple
+X-None Subject To X-Tag: /multiple #1/			{ SAVE %u.1 };
+X-None X-Tag: /multiple #2/, X-Other: /another/,
+To Cc: root, Cc To: ram							{ SAVE %u.3; REJECT MULTIPLE };
+<MULTIPLE> X-Non-Existent: *					{ SAVE %u.2 };
+X-Tag: /multiple #2/, X-Other: /multiple #2/	{ SAVE %u.2 };
+
+# filter/list
+X-Tag: /list #1/				{ BEGIN LIST; REJECT };
+<LIST> To: ram					{ SAVE %u.1 };
+<LIST> To: max					{ SAVE %u.2 };
+<LIST> To: /^root@eiffel.com$/	{ SAVE %u.3 };
+<LIST> To: /^riot@eiffel.co$/	{ DELETE };
+<LIST> To: /^riot@eiffel.com$/	{ SAVE %u.4 };
+<LIST> To: /^riot/				{ SAVE %u.5 };
+<LIST> To: /riot/				{ SAVE %u.6 };
+<LIST> Newsgroups: news.lists	{ SAVE %u.7 };
+<LIST> To <3>: /^root@local/	{ SAVE %u.8 };
+<LIST> To: !ram					{ SAVE %u.9 };
+<LIST>							{ DELETE };
+
+X-Tag: /list #2/						{ BEGIN LIST; REJECT };
+<LIST> Relayed: ursa-major.spdcc.com	{ SAVE ok.1; REJECT LIST_OK };
+<LIST> 									{ SAVE never; REJECT };
+<LIST,LIST_OK> 							{ REJECT LIST };
+<LIST> Relayed <1>: /ursa-major/ 		{ SAVE ok.2; REJECT LIST_OK };
+<LIST> 									{ SAVE never; REJECT };
+<LIST,LIST_OK> 							{ REJECT LIST };
+<LIST> Relayed <-1,->: *eiffel.com	 	{ SAVE ok.3 };
+<LIST> 									{ SAVE never };
+
+# filter/pattern
+X-T.*: "pattern-list"			{ BEGIN PAT; REJECT };
+<PAT> .*Re[^\-]*$: *, ^Sub*: *	{ RUN /bin/echo '%&' > macro; DELETE };
+
+# filter/backref
+X-Tag: /^back(.*) #1/,
+Subject: /Re:\s+(\w+)\s+ice\s+(\w+)/,
+From: /(.*)compilers/,
+From: /com(.*)rs/,
+To: /^(\w+)@(\S+)/		{ RUN /bin/echo '%1,%4,%5@%6,%2 %3' > output; DELETE };
+
+X-Tag: /^back.* #2/,
+Newsgroups:
+	/(comp.lang.perl)/,
+	/(comp.unix.wizards)/,
+	/(comp.mail.mh)/	{ SAVE %1 };
+
+# filter/escape
+X-Tag: /escape/			{ RUN /bin/echo '\;,\\\;,\\,\w' > output; DELETE };
+
+# filter/mode
+X-Tag: /mode/			{ REJECT MODE };
+<MODE, !INITIAL>		{ SAVE always; REJECT };
+<MODE>					{ SAVE always.2; REJECT };
+<!NOSUCH,!BADMODE> X-Tag: /mode/	{ SAVE always.3; REJECT };
+<!MODE> X-Tag: /mode/				{ SAVE never; REJECT };
+<MODE>					{ DELETE };
+
+# filter/not
+X-Tag: /not #1/			{ BEGIN NOT; REJECT };
+<NOT> To: !ram			{ SAVE never };
+<NOT> To: !/ram@eiffel/	{ SAVE never };
+<NOT> To: !/^ram/i		{ SAVE never };
+<NOT> To: /^ram/i				{ SAVE always; REJECT };
+<NOT> To: !/^root/i				{ SAVE always.2; REJECT };
+<NOT> X-Tag: !"pattern-list"	{ SAVE always.3 };
+
+X-Tag: /not #2/,
+!To: !ram,
+To: !compilers,
+!From: root				{ SAVE always };
+
+# filter/group
+X-Tag: /group/			{ BEGIN GROUP; REJECT };
+<GROUP> !To !From: ram	{ SAVE never };
+<GROUP> To !From: !ram	{ SAVE never };
+<GROUP> !To !From: ram,
+	!Subject !To: ram		{ SAVE never };
+<GROUP> !To: root, ram		{ SAVE never };
+<GROUP> !F.*: /compiler/	{ SAVE never };
+<GROUP> !From: ram, !To: ram	{ SAVE always; REJECT };
+<GROUP> From: ram, To: ram		{ SAVE never };
+<GROUP> From: /compiler/,
+	!From: ram, !From: !/compiler/	{ SAVE always.2; REJECT };
+<GROUP> From !Cc !To: /compiler/,
+	From !Cc !To: ram,
+	!From To Cc: /eiffel/,
+	!From To Cc: !/ice/			{ SAVE always.3; REJECT };
+<GROUP> !To !Cc: guy_3			{ SAVE never.2 };
+<GROUP> !To Cc: guy_3			{ SAVE always.4; REJECT };
+<GROUP> !To: unknown, !Subject !From: ram	{ SAVE always.5 };
+
+# filter/case
+X-Tag: case, Cc: root	{ STRIP Cc; SAVE always };
+
+# filter/status
+X-Tag: /status/	{ REJECT -t STATUS };
+<STATUS> { RUN ../no/such/file; REJECT -t; SAVE always; REJECT -t; SAVE never };
+<STATUS> { RUN ../this/does/not/exist; REJECT -f; SAVE never };
+<STATUS> { RUN ../nor/does/this; REJECT -t; REJECT -t; REJECT -f; SAVE never };
+<STATUS> { SAVE always.2; REJECT -f; BEGIN INITIAL; REJECT -t };
+<INITIAL> X-Tag: /status/	{ SAVE always.3 };
+
+# filter/hook
+X-Tag: /hook #(\d)/		{ SAVE hook.%1; ABORT -t; SAVE never };
+
+# filter/range
+X-Tag: /range/			{ BEGIN RANGE; REJECT };
+<RANGE> From <2, 4>: /compiler/	{ SAVE always; REJECT };
+<RANGE> To Cc: made				{ SAVE always.2; REJECT };
+<RANGE> To Cc <1, 1>: made		{ SAVE never; REJECT };
+<RANGE> To Cc <1, 2>: must		{ SAVE always.3; REJECT };
+<RANGE> To Cc <3, 1>: ram		{ SAVE never.2; REJECT };
+<RANGE> Body <-, 3>: /SIGPLAN/	{ SAVE never.3; REJECT };
+<RANGE> Body <-, ->: /SIGPLAN/	{ SAVE always.4; REJECT };
+<RANGE> Body <9, 9>: /SIGPLAN/	{ SAVE always.5; REJECT };
+<RANGE> Body <9, 9>: /CD-ROM/		{ SAVE never.4; REJECT };
+<RANGE> Body <13, 14>: /something/	{ SAVE always.6; REJECT };
+<RANGE> Body <-3, ->: /Regards/		{ SAVE always.7; REJECT };
+<RANGE> Cc <-1, ->: made			{ SAVE always.8; REJECT };
+<RANGE> Body <-3, ->: /request/		{ SAVE never.5; REJECT };
+<RANGE> Cc <-1, ->: must			{ SAVE never.6 };
+<RANGE> 							{ DELETE };
+
+# filter/macros
+X-Tag: /macros/			{ REJECT MACROS };
+<MACROS> To: %u			{ LEAVE };
+<MACROS>				{ DELETE };
+

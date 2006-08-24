@@ -1,0 +1,20 @@
+This directory contains the implemetation for a new filtering action PATBOUNCE,
+along with the necessary configuration files. The PATBOUNCE command is used to
+automatically remove bad addresses from users file list, recorded via
+@SH package commands.
+
+This should be very useful if you distribute patches via e-mail for the
+packages you maintain, and use dist-3.0 to maintain them. Otherwise,
+it is a good example of how to post-process a bounce message and deal
+with it.
+
+The rules.cf file includes sample rules showing how PATBOUNCE is intended
+to be used. You can include the lines from mailagent.cf into your ~/.mailagent
+to configure the command.
+
+Don't forget to install the new command by adding the line in newcmd.cf into
+your newcmd file and installing the patbounce.pl file in the proper location
+where mailagent can find it.
+
+	Raphael Manfredi <Raphael_Manfredi@grenoble.hp.com>
+	Grenoble, France, December 26th 1996

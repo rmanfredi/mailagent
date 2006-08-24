@@ -1,0 +1,170 @@
+The purpose of the mail agent is to enable me answer some of your
+requests, even if it's early in the morning and I've just gone to bed ! :-)
+
+For instance, you need Larry Wall's patch program or Rich Salz's cshar.
+I have them and I use them in my own kits.  So you may ask me to send them
+to you.  Of course, you could send me a mail saying "Please, could you
+send me the cshar distribution kit ?", but I certainly won't be able to do
+it at once , either because I am not there when the mail arrives, or
+because someone else asked before you...
+
+With the mail agent, there are no problems. You simply (!) send me a mail
+of the following form:
+
+	Subject: Command
+	@SH maildist =DEST= cshar 3.0
+
+and you will get version 3.0 of cshar.
+
+
+Here are the possible commands:
+
+	- mailhelp PATH
+		# sends some help
+
+	- maillist PATH
+		# sends a list of what is available
+
+	- mailpatch PATH SYSTEM VERSION LIST
+		# sends patches for a system
+
+	- maildist PATH SYSTEM VERSION
+		# sends a whole distribution kit (latest patchlevel)
+
+where PATH is a return path FROM ME TO YOU either in Internet notation
+or in bang notation from some well-known host.  As far as you are
+concerned, it appears to be =DEST=.
+
+PATH may be omitted for mailhelp and maillist, in which case the return
+address found in the mail header will be used.
+
+SYSTEM is the system's name and VERSION is the version number.  For
+systems that are not maintained, the version number has no sense and
+thus may be omitted (for maildist). A '-' stands for the latest version.
+
+The LIST for mailpatch is the number of one or more patches you need,
+separated by spaces, commas, and/or hyphens. For instance:
+
+	2,3 4-7,10-
+
+asks for patches 2 and 3, then 4 to 7, and from 10 to the end, while
+
+	-5 10 11
+
+requests patches up to 5, then 10 and 11.
+
+
+Commands must be preceded by the token "@SH" at the beginning of a line.
+Do not put spaces/tabs in front of "@SH".  In the mail examples I give,
+I do put one, but it is only for clarity purpose.
+
+In the same way, the line "Subject: Command" must be left-justified.
+Note that the subject of the mail does not need to be "Command", as long
+as you put the "Subject: Command" line in the body of your message,
+before your commands. You may use either "Command" or "command".
+
+Once the "Subject: Command" line appears in your mail, either in the
+header or in the body, you may put as many commands as necessary.
+For example:
+
+	Subject: Command
+
+	@SH maillist =DEST=
+	@SH maildist =DEST= cshar 3.0
+
+
+If you are in doubt of what is the return path, you may put "PATH" or a
+single '-' instead of your address, and the mail agent will replace it
+with the return path it finds in the mail header.  In case you do not
+trust your mail headers, you may force the return path with the "@PATH"
+command.  The mail agent reads the whole message before actually
+processing it, so the location of this command does not really matters.
+Here is an example:
+
+	Subject: Command
+
+	@SH mailhelp
+	@SH mailpatch - kit 2.0 4,5
+	@PATH =DEST=
+
+
+When you ask for files to be sent, the mail agent makes shell archives or
+kit archives, depending on the amount of bytes that are to be returned.
+If it exceeds an arbitrary-fixed limit of =MAXSIZE= bytes, files are sent
+as kit archives.  Otherwise, they will be sent as shell archives provided
+that no file is greater than the maximum allowed for a single shell
+archive.  This is called the "auto" packing mode.
+
+The "@PACK" command forces the distribution mode, which is "auto" by
+default. The specified packing mode is used, until another "@PACK"
+command is found. Valid parameters are "auto", "kit" and "shar".
+Note that forcing mode to "shar" may well result in a failure if one
+of the files to be sent is bigger than the maximum size allowed for a
+shell-archive (around 50000 bytes). However, the mail agent does its
+best: it will split large files and uuencode non-ASCII ones.
+
+When you use maildist, please do not request for "shar" mode, as "kit" will
+be more efficient and safer. Note that when the packing mode is "auto" and
+the mailagent has to kit the files, a minikit is included. Hence you may
+unkit the distribution even if you do not have kit. But it will always be
+simpler with kit anyway.
+
+"Kit" is a binary tar-mailer that you must own in order to unkit
+the kit archives which do not include a 'minikit'. If you do not have it,
+send me the following mail:
+
+	Subject: Command
+	@SH maildist =DEST= kit -
+
+and you will get the latest release of "kit".
+
+Here is another example that uses the "@PACK" request (the following
+package names, revision numbers and patchlevels are here for the purpose
+of demonstration only. Reality may -- and often will -- be completely
+different):
+
+	Subject: Command
+
+	-- Set the return path, so that we can use '-' without fear.
+	@PATH =DEST=
+	-- Request patches for kit 2.0, sent in "auto" packing mode.
+	-- Note that the '-' actually stands for the return path.
+	-- We could also have said:
+	--     @SH mailpatch =DEST= kit 2.0 3-
+	-- but as long as we have more than one command in the file,
+	-- it would be cumbersome to repeat the address each time.
+	@SH mailpatch - kit 2.0 3-
+	-- Force packing mode to "shar", as we don't want to kit 'kit'.
+	-- We don't know what the latest version is, so we put a '-'.
+	-- Maildist will send the version at its highest patchlevel.
+	@PACK shar
+	@SH maildist - kit -
+	-- Kit is more reliable and will greatly reduce the amount of
+	-- transmitted data (typical gain is 50% for sources).
+	@PACK kit
+	-- We want version 2.0 for dist and nothing else.
+	@SH maildist - dist 2.0
+	-- Request all patches for the latest version of matrix
+	@SH mailpatch - matrix - 1-
+
+
+A nice thing with the mail agent is that you can ask for a receipt, in
+order to be sure that I received your mail.  You may do so by placing
+the "@RR" command at the beginning of any line in the body of your
+message.  A receipt will then be sent to the return path extracted from
+the header.  You may force the receipt to be sent to a given address by
+giving it after the @RR token.  Saying "@RR PATH" or "@RR -" is possible
+but not very different from a single "@RR" !!
+
+Here are valid requests:
+
+	@RR
+	@RR =DEST=
+	@RR login@cpu.domain.top
+
+Note that no "Subject: Command" line is necessary for that, so you may
+ask for receipts in every mail.
+
+
+If this help file is not clear enough, or if you have suggestions/questions,
+feel free to ask me.

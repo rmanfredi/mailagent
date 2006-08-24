@@ -1,0 +1,15 @@
+This directory contains the implemetation for a new filtering action UNKIT,
+along with the necessary configuration files. The UNKIT command is used to
+automatically unkit messages produced by the 'kit' binary tar-mailer.
+
+Messages are left in a directory until all the kit parts have been received,
+at which point 'unkit' is called and the session transcript is mailed back
+to the user.
+
+This was inspired by a shell script written by Christian Bertin
+<bertin@acri.fr> and doing roughly the same thing. This perl version was
+merely written as an exercise to see how easy/uneasy the command extension
+process was.
+
+	Raphael Manfredi <ram@eiffel.com>
+	Santa Barbara, CA, USA, March 1st 1993.

@@ -1,0 +1,396 @@
+-- $Id: FAQ,v 3.0.1.4 1995/08/07 16:04:41 ram Exp ram $
+--
+--  Copyright (c) 1990-2006, Raphael Manfredi
+--  
+--  You may redistribute only under the terms of the Artistic License,
+--  as specified in the README file that comes with the distribution.
+--  You may reuse parts of this distribution only within the terms of
+--  that same Artistic License; a copy of which may be found at the root
+--  of the source tree for mailagent 3.0.
+--
+-- $Log: FAQ,v $
+-- Revision 3.0.1.4  1995/08/07  16:04:41  ram
+-- patch37: updated my e-mail address
+--
+-- Revision 3.0.1.3  1995/02/16  14:19:48  ram
+-- patch32: now mentions new mailagent option -I for quick setup
+-- patch32: made some cleanup following Nancy McGough's comments
+--
+-- Revision 3.0.1.2  1995/02/03  17:54:03  ram
+-- patch30: detab-ed the FAQ file for easier reading on terminals
+-- patch30: minor changes in wording and added the Star Trek example
+--
+-- Revision 3.0.1.1  1995/01/03  17:53:38  ram
+-- patch24: created
+--
+
+[This FAQ written for inclusion in the "Filtering Mail FAQ" posting]
+
+Subject: 5.0 Mailagent
+
+Mailagent is a powerful mail processing package that can be used to
+process your mail messages, either at arrival time via a .forward hook
+or later on while they are already saved in a mail folder.
+
+Mailagent is written in Perl and hence has all the advantages of being
+interpreted, i.e. it is easy to enhance dynamically and to customize.
+
+This version of the FAQ describes the basics of setting up mailagent to
+process incoming mail messages from within a .forward. To find out about
+the more advanced features of mailagent, please refer to the mailagent(1)
+manual page.
+
+-----------------------------------
+
+Subject: ... 5.1 Setting Up Mailagent
+
+1] First, make sure mailagent is available on your system. The easiest
+   way to do this is to run:
+
+    mailagent -V
+
+   which will print the mailagent version if it is available, or the shell
+   will issue an error message "mailagent: not found" or something like it.
+
+2a] Now you need to understand the MTA (Mail Transport Agent, the program
+    that delivers the mail; usually, sendmail) will NOT deliver to mailagent
+    directly, rather to an intermediate (small) filter program. Two versions
+    are available: shell or C -- refer to the mailagent(1) manpage to choose,
+    but I recommend you use the C version first, and move to the shell
+    version if you can't run a binary from your .forward file.
+
+2b] Locate the filter program (it will be filter or filter.sh depending on
+    whether you choose the C or the shell version respectively) under some
+    directory like /usr/local/lib/mailagent. From now on, we'll assume we
+    use the C filter and that it is located under /usr/local/lib/mailagent.
+
+3] Copy the file /usr/local/lib/mailagent/mailagent.cf as ~/.mailagent and
+   edit it to configure your system correctly. You will see two distinct
+   sections in that file and you need to set-up properly the first one, the
+   "Configuration section".
+
+   If you have a version of mailagent that is recent enough (at least 3.0 PL32)
+   then you can create an initial configuration very easily and quickly by
+   running the following command:
+
+    mailagent -I
+
+   which will set-up an almost ready-to-use ~/.mailagent file. All you
+   need to do at this point is go through its configuration section
+   to make sure mailagent made the right choices...
+
+   The minimal set of variables that MUST be correctly set (i.e. for which
+   you cannot rely on the default set in the file) are (# introduces comment
+   in a shell-like manner, which run up to the end of the line):
+
+    home:  # Your HOME directory, as reported by "echo $HOME", usually.
+    path:  # Path to be used to locate mailagent and perl, at least.
+    p_xxx: # Path to be appended to "path" above when running on machine "xxx".
+    user:  # Your login name.
+    name:  # Your name.
+    level: # Logging level. I recommend you raise it to 20 for testing.
+
+   The mail folder directory is ~/Mail by default, but it can be changed
+   only from within your rule file by putting
+
+    maildir = ~/mail;
+
+   at its top, for instance, to make it ~/mail. The rule file is defined as
+   the "rules" parameter, and is set to ~/.rules by default.
+
+4] Ensure the directories configured in your ~/.mailagent under "logdir" and
+   "spool" and "queue" do exist. If you use the standard setting, this
+   requires the following commands:
+
+    cd
+    mkdir var
+    cd var
+    mkdir log mailagent
+    cd mailagent
+    mkdir queue
+
+5a] Create a rule file (named ~/.rules by default) for testing:
+
+    cd
+    vi .rules
+
+5b] Enter the following in ~/.rules
+
+    Subject: /test/     { SAVE testing };
+
+    The meaning of that rule should be pretty obvious: If we receive a mail
+    whose subject line contains the word "test", then we save that mail in
+    a folder named "testing", under the default folder directory (~/Mail).
+
+5c] Create a ~/.forward file as follows:
+
+    "|exec /usr/local/lib/mailagent/filter >> /export/home/ram/.bak 2>&1"
+
+    The meaning of that line is the following: every mail should be piped
+    (hence the leading "|" character) onto the filter program, and any
+    output from that program (i.e. errors) are appended to some file in
+    your home directory, with stderr following stdout (2>&1) in traditional
+    sh syntax.
+
+    == IMPORTANT NOTES ==
+    * Your .forward is always processed by sh, regardless of your login shell.
+    * Replace /export/home/ram with your proper login directory full path.
+      That's a part that makes your .forward unique (for zealous optimizing
+      sendmail that are dead wrong about optimizing!) and that can save
+      you a lot of trouble if anything goes wrong! Just look at your ~/.bak!
+    * Replace /usr/local/lib/mailagent/filter with the proper filter path
+      on your machine.
+
+5d] Note that on many systems, you need to ensure your .forward will be
+    readable by everybody, and that your home directory has the "x" bit set
+    for everybody (i.e. can be part of a lookup path) so that sendmail can see
+    and parse your .forward file. To ensure this, type:
+
+        cd
+        chmod a+r .forward
+        chmod a+x .
+
+6] Send yourself two test messages: one with "test" in the subject, and one
+   without "test" in the subject.
+
+7a] Checkout your ~/.bak file: it should be empty!
+
+7b] Checkout your ~/var/log/agentlog file to see what really happened to your
+    messages. Watch out for any ERROR or WARNING logs. This assumes you have
+    left at least the default logging level (9) in the ~/.mailagent file (the
+    "level" variable). But for testing, that level should be raised to 20 to
+    help you diagnose what's going on.
+
+7c] Look out in ~/Mail/testing. You should find there the message whose Subject
+    line contained the word "test". Then make sure the other message has been
+    delivered to your regular mailbox. (Since no match occurred in your rule
+    file, the mail is left in your mailbox by default).
+
+7d] TROUBLESHOOTING
+    * If your mail was not properly delivered, please make sure your rule file
+      and configuration file are correct by issuing the following command:
+
+        mailagent -d
+
+    * If the previous command does not output the single rule you should have
+      put in ~/.rules, then please make sure step 3 and 4 above were correctly
+      performed (those being the crucial steps ensuring a proper configuration).
+    
+    * Check the ~/.bak file for error messages.
+
+    * Check for typos in any of these files:
+        ~/.forward
+        ~/.mailagent
+        ~/.rules
+    
+    * Check the file and directory permissions of your .forward (set in step
+      5c above).
+
+      Type...          In order to...
+      -------          --------------
+      cd               Go to your home directory.
+      
+      ls -l .forward   Check the permission: it should say -rw-r--r--
+      
+      ls -ld .         Check permission of home dir: it should say drwx?-x?-x
+                       The ?'s may be r's or hyphens or one of each (i.e.,
+                       drwx--x--x, drwxr-xr-x, drwxr-x--x, drwx--xr-x).
+      
+    * If none of the previous hints helped you identify problem, and you can't
+      figure it out from the output in ~/.bak or in the ~/var/log/agentlog file
+      (or whatever file you have configured for logging within your ~/.mailagent
+      file, variables "log" and "logdir"), then make sure your mail is not
+      waiting in the MTA's queue: this might be the case if the agentlog file
+      is empty. If you are using sendmail as MTA, you can run:
+
+        /usr/lib/sendmail -bp
+    
+      to print out the queue.
+    
+    * As a last resort, please look at the mailagent(1) manual page under
+      the section "Testing Your Installation" for more tips and things
+      to look at.
+
+8] Once you have successfully tested mailagent in steps 6 and 7 above,
+   you're on! Mailagent is ready to process your mail. All you have to
+   do is extend the ~/.rules file to add more rules.
+
+   For instance:
+
+   To Cc: www-talk      { SAVE www-talk };
+   To Cc: agent-users   { SAVE agent-users };
+
+   Those two rules filter the two mailing lists www-talk and agent-users into
+   their respective folders, whether the mailing list address appear in the To
+   OR Cc header.
+
+   Since rules are not qualified as a pattern match (contrary to our test
+   above), they match on logins in the address, i.e. they will match things
+   like www-talk@chip.com or chip!www-talk, or a plain simple www-talk if
+   this is a local alias. (This implicit matching on logins works only for
+   some selectors like To, Cc or From which are know to contain addresses).
+
+   If you wish to sort on patterns appearing in the Subject of messages for
+   instance, then you must use a pattern matching syntax, as in:
+
+   Subject: /star trek/ { SAVE star-trek; };
+
+   to save in a folder "star-trek" all the messages whose subject contains
+   the words "star trek". Case matters, but keep on reading...
+
+9] As an advanced topic, since mailagent is written in Perl, you have all the
+   power of Perl's regular expressions at your disposal. Which means you can
+   write things like this:
+
+   To Cc: agent-users                    { REJECT AGENT };
+   <AGENT> Subject: /^\w*subscribe/i     { DELETE };
+   <AGENT> *                             { UNIQUE -a; SAVE agent };
+
+   The second lines makes use of that perl extended regular expression syntax:
+   \w matches an alphanumeric character plus "_", while the trailing "i" option
+   requests a case-insensitive match.
+
+   You also note you have a real automaton at your disposal. You can enter
+   a special state (AGENT in our example) and continue parsing by only
+   scanning for rules tagged by this mode. The first match stops the automaton,
+   unless you REJECT to continue processing. When not restricted by a mode list,
+   a rule is always taken into account. For example, assuming the automaton
+   is in the state "NEWS", it will not consider rules tagged <AGENT>, as in
+   the above example. The automaton begins in mode "INITIAL".
+
+   The "UNIQUE -a" action followed by a SAVE ensures only one copy per
+   Message-ID will ever end-up in your agent folder -- no duplicates!
+   Also note you can have more than one action per rule, and that the last
+   one uses '*' to match anything, i.e. its action part between {} will
+   always be executed in AGENT mode, when reached by the automaton.
+
+   Also, since in Perl regular expression syntax, \b matches a word-boundary
+   and \s any space or tab character, we can write our Star Trek message
+   sorting into a much more robust form:
+
+   Subject: /\bstar\s+trek\b/i  { SAVE star-trek; };
+
+   (\s+ matches one or more white spaces, while \s* would match zero or more,
+   see the Perl manual page for a complete description of regular expressions.)
+
+   which will match on various subject strings like "Last Star Trek season"
+   or "I am addicted to Star trek", but not on "Tristar treks" -- whatever
+   that means :-)
+
+   All in all, the filtering automaton syntax is pretty much intuitive and
+   easy to read. You have to learn which actions are possible and what they
+   mean, naturally.
+
+-----------------------------------
+
+Subject: ... 5.2 Tracking Your Incoming Mail
+
+If you are curious about what mailagent does to your mail, you have two
+options:
+
+    * Look at your "agentlog" file, with a log level set to 9.
+    * Get a summary of all the actions performed by running:
+
+        mailagent -summary
+
+      This last option is only possible if you have initialized the statistics
+      gathering process by creating a ~/var/mailagent/mailagent.st file (under
+      the default setting from ~/.mailagent).
+
+      You will get a clear picture of your processing, by seeing which rule
+      match, how often, in which state, etc... You will also know how many
+      times you SAVE or DELETE messages for instance.
+
+      Actually, mailagent statistics are triggered by a simple
+
+        mailagent -s
+    
+      command, the letters given after in the {u,m,a,r,y} set being options
+      that alter the output given by the command.
+
+    * Look at the ~/.bak occasionally to make sure no error is pending...
+
+-----------------------------------
+
+Subject: ... 5.3 How Safe Mailagent Processing Is?
+
+As soon as the filter program has taken a hold on your message, you can rest
+assured the mail will get filtered one way or the other. If filter can't
+queue your mail, it will exit with an exit status of 75, that status
+being recognized by "sendmail" as a "deliver later on" hint, in which case
+the mail message will safely wait in sendmail's queue.
+
+So if filter gets your message, it immediately forks and exits with a 0
+status for sendmail, letting it know its work is finished and releasing it
+to save resources. It then calls mailagent on the queued message (in mailagent's
+private queue) to actually process the message.
+
+Only after successful processing will mailagent delete the queued message.
+Hence, under an heavily loaded system, the worst that could happen would be
+a duplicate processing of a message, or a bounce back when sendmail cannot
+fork and exec the filter program from your .forward.
+
+Under catastrophic conditions, filter or mailagent will simply dump the message
+on stdout, for ~/.bak to catch, preceded by the reason why processing was
+aborted.
+
+-----------------------------------
+
+Subject: ... 5.4 Locking Under Mailagent
+
+By default, mailagent proceeds with a fixed locking scheme (.lock extension)
+plus flock() if asked to do so at Configure time. However, mailagent provides
+support for NFS-secure locks and also can use non-standard locking procedures,
+configurable from within ~/.mailagent (variables "nfslock" and "mboxlock").
+
+However, it cannot support locking on a rule basis (yet!). The author is
+willing to raise the priority of that item if one comes up with a legitimate
+need for that feature that could not be worked-around by a PERL escape. ;-)
+
+-----------------------------------
+
+Subject: ... 5.5 Folder Types Supported
+
+Mailagent can deliver mail to plain UNIX folders (also known as "mbox format"),
+to MMDF folders, to MH folders (with unseen sequence update built-in and using
+locks, not like rcvstore which does not!) or to directories (ala MH, but
+without unseen sequence support and with alternate naming possible).
+
+It also supports delivery to folders with the "x" bit set, in which case
+mailagent interprets those as being hooks. It either pipes the message
+to the "program" or further interprets the hook to do more processing.
+See the manual page mailagent(1) under the section "MAIL HOOKS" for more
+details.
+
+-----------------------------------
+
+Subject: ... 5.6 Mailagent References
+
+Manuals:    mailagent(1) - reference manual page (about 47 pages troff'ed).
+            perl(1)      - reference manual for Perl
+            sendmail(8)  - send mail over the Internet
+
+Examples:   agent/examples/rules - a commented rule file sample, from the
+                                   distribution source tree.
+
+Newsgroup: comp.mail.misc
+
+Mailing List: agent-users@foretune.co.jp
+
+    Subscribe to the list by sending mail:
+
+      To: majordomo@foretune.co.jp
+      subscribe agent-users
+    
+Mailagent archives:
+
+    FTP://ftp.foretune.co.jp/pub/network/mail/mailagent
+
+    EMAIL: Send mail to the author's mailagent:
+    
+      To: ram@hptnos02.grenoble.hp.com
+      Subject: Command
+      @SH maildist - mailagent -
+
+-----------------------------------
+

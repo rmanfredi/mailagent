@@ -1,0 +1,16 @@
+From: Raphael Manfredi <Raphael_Manfredi@grenoble.hp.com>
+To: Raphael_Manfredi@grenoble.hp.com
+%<{fcc}Fcc: %{fcc}\n%>\
+%<{subject}Subject: Re: %{subject}\n%>\
+%<{date}In-reply-to: Your message of "\
+%<(nodate{date})%{date}%|%(pretty{date})%>."%<{message-id}
+             %{message-id}%>\n%>\
+%<{message-id}References: %<{References}%(trim)%(putstr) %>%{message-id}%>
+X-Trigger: fakesend; please don't use that as-is -- see misc/fakesend/README.
+--------------------------------------------------------------------------------
+From: Raphael Manfredi <Raphael_Manfredi@grenoble.hp.com>
+%(lit)%(formataddr %<{from}%|%<{sender}%|%<{return-path}%>%>%>)\
+%<(nonnull)%(void(width))%(putaddr To: )\n%>\
+%(lit)%(formataddr{to})%(formataddr{cc})%(formataddr(me))\
+%<(nonnull)%(void(width))%(putaddr Cc: )\n%>\
+--------------------------------------------------------------------------------

@@ -1,0 +1,64 @@
+This file shortly documents the new features appearing in mailagent 3.0
+compared to mailagent 2.9 PL19. For more details, please refer to the manual
+page [yes, it's getting bigger and bigger, sorry].
+
+. Mailhook disappears. Folder hooks are now handled without the need for an
+  extra process.
+
+. NOTIFY now takes its FIRST argument to indicate the message file,
+  instead of its LAST as in the 2.9 release. This change in order to make
+  it compatible with MESSAGE.
+
+. Mailagent secure configuration checks. Impossible to use mailagent if the
+  ~/.mailagent file or the rule file are not correctly protected.
+
+. Dynamic loading interface (dynload.pl) available for perl commands.
+
+. Added a generic command server. Mailagent provides the server engine and
+  users write their own commands, with special provision for perl scripts
+  which can be directly loaded and executed within mailagent itself.
+
+. User-defined macro support %-(x) and perl interface.
+
+. New APPLY, REQUIRE, SERVER, MACRO commands.
+
+. Support for rule caching. This avoids recompiling large rule files at every
+  mailagent run, but speed has never never been a main concern in this program
+  anyway.
+
+. Negated mode support <!MODE>. Rule is not executed if in the specified
+  negated mode. This supersedes normal modes, i.e. <MODE, !MODE> is never
+  executed.
+
+. Can now configure sendmail process and inews, with options, from ~/.mailagent.
+  If your sendmail behaves strangely or want to have interactive delivery
+  instead of queuing, this is the place to look at.
+
+. New usr_log facility, enabling user-defined logfiles. Available for your
+  own commands and used internally by mailagent.
+
+. Saving operations now check on the size of the produced folder for NFS.
+
+. Can now access ~/.mailagent config params via %=var
+
+. Fixed bug in agent queue parsing. This happened mainly on SUN systems, and
+  was apparently a perl fileglob bug (or is it a /bin/csh bug?). Anyway, I
+  now use readdir() to access the queue, which suppresses forking of an extra
+  process.
+
+. Improved RFC822 address parsing. Now understands group names as login names.
+
+. Output for mailagent -d formatted differently.
+
+. Selector range Body <1,4>: available. This example selects body lines 1 to
+  4 (inclusive) for matching.
+
+. Can now deliver to MH folders (without the need for an extra process). Use
+  'SAVE +foo' to deliver to the MH folder foo. Unseen sequences specified in
+  your ~/.mh_profile are correctly updated.
+
+. Minimal support for directory hooks (only behaves like MH folders currently).
+
+. New @SH package command for dist-3.0 MailAuthor.U support. That metaconfig
+  units sends a mail in specific format to record users of some package, and
+  the package command is there to automate the process.

@@ -1,0 +1,9 @@
+#
+# Configuration for PATBOUNCE
+#
+
+x_pbounce_bad  : +pbad 			# Folder where unknown error messages are saved
+x_pbounce_ok   : +pok 			# Folder where processed messages are saved
+x_pbounce_save : OFF 			# Save in $x_pbounce_ok after good handling?
+x_pbounce_log  : badlog			# Where PATBOUNCE logs what it does
+

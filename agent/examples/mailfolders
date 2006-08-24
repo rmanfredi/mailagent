@@ -1,0 +1,17 @@
+#
+# Folders which should be scanned by ksh for new mail
+#
+~/mail/ftp.mail
+~/mail/cmds
+~/mbox.filter
+~/mbox.urgent
+~/mail/gue
+~/mail/comp.mail.mh
+~/mail/unix-src
+~/mail/unix-wiz
+~/mail/admin
+~/mail/ise
+~/mail/rdb
+~/mail/dist
+~/mail/frog
+~/mail/magic

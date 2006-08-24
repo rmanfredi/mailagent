@@ -1,0 +1,41 @@
+This directory contains examples of rule files for the mailagent and
+other aspects from my own environment.
+
+daemon:
+	A small rule file which basically simulates the behaviour of the
+	vacation program (except that vacation messages are sent every day,
+	not once).
+
+mailfolders:
+	This file is a copy of my ~/.mailfolders. It lists all the folders or
+	directories where the filter drops its incoming mail (appart from my
+	system mailbox, which is implicetely included). This file is used by
+	my ~/.profile to compute a suitable MAILPATH value (a colon separated
+	list of files ksh should monitor for new mail). It is also used by the
+	mchk script.
+
+mchk:
+	Check all the folders for new mail.
+
+mhinc:
+	This script incorporates the filtered mails or news into the
+	corresponding MH folder.
+	
+nocmds:
+	A copy of my ~/tmp/nocmds file, which will be mailed back to anybody
+	who sends me a Command mail, except when sent by myself.
+
+profile:
+	An excerpt from my ~/.profile file where the mail related variables
+	are set. I am using ksh, but some plain sh also handle those variables,
+	which is why it is not in a ~/.kshrc.
+
+rules:
+	The rule file I am currently using as of today, June 30th 1992. It is
+	a good example of what can be done, although it is far from using all
+	the available features. Heavily commented.
+
+vacation:
+	A generic vacation message held in ~/.vacation. It shows typical macro
+	substitutions.
+

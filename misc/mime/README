@@ -1,0 +1,59 @@
+Here is a sample un-MIME feature using the FEED command.
+
+The purpose of un-MIMEing is to remove MIME attributes from all the messages
+that are simply text and therefore do not really require MIME processing.
+
+When MIME attributes are rightfully used (to transmit multipart messages
+and/or binaries such as images), the encoded binary part is automatically
+extracted for you in ~/mail/MIME. Original MIME messages are also left
+in the +mime MH folder.
+
+There is also support for broken mailers that insert a Content-Type line
+yet do not also add a Mime-Version header. Those messages are subject to
+mis-interpretation of some of their characters, leading to wrong =xx
+escapes all over the place... Fortunately, we have a rule dealing with that.
+
+Okay. Now how can you setup this configuration?
+
+This directory contains, besides this README file:
+
+	. unmime: the heart of this un-MIMEing process.
+	. rules: the rules you should insert at the top of your rule file.
+
+Before jumping in and installing, you *must* make sure you have the
+proper Perl extensions (you'll need Perl version 5 for this to work).
+This can be done by running:
+
+	perl -c unmime
+
+If perl croaks, you need to wander on CPAN and look for the proper
+perl extensions. You basically need MIME modules, but those may
+have dependencies. Your best bet is to grab CPAN.pm and use that
+to retrieve all the required extensions.
+
+If you don't know where/what CPAN is, a good place to start is to
+have a look at the following URL:
+
+	http://www.perl.com/perl/index.html
+
+and follow from there (probably the Software link, which should
+lead you to CPAN eventually).
+
+Once you can run 'perl -c unmime' without any errors, you're halfway
+there. Now you need to decide where the MIME-decoded files will be
+stored. I chose to hardwire ~/mail/MIME in the 'unmime' script, but
+you may change this easily by editing the $TMPDIR variable at the
+top.
+
+Then, you need to insert the rules at the top of your rule file and
+put the 'unmime' script at the proper place. The FEED actions have
+the ~/mail/unmime path hardwired, so you'll need to edit that to
+refer to the place you chose to put that script. Beware: there are
+two spots using FEED...
+
+If you don't use MH, you can change "SAVE +mime" into "SAVE mime"
+within the rules themselves to save original real MIME messages
+into a plain folder.
+
+	Raphael Manfredi <Raphael_Manfredi@hp.com>
+	Grenoble, France, December 1996.

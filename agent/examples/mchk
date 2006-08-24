@@ -1,0 +1,41 @@
+#! /bin/sh
+# @(#) Scans all the mailboxes to spot any new mail
+
+# Compute location of the spool mailbox
+spool=/usr/spool/mail
+if test -d /usr/mail; then
+	spool=/usr/mail;
+fi
+spool=$spool/`(logname || whoami) 2>/dev/null`
+
+# First look for a ~/.mailfolders file, otherwise parse $MAILPATH, and
+# finally use the spool mailbox if none of those worked.
+if test -f $HOME/.mailfolders; then
+	set X $spool \
+		`sed -e "/^[ 	]*#/d" -e "s|^~|$HOME|" <$HOME/.mailfolders`
+elif test "$MAILPATH"; then
+	set X `echo $MAILPATH | tr ':' '\012'`
+else
+	set X $spool
+fi
+shift
+
+# Loop over the computed locations and print the name of the mailboxes
+# which are not empty. If a location is a directory, scan all the files
+# found in that directory.
+for location in $*
+do
+	if test -d "$location"; then
+		for file in $location/*
+		do
+			if test -s "$file"; then
+				echo "$file"
+			fi
+		done
+	elif test -s "$location"; then
+		echo "$location"
+	elif test -s "$location.Z"; then
+		echo "$location.Z"
+	fi
+done
+

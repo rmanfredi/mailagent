@@ -1,0 +1,86 @@
+# Small descriptions for programs
+
+* cshar
+The useful shell-archive maker. I modified the original
+slightly to add a Configure script.
+---
+
+* kit
+A simple binary tarmailer. This is used by the mail agent when
+mailing big sets of files. You presently need cshar (from
+Rich Salz) to use kit.
+---
+
+* dist
+Larry Wall's dist package, modified. It contains:
+    - metaconfig, a Configure script generator
+    - a patch generator
+    - a distribution maker
+It comes from version Larry's dist 2.0 PL 2 package, but has
+quite a few extensions (I worked especially on the patch
+generating tools and metaconfig itself). The units used by
+metaconfig have been manually ripped off from some recently
+posted Configure scripts (elm 2.3, perl 3.0).
+---
+
+* matrix
+An object-oriented matrix library. It is a beta-test release.
+---
+
+* file
+The file(1) command with lots of /etc/magic entries. Useful
+when you work with NFS on different architectures as you
+can have your own magic file.
+---
+
+* rcs
+GNU Revision Control System. You need RCS to use Larry's
+dist package (patch generating tools).
+---
+
+* cops
+Security analysis tools. May be useful to find holes in
+your system.
+---
+
+* xfmt
+Simple text formatter. You need flex to compile it.
+It looks like SUN-OS fmt program.
+---
+
+* less
+The pager that is more than more(1).
+---
+
+* flex
+Fast lex. Needed for the xfmt package, because lex is not
+powerful enough.
+---
+
+* et
+Error table compiler (from MIT).
+---
+
+* undel
+Replacement for rm(1). Marks files for deletion instead of
+removing them. You need the et package for version 2.0 to
+compile.
+---
+
+* dither
+Displays a color image on a two-level display (White and black).
+Uses a non-standard picture format in input and output
+(that's mine ! :-)).
+---
+
+* perl
+Larry Wall's Practical Extraction and Report Language. It
+combines the best features of C, awk, sed and sh.
+You need it to use the dist package.
+---
+
+* patch
+The useful utility to apply diff files on a distribution. You could
+of course apply them by hand, but it may well be a long procedure !
+Written by Larry Wall.
+---

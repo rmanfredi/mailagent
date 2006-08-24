@@ -1,0 +1,11 @@
+# Commands allowed by the server (file formatted with tabstops=4)
+
+# command name
+# 			type (shell/perl/end/help)
+#					concealed arguments
+#						collect data
+#							file name
+#								[function name (perl) / options (shell)]
+
+end			end		-	-	-
+help		help	-	-	-

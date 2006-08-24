@@ -1,0 +1,110 @@
+#
+# Setup file for mailagent
+#
+
+# $Id: setup.cf,v 3.0.1.5 2001/03/17 18:04:04 ram Exp ram $
+#
+#  Copyright (c) 1990-2006, Raphael Manfredi
+#  
+#  You may redistribute only under the terms of the Artistic License,
+#  as specified in the README file that comes with the distribution.
+#  You may reuse parts of this distribution only within the terms of
+#  that same Artistic License; a copy of which may be found at the root
+#  of the source tree for mailagent 3.0.
+#
+# $Log: setup.cf,v $
+# Revision 3.0.1.5  2001/03/17 18:04:04  ram
+# patch72: added two variables: domain and hidenet
+#
+# Revision 3.0.1.4  1998/07/28  16:56:55  ram
+# patch62: added setup information for the "hash" config variable
+#
+# Revision 3.0.1.3  1996/12/24  13:49:42  ram
+# patch45: can now say that a file is expected under some directory
+# patch45: applied that to mailbox, which is a file expected under maildrop
+#
+# Revision 3.0.1.2  1995/09/15  13:40:37  ram
+# patch43: maildrop now defaults to the configured value at first install
+# patch43: new compspecs optional file in configuration
+#
+# Revision 3.0.1.1  1995/02/16  14:26:30  ram
+# patch32: created
+#
+
+# Perl expressions for computing default values to some parameters when
+# initializing ~/.mailagent from the mailagent.cf template.
+# Expressions will be evaluated from within the cfset package.
+
+home      : &main'tilda_expand('~')
+path      : &default_path
+user      : (getpwuid($<))[0]
+name      : $main'ENV{'NAME'} || (getpwuid($<))[6]
+email     : &main'email_addr
+domain    : &main'domain_addr
+hidenet   : $main'hiddennet eq '' ? OFF : ON
+
+sendmail  : $main'mailer
+sendnews  : $main'inews
+mailopt   : $main'mailer =~ /\bsendmail$/ ? '-odq' : ''
+
+maildrop  : $main'maildir
+timezone  : $main'ENV{'TZ'} || 'MET'
+
+# Types of various configuration parameters. A lowercase f/d indicates an
+# optional file/directory, or one that will be created on demand. An uppercase
+# F/D means a mandatory file/directory that should exist.
+#
+# It is possible to further specify an underlying directory for the file
+# or directory by following the type with a value between parenthesis, as in:
+#
+#        mailbox = f ($maildrop)
+#
+# to say for instance that the mailbox setting in the config file really
+# indicates a file lying under the maildrop setting. A variable name is
+# interpreted in the cf package, NOT in the cfset, since it is assummed to
+# be a configuration variable. It can be fully qualified if it is not.
+# It is also possible to put a plain string here, since the value will
+# be interpolated in "" context.
+#
+# By default, files are anchored under the home directory unless they start
+# with a /.
+#
+# When using 'mailagent -I', a mandatory directory will be created, while a
+# mandatory file will be copied from a template lying in the privlib directory
+# when specified; otherwise, it is created with a null size.
+
+spool     = D
+queue     = D
+logdir    = D
+hash      = D ($spool)
+context   = f
+callout   = f
+log       = f
+seq       = f
+statfile  = f
+rules     = f
+rulecache = f
+
+maildrop  = d
+mailbox   = f ($maildrop)
+
+compress  = f
+compspecs = f
+
+biffmsg   = f
+mhprofile = f
+newcmd    = f
+
+comserver = F
+servdir   = d
+powers    = d
+powerlog  = f
+powerlist = f
+powerdir  = d
+passwd    = f
+helpdir   = d
+
+comfile   = F commands
+distlist  = F
+proglist  = F
+plsave    = f

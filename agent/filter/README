@@ -1,0 +1,40 @@
+This is the root directory for the C filter.
+
+Using the C version of the filter instead of the shell version is up to you.
+This is not really a filter in the common sense, because it does not actually
+filter anything based on the contents of your mails. It only distills your
+incoming mail into the mailagent's queue, avoiding the spawning of multiple
+perl processes which are resource consuming.
+
+I had to write a C version for the filter because I was loosing some mail on
+my machine when I used the shell script. This occurred seldom, but still...
+The reason was due to the delivery mode at our site. We get our mail from a
+uucp feed. Once in a while, 20 or more mails were delivered at the same time,
+and the shell script was not fast enough, and sendmail + filter were eating
+all my system's resources.
+
+This program was written in two days, in self defense, when I decided I could
+not afford seeing my precious mail sweeping into /dev/null any longer. It
+might not be as portable as I wanted it too.
+
+If you have an internet connection and receive only a small amount of mail
+at a time, or if you have NFS mounted mailboxes, then the shell script filter
+may well be the winner.
+
+In case you are lucky enough to have a uucp connection *and* NFS mounted
+mailboxes where you may receive mail on multiple machines :-), then you may
+run into difficulties while setting up your .forward. The best thing to do is
+to have the filter executable installed at the same location on all the
+machines, say in /usr/local/bin/filter.
+
+If your sendmail does not always set the uid correctly before invoking the
+mailer specified in the .forward, then you will have to use the C filter and
+make a local copy with the setuid bit set. This is yet another reason for me
+to use this program on my MIPS workstation, grrr...
+
+The C filter pays attention to more variables in the ~/.mailagent than the
+shell script one, mainly to ensure a proper PATH variable. Also note that
+the algorithms used by the two programs are completely different. Despite the
+fact it was written in a hurry, I believe it is a little safer than its shell
+counterpart. At least it is *much* faster.
+

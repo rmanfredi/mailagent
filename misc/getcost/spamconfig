@@ -1,0 +1,384 @@
+# $Id
+#
+#  Copyright (c) 1990-2006, Raphael Manfredi
+#  
+#  You may redistribute only under the terms of the Artistic License,
+#  as specified in the README file that comes with the distribution.
+#  You may reuse parts of this distribution only within the terms of
+#  that same Artistic License; a copy of which may be found at the root
+#  of the source tree for mailagent 3.0.
+#
+# $Log: spamconfig,v $
+# Revision 3.0.1.1  1998/03/31  15:30:20  ram
+# patch59: created
+#
+#
+# A sample ~/.spamconfig file that has proven useful to me.
+# Since some spammers will now undoubtedly check their messages against
+# this rule file, it will require adjustments over time.
+# In any case, do not widely distribute your scoring patterns.
+
+###############################################################################
+#
+# The general form of this file is (there are exceptions, though -- see below):
+#
+#	[ section name ]
+#	pattern1		score1
+#	pattern2		score2
+#	pattern3		score3
+#	...
+#
+# Patterns are Perl regular expressions, and are case-insensitive.  Note
+# that a line continuation character does NOT exist; everything must fit
+# onto one line.
+#
+# A score is simply a numeric number.  The score is summed with all
+# other scores to form the message cost.  Use negative numbers for SPAM
+# phrases, and positive numbers for non-SPAM phrases.
+#
+# Within a section, patterns are applied in the order they are listed.
+#
+# Comments, of course, begin with a "#", and MUST occur at the beginning
+# of a line (leading whitespace is allowed, though).  You cannot put
+# comments at the end of a line.  A comment covers an entire line.
+#
+# Totally blank lines are ignored.
+#
+###############################################################################
+#
+# "name" is your email address (basically, your login name), as a
+# regular expression.  It is used when the "-m" option is used, to
+# increase the cost if this "name" pattern appears in the To: header.
+#
+# NOTE: This section can be omitted by most people, as the default is
+# your login name followed by an "@" sign.  It is listed here for
+# documentation reasons, just in case someone has an obscure reason for
+# using something other than the login name.
+#
+# NOTE: This section is different than most, in that this section
+# consists of a single line, which contains just an email address
+# pattern.
+#
+[ name ]
+
+# yourlogin\@
+
+#
+# "good sites" are sites from which mail is always (blindly) accepted.  The
+# following patterns are matched against the From: or Reply-To: headers.
+# However, "good sites" are matched only if:
+#
+#	1. These headers do not contain more than one "@" characters.
+#	2. These headers do not contain "mailer-daemon" (questionable).
+#	3. An earlier From: or Reply-To: header has not already matched a
+#	   score pattern from the "sender scores" section (see below).
+#
+[ good sites ]
+
+\bhp\.com\b
+\bemse\.fr\b
+
+###############################################################################
+#
+# "sender scores" are matched against From: or Reply-To: headers (only
+# once) or the "Sender:" header (as many times at it appears).
+#
+[ sender scores ]
+
+# Yes, allowing -request through opens the portal ...
+\b-request\b										100000000
+
+# I consider these to be anathema:
+broadcast											-1000000
+conserve\@sav[-a-z0-9\._]+\.com\b					-1000000
+\@[-A-Za-z0-9_.]*slip\.net\b						-1000000
+\@[-A-Za-z0-9_.]*discount[-A-Za-z0-9_.]*\.com\b		-1000000
+\@[-A-Za-z0-9_.]*golfball[-A-Za-z0-9_.]*\.com\b		-1000000
+\@dunwell\.com\b									-1000000
+\@ultragrafix\.com\b								-1000000
+\@interramp\.com\b									-1000000
+\bquantum\s+communication							-1000000
+\bproduct\s+link\b									-1000000
+\binternetmedia\.com\b								-1000000
+\bfullmkt\.com\b									-1000000
+\@sallynet\.com\b									-1000000
+\@brezz\.com\b										-1000000
+\bdelphy\.com\b										-1000000
+\bcsrlink\.net\b									-1000000
+\bearthlink\.net\b									-1000000
+\bjuno\.com\b										-1000000
+\bgtw\.com\b										-1000000
+\batlantec\.net\b									-1000000
+\banswerme\.com\b									-1000000
+\bowlsnest\.com\b									-1000000
+\bvdocam\.com\b										-1000000
+\bcyberpromo\.com\b									-1000000
+promotion.*\.com\b									-1000000
+\bhotmail\.com\b									-1000000
+\@.*\bearthstar\.com\b								-1000000
+\@[0-9]+\.com\b										-1000000
+\bdude[-\._a-z0-9]*\.(com|net)						-1000000
+\bt-1net\.com\b										-1000000
+
+# If the name contains "sales", ding them lightly (?):
+\bsales\b						-100
+
+# I don't like these:
+\baol\.com\b					-1000
+\.uu\.net\b						-1000
+
+# No legitimate mail from the owner of a sendmail alias!
+\bowner-						-1000
+
+# These are capable of the worst
+\.net\b							-500
+\.hk\b							-500
+
+# Bonus for quality
+\.com\b							500
+\.edu\b							1000
+\.fr\b							1000
+
+###############################################################################
+#
+# "subject scores" are matched against the "Subject:" header.
+#
+
+[ subject scores ]
+
+# Those I want
+\bperl\b						1000000
+\bpdl\b							1000000
+
+# Don't want
+\btelstra\b						-1000000
+
+# Negative impression
+\bhave\s+your\s+permission\b	-100000
+\${3,}							-10000
+!{3,}							-10000
+\*{4,}							-10000
+\bfree\b						-10000
+\bchurch\b						-1000
+\bfree\s+stuff\b				-300
+\byou\s*!{2,}					-200
+\bsweetie\b						-100
+
+###############################################################################
+#
+# "relay scores" are matched against the "received" header line.
+#
+# Warning: be careful in adding lines here.  Many spammers forge the
+# message headers, so blindly adding relay hosts here doesn't always
+# work.  Generally, the host that connects to the HP mail relay is a
+# good candidate, assuming that the host isn't a major backbone/mail
+# relay host.  Any other hosts are suspect (but adding them often
+# doesn't hurt).
+#
+[ relay scores ]
+
+# Matching against "@" is a good way of detecting SPAM.  Unfortunately,
+# it also increases the number of false positives.  Uncomment the
+# following line (remove the leading "#") if you hate SPAM more than you
+# hate false positives:
+#\@									-1000
+
+\binterramp\.com\b					-1000000
+\binternet\.com\b					-1000000
+\bnowhere\.com\b					-1000000
+\bhkstar\.com\b						-1000000
+\bvdocam\.com\b						-1000000
+\bbad\.helo\.input\b				-1000000
+\bnetrunner\.net\b					-1000000
+\bwinnet\.net\b						-1000000
+\bearthlink\.net\b					-1000000
+\bispam\.net\b						-1000000
+\bsdt\.net\b						-1000000
+
+# The following have hit my mailbox with SPAM... once... be gentle!
+
+\buserid\.net\b						-500
+
+###############################################################################
+#
+# "body text" contains patterns to be matched against each line of the
+# message body.  The score of the first pattern that matches will be
+# used; once a match is found, no other patterns will be checked.
+#
+# Remember, patterns are checked in the order in which they appear.
+#
+# IMPORTANT NOTE: unlike other sections, the Perl regular expressions
+# here must contain Perl-style regular expression delimiters (e.g.,
+# "/foo/" instead of "foo", like all other regular expressions above).
+# This is done to give greater flexibility (like case-sensitive
+# matches or multiple patterns).
+#
+# In the body, a score of zero ("0") is special; it causes pattern
+# matching to stop at the current line (if the pattern matches).  No
+# other lines in the message body will be checked.  This is useful for
+# stopping scanning when (for example) a shar file is detected.  Also,
+# assigning a very large positive or negative number will have a similar
+# effect, except that the message cost will be adjusted accordingly
+# (this is useful for forcing a message to be considered as SPAM or
+# not-SPAM, and stopping scanning at the same time).
+#
+# Also, scoring also stops if the score goes above 1000000 or below
+# -100000.  Another way to stop further lines from being processed is to
+# add a very large number to the score to get the score above 1000000
+# (assuming that you want the message to always be accepted).
+#
+[ body text ]
+
+# Stop scanning at PGP blocks (output the cost "as-is").
+m|^-----BEGIN\s+PGP\s+[A-Z0-9,/\s]+\b-----|		0
+
+# Stop at context diff: *** file/path/name   Tue Aug 12 07:48:00 1997
+m|^\*\*\*\s+\S+\s+(\w+\s+){3}[\d:]+\s+\d{4}\s*$|	0
+
+#
+# Let messages with the following through:
+#
+
+#	uuencoded files:
+/^begin\s+[0-9]{3}\s+[0-9_a-z]/i				10000000
+
+#	shar files:
+/^\#\s+this\s+is\s+a\s+shell\s+archive\b/i		10000000
+
+#	patch(1) patches
+/^diff[- \ta-zA-Z0-9]*-[ruc]/					10000000
+
+#	Emacs-lisp files:
+/^;+\s*[^ \t.]+\.el\b/i							10000000
+/^;+\s+-[*]-Emacs-Lisp-[*]-\b/i					10000000
+/^;\s*File:\s+[^ \t.]+\.el\b/i					10000000
+/^;+\s*copyright\b/i							10000000
+/^;.*(minor|major)\s+mode\b/i					10000000
+
+#	Shell/Perl scripts/shar files (this is questionable)
+m|^\#!\s*/\S*\bbin/|i							10000000
+
+#	Messages with key phrases:
+/\bgnu\s+general\s+public\s+license/i			10000000
+/\bfree\s+software\s+foundation\b/i				10000000
+
+#
+# I think these are good ...
+#
+
+# Usenet-style signature found
+/^--\s?$/										1000
+
+#
+# I think these are bad ...
+#
+
+##### -1000 section #####
+
+/\bfree\s+stuff\b/i										-1000
+/\bcomplimentary\s.*\boffer\b/i							-1000
+/\b(send|reply)\b.+\bmessage\b.+\bremove\b/i			-1000
+/"?\bremove\b"?\s+[oi]n\s+(the\s+)?(subject|body)/i		-1000
+/[^A-Z0-9_ \t,.;]+\s+\bfree\b\s+[^A-Z0-9_ \t,.:;]+/i	-1000
+/\bremove\s+your\b.+\baddress\b/i						-1000
+/\byour\s+e-?mail\b.+\baddress\s+removed\b/i			-1000
+/look\s+at\s+this\s+ad.*\s+i\s+saw/i					-1000
+/\b(earth|environment[a-z]*)-*\s*friendly\b/i			-1000
+/\bevideos\b/i											-1000
+/\bFREE\b/												-1000
+/\bNO\s+FEE[Ss']\b/										-1000
+/^\s*dear\s+friend/i									-1000
+/\bmoney-back\b/i										-1000
+/(please)?\b(remove|delete)\b.*\b(me|name|address)\b.*(mail|list)/i	-1000
+/\byou\s+must\s+be\s+over\s+21\b/i						-1000
+/\byou\s+have\s+been\s+selected\b/i						-1000
+/\byou\s+(only\s+)?have\s+until\b[^.]+\bto\s+reply/i	-1000
+/\byou\s+wish\s+to\s+be\s+\w+\s+from\s+this\s+mailing/i	-1000
+/\bremove\@iemmc\.org\b/i								-1000
+/\bporn\b/i												-1000
+/\bYou\s+must\s+be\s+21\s+or\s+older\b/i				-1000
+/\bremov(al|ed)\s+from\s+(this|our).*\b(list\b|mail)/i	-1000
+/\bcall\s+1[\s-]800[\s-][\d-\s]+\b/i					-1000
+/\bwe\s+will\s+call\s+you\b/i							-1000
+/\b(enhanc|increas)(e|ing)\s+(your|my)\s+(income|pay)\b/i	-1000
+/\s+honor\s+(all\b)?\s*remove\s+requests?/i				-1000
+
+# A price followed by a !
+/\$\s*[0-9\. \t]+!/										-1000
+
+# Suspicious URL sites...
+m|http://[\w-.]+sex|									-1000
+m|http://[\w-.]+whore|									-1000
+m|http://[\w-.]+girl|									-1000
+m|http://[\w-.]+live|									-1000
+
+##### -500 section #####
+
+# More than 5 consecutive words in capitals enclosed between non-words
+# on a line by itslef, such as "===> WHATEVER THEY SELL <==="...
+/^\s*\W+\s*[A-Z]+\s+([A-Z]+\s+){4,}\s*\W+\s*$/			-500
+
+##### -300 section #####
+
+/send\s+(cash|check|money\s+order)+/i					-300
+m|\bimmediately\s+at\s+http://www\.[\w-]+\.com\b|i		-300
+/\bwe\s+are\s+t?here\s+to\s+(provide|offer)\b/i			-300
+/\bMUST\s+SEE\s+TO\s+BELIEVE\b/i						-300
+m|\bhttp://\d+\.\d+\.\d+\.\d+/|							-300
+/\byour\s+business\b/i									-300
+/\byour\s+organization\b/i								-300
+/\byour\s+customers?\b/i								-300
+/\bwholesale\b/i										-300
+/\bgo\s*to\s+our\s+web\s*site\b/i						-300
+
+# Too many $'s or !'s or *'s or /'s
+/\${3,}/ || /!{3,}/					-300
+/\*{4,}/							-300
+m|/{4,}|							-300
+
+##### -100 section #####
+
+# IMPORTANT NOTE: the pattern "free" is special in that additional care
+# is taken to match "free" in a textual context.  Lines with, say C/C++
+# code with "free()" or "free ()" will *NOT* be matched.
+# If it's a verb (to free something), it will *NOT* match as well.
+
+free											-100
+
+/\blong\s+distance\b/i							-100
+/\baromatherapy\b/i								-100
+/\bautoresponder\b/i							-100
+/\bplease\b.*\bhave\s+your\s+permission\b/i		-100
+/\bplease\s+send\b.*\bemail\b/i					-100
+/\bdateline\b/i									-100
+/\b(900|976)\s*[-\)]\s*[0-9]{3}\s*-/			-100
+/\badult\s+customers?\b/i						-100
+/\b\bmy\s+name\s+is\s+/i						-100
+/\b\bmust\s+be\s+21\s+/i						-100
+/\bpenpals?\b/i									-100
+/\bsweetie\b/i									-100
+/\b(video|cheerleader|dancer|giveaway)\b:/i		-100
+/\bprice\s*:/i									-100
+/\b(visit|access)\s+our\s+web\b/i				-100
+/\b(tele)?phone\s*:/i							-100
+/mail.*\baddress\b/i							-100
+/\brecords?\s+(indicate|show)\b/i				-100
+/\bgolf\s*balls?\b/i							-100
+/\bhobbies\b/i									-100
+/\bcool\s+site[- \t]+of[- \t]+the[- \t]+week\b/i	-100
+/\binforevolution\b/i							-100
+/\bplease\s+visit\b/i							-100
+/\bplease\s+submit\s+your\b/i					-100
+/\byou\s*!{2,}\s*$/i							-100
+m|\bat\s+http://www\.[\w-]+\.com\b|i			-100
+m|>\s*click\s+here(\s+now)?\s*</A>|i			-100
+/\b(call|order)\s+now\b/i						-100
+/\bBulk\s+Email/i								-100
+/\byour\s+web\s*site\b/i						-100
+/\bonly\s+adults\s+(will|can)\b/i				-100
+/\bforward\s+to\s+(your)?(\s*)friends?\b/i		-100
+/\bdiscounts?\b/i								-100
+
+# A price without a !
+/\$\s*[0-9\.]/						-100
+

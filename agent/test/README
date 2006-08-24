@@ -1,0 +1,68 @@
+This is the root directory for the regression test suite.
+
+A regression test suite is not meant to be a validation suite. Rather, it is
+used by developpers to make sure nothing breaks between two snapshots or
+releases. Thoroughness is not a requirement, since it only affects the
+accuracy of the test.
+
+The single TEST executable will run the test suite and report any failure.
+Although not every feature of the mailagent is tested, having it pass
+the whole test suite is a Good Thing. Some commands like PROCESS or POST
+are not easy to test automatically, but if you can design good tests
+for them, I will be glad to include them.
+
+This set of programs were written quickly, as effeciency or maintainability
+was not the main issue, obviously. I believe they are reasonably well
+written, making it possible for someone to be able to understand and modify
+them.
+
+Running the whole test suite takes a long time. On my machine with 40 Mb of
+main memory, it requires 12 minutes to complete. It may take a lot longer
+if you do not have at least 16 Mb of RAM.
+
+The option -i turns the incremental mode on. This proved really nice to
+me when I was writing this suite, as I was able to skip all the successful
+tests and focus only on those which failed or the new ones. The -s option will
+cause the test suite to stop at the first error. Normally, only failed basic
+tests abort the process. The -o option will not restart the tests from scratch,
+even if the mailagent or filter is newer than the current OK file. Option -n
+will test the non-dataloaded version of the mailagent (because of some bugs
+with eval() which cause the dataloaded version to dump core via a segmentation
+violation).
+
+The -m option is for desperate cases. It launches the atail process in the
+background (a real CPU hog) to monitor all changes to the out/agentlog file.
+This may be really convenient when debugging a test suite failure...
+
+I don't know why I spent some time documenting all this, as I don't expect
+anybody to have any chance working on this suite. Anyway, it might be nice
+knowing that all the successful tests are recorded in an OK file, along
+with the time stamp of the test, so we may re-run those which were updated
+since last run. In the event the mailagent or the filter are modified, the
+tests are re-run throughoutfully.
+
+The file 'level' is optional. If present, it gives the default logging level
+to be applied when most of the tests are run (i.e. for those who do not require
+any special logging level). If absent, no logging will be done (except for
+those tests who do require... etc...). All the tests are performed in the
+'out' subdirectory, with the user name set to 'nobody'. That may help a lot
+when testing commands like RUN, as they have the nasty habbit to mail you, the
+user, their output when they fail for whatever reason.
+
+The generic mail used by the test is an automatic answer I got from the
+comp.compilers newsgroup moderator the day I posted my first article to that
+group. It has no special value, appart from having some constants relative
+to it hardwired within the tests themselves. Don't touch it, even to remove
+a white space or some tests may fail (particularily GIVE and PIPE, which have
+the output of 'wc' hardwired). On my machine, here is the output of 'wc mail':
+
+     34     227    1620  mail
+
+In the event some of the tests do not pass, there is no reason to panic, and
+it doesn't necesseratily mean the mailagent has a bug. It is more likely a
+combinaison of perl + dataloading + bugs + memory + moon's position. Try
+to run the test suite again, and then one more time. It sometimes helps.
+Also try changing the logging level via 'level' to see if it doesn't make
+any difference. This is not really rational, but empirical law :-).
+
+I think that's all there is to say.

@@ -1,0 +1,336 @@
+Artistic                   The Artistic Licence
+ChangeLog                  Where changes are recorded
+Changes                    User-visible changes between 2.9 and 3.0
+Configure                  Portability tool
+Credits                    Traditional "thank you" list
+FAQ                        An exerpt from the "Filtering Mail FAQ" posting
+Jmakefile                  Description of the main Makefile
+MANIFEST                   This list of files
+Makefile.SH                A makefile to run subsidiary makefiles
+README                     Basic instructions
+U/                         Specific metaconfig units
+U/End.U
+U/Myinit.U
+U/mboxlock.U
+U/utmp.U
+agent/                     Where mailagent support files are located
+agent/Jmakefile            High level description of Makefile
+agent/Makefile.SH          Makefile which builds and installs mailagent
+agent/README               Welcome to mailagent
+agent/edusers.SH           Edits users file with proper locking procedure
+agent/examples/            A set of files from my own environment
+agent/examples/Jmakefile   High level description for Makefile
+agent/examples/Makefile.SH Makefile for examples
+agent/examples/README      Explains what the examples are
+agent/examples/daemon      Rules for "vacation" emulation
+agent/examples/mailfolders A copy of my ~/.mailfolders
+agent/examples/mchk        Checks for new mail
+agent/examples/mhinc       Call the MH inc command to incorporate new mail
+agent/examples/nocmds      Message you currently get if you send me a command
+agent/examples/profile     What I added to my onw ~/.profile
+agent/examples/rules       The rules I am currently using
+agent/examples/vacation    A sample vacation message
+agent/files/               Mailagent's configuration files
+agent/files/Jmakefile      High level description for Makefile
+agent/files/Makefile.SH    Makefile for subsidiary files
+agent/files/README         Notes about files found in this directory
+agent/files/agenthelp      Help file used by mailhelp
+agent/files/chkagent.sh    Cron script to spot problems in the mailagent system
+agent/files/commands       Allowed commands for mailagent
+agent/files/compressors    Default sample compressors available
+agent/files/distribs       Example of distribution list
+agent/files/filter.sh      Shell script version of the mail filter
+agent/files/help/              Directory holding SERVER help files
+agent/files/help/Jmakefile     Generic makefile for help directory
+agent/files/help/Makefile.SH   Generated makefile
+agent/files/help/README        States what this directory is about
+agent/files/help/addauth.SH    Help file for addauth
+agent/files/help/approve.SH    Help file for approve
+agent/files/help/delpower.SH   Help file for delpower
+agent/files/help/end.SH        Help file for end
+agent/files/help/getauth.SH    Help file for getauth
+agent/files/help/help.SH       Help file for help
+agent/files/help/newpower.SH   Help file for newpower
+agent/files/help/passwd.SH     Help file for passwd
+agent/files/help/password.SH   Help file for password
+agent/files/help/power.SH      Help file for power
+agent/files/help/release.SH    Help file for release
+agent/files/help/remauth.SH    Help file for remauth
+agent/files/help/set.SH        Help file for set
+agent/files/help/setauth.SH    Help file for setauth
+agent/files/help/user.SH       Help file for user
+agent/files/mailagent.cf   Example of configuration file
+agent/files/passwd         An example for power password file
+agent/files/proglist       Example of description file
+agent/files/server         An example for server command file
+agent/files/setup.cf       Standard configuration setup definition
+agent/filter/              The C version of the mail filter
+agent/filter/Jmakefile     Generic makefile template
+agent/filter/Makefile.SH   Makefile for C filter
+agent/filter/README        Introduction to filter
+agent/filter/dup2.c        Emulation of the dup2() system call
+agent/filter/environ.c     Environment management routines
+agent/filter/environ.h     Declarations for environment management routines
+agent/filter/getopt.c      Replacement for libc's getopt()
+agent/filter/hash.c        Symbol table handling
+agent/filter/hash.h        Declarations for symbol table
+agent/filter/io.c          I/O routines
+agent/filter/io.h          Header for I/O routines
+agent/filter/lock.c        File locking
+agent/filter/lock.h        Declarations for file locking routines
+agent/filter/logfile.c     Logging facilities
+agent/filter/logfile.h     Header for logging routines
+agent/filter/main.c        The main entry point for filter
+agent/filter/misc.c        Miscellaneous routines
+agent/filter/msg.c         Handles fatal messages
+agent/filter/msg.h         Declarations for user messages
+agent/filter/parser.c      Parse the config file with variable substitutions
+agent/filter/parser.h      About config file parsing
+agent/filter/portable.h    Portable declarations
+agent/filter/sysexits.h    Standard exit codes
+agent/filter/user.c        To get login name from user
+agent/magent.sh            The main processor
+agent/maildist.SH          Mails a whole distribution
+agent/mailhelp.SH          Mails some help
+agent/maillist.SH          Mails a list of available distributions
+agent/mailpatch.SH         Mails patches for a given distribution
+agent/man/                 Manual pages for mailagent
+agent/man/Jmakefile        Makefile description for jmake
+agent/man/Makefile.SH      Makefile for manual pages extraction
+agent/man/edusers.SH       Produces a manual page for edusers
+agent/man/mailagent.SH     Produces a manual page for mailagent
+agent/man/maildist.SH      Produces a manual page for maildist
+agent/man/mailhelp.SH      Produces a manual page for mailhelp
+agent/man/maillist.SH      Produces a manual page for maillist
+agent/man/mailpatch.SH     Produces a manual page for mailpatch
+agent/man/package.SH       Produces a manual page for package
+agent/package.SH           Records users of a PD package (cf dist-3.0)
+agent/pl/                  Perl files used by mailagent scripts
+agent/pl/Jmakefile         Generic Makefile for perl library
+agent/pl/Makefile.SH       Jmake-generated makefile
+agent/pl/acs_rqst.pl       Perl library to ask for private file access
+agent/pl/actions.pl        Implementation of mailagent's actions
+agent/pl/add_log.pl        Perl library to add logs to logfile
+agent/pl/addr.pl           Approximate address matching and validation
+agent/pl/analyze.pl        Perl library analyzing the incoming mail
+agent/pl/biff.pl           Built-in biffing support
+agent/pl/builtins.pl       Perl library dealing with builtins
+agent/pl/callout.pl        Perl library to handle callout queue
+agent/pl/cdir.pl           Perl library to derive path changes ala cd
+agent/pl/checklock.pl      Perl library to check for long lasting locks
+agent/pl/cmdserv.pl        Implements generic mail server
+agent/pl/compress.pl       Folder compression library
+agent/pl/context.pl        Mailagent context file handling
+agent/pl/dbr.pl            Internal database management
+agent/pl/distribs.pl       Perl library to scan the distribs file
+agent/pl/dynload.pl        Dynamically loads perl code into mailagent
+agent/pl/emergency.pl      Perl library dealing with emergencies
+agent/pl/eval.pl           A little expression interpreter
+agent/pl/extern.pl         Perl library to handle persistent variables
+agent/pl/fatal.pl          Perl library to deal with fatal errors
+agent/pl/file_edit.pl      File edition with extensive error checking
+agent/pl/filter.pl         Running the filtering commands
+agent/pl/forward.pl        Automatic Command forwarding support routines
+agent/pl/free_file.pl      Perl library to free file access
+agent/pl/gensym.pl         Dynamic symbol generator
+agent/pl/getdate.pl        Richard Ohnemus's getdate package
+agent/pl/header.pl         Header-related routines
+agent/pl/history.pl        Perl library to implement history mechanism
+agent/pl/hook.pl           Mail hook wrapping functions
+agent/pl/hostname.pl       Perl library to compute hostname
+agent/pl/include.pl        Processing of "include file" requests
+agent/pl/install.pl        Dealing with initial ~/.mailagent setup
+agent/pl/interface.pl      Perl interface with filter commands
+agent/pl/jobnum.pl         Perl library to compute a job number
+agent/pl/lexical.pl        Perl library for lexical analysis
+agent/pl/listqueue.pl      Perl library to list the queue
+agent/pl/locate.pl         Perl library to locate loaded patterns/addresses
+agent/pl/macros.pl         Perl library for macros expansion
+agent/pl/mailhook.pl       Initializing and running hooks
+agent/pl/makedir.pl        Perl library for making a directory
+agent/pl/matching.pl       Matching routines used by filter
+agent/pl/mbox.pl           Getting mails from a mailbox file
+agent/pl/mh.pl             Handles MH-style folder delivery
+agent/pl/mmdf.pl           MMDF-style mailbox handling
+agent/pl/newcmd.pl         Filter command extension driver
+agent/pl/once.pl           Dealing with once commands
+agent/pl/options.pl        Generic option processing for filter actions
+agent/pl/package.pl        Sources dist's .package file into pkg package
+agent/pl/parse.pl          Perl library to parse a mail message
+agent/pl/period.pl         Perl library to compute periods
+agent/pl/plsave.pl         Perl library to handle the plsave cache file
+agent/pl/plural.pl         Perl library to pluralize words
+agent/pl/power.pl          Power management for mail server
+agent/pl/pqueue.pl         Processing the queued mails
+agent/pl/q.pl              Quote removal function
+agent/pl/queue_mail.pl     Queuing mails
+agent/pl/rangeargs.pl      Perl library to expand a list of patches
+agent/pl/read_conf.pl      Perl library to read configuration file
+agent/pl/rfc822.pl         Perl library to parse RFC822 addresses
+agent/pl/rulenv.pl         Handles rule environment with local settings
+agent/pl/rules.pl          Compiles the filtering rules
+agent/pl/runcmd.pl         Filter commands ran from here
+agent/pl/secure.pl         Make sure a file is "secure" and can be trusted
+agent/pl/sendfile.pl       Perl library to send files in shar / kit mode
+agent/pl/signals.pl        Installs emergency signal handlers
+agent/pl/stats.pl          Mailagent's statistics recording and printing
+agent/pl/tilde.pl          Perl library to perform ~name expansion
+agent/pl/unpack.pl         Perl library to unpack archive files
+agent/pl/usrmac.pl         User-defined macros
+agent/pl/utmp/Jmakefile    Generic Makefile for utmp.pl
+agent/pl/utmp/Makefile.SH  Produces Makefile for umtp.pl
+agent/pl/utmp/utmp_ph.c    Generates a perl view of struct utmp
+agent/pl/utmp/utmp_pl.sh   Produces utmp.pl, to handle utmp file
+agent/test/                Regression test suite
+agent/test/Jmakefile       Generic makefile for test suite
+agent/test/Makefile.SH     Makefile for test suite
+agent/test/README          About the regression tests
+agent/test/TEST            Runs the full test suite
+agent/test/actions         Rule file for cmd tests
+agent/test/atail           Active monitoring of the out/agentlog file
+agent/test/basic/              Basic tests
+agent/test/basic/config.t      Main test initialization and sanity checks
+agent/test/basic/filter.t      Make sure C filter works
+agent/test/basic/mailagent.t   Make sure mailagent basically works
+agent/test/cmd/                Tests of mailagent's filtering commands
+agent/test/cmd/abort.t         Test ABORT command
+agent/test/cmd/after.t         Test AFTER command
+agent/test/cmd/annotate.t      Test ANNOTATE command
+agent/test/cmd/apply.t         Test APPLY command
+agent/test/cmd/assign.t        Test ASSIGN command
+agent/test/cmd/back.t          Test BACK command
+agent/test/cmd/beep.t          Test BEEP command
+agent/test/cmd/begin.t         Test BEGIN command
+agent/test/cmd/biff.t          Test BIFF command
+agent/test/cmd/bounce.t        Test BOUNCE command
+agent/test/cmd/delete.t        Test DELETE command
+agent/test/cmd/do.t            Test DO command
+agent/test/cmd/feed.t          Test FEED command
+agent/test/cmd/forward.t       Test FORWARD command
+agent/test/cmd/give.t          Test GIVE command
+agent/test/cmd/keep.t          Test KEEP command
+agent/test/cmd/leave.t         Test LEAVE command
+agent/test/cmd/macro.t         Test MACRO command
+agent/test/cmd/message.t       Test MESSAGE command
+agent/test/cmd/nop.t           Test NOP command
+agent/test/cmd/notify.t        Test NOTIFY command
+agent/test/cmd/on.t            Test ON command
+agent/test/cmd/once.t          Test ONCE command
+agent/test/cmd/pass.t          Test PASS command
+agent/test/cmd/perl.t          Test PERL command
+agent/test/cmd/pipe.t          Test PIPE command
+agent/test/cmd/post.t          Test POST command
+agent/test/cmd/process.t       Test PROCESS command
+agent/test/cmd/protect.t       Test PROTECT command
+agent/test/cmd/purify.t        Test PURIFY command
+agent/test/cmd/queue.t         Test QUEUE command
+agent/test/cmd/record.t        Test RECORD command
+agent/test/cmd/reject.t        Test REJECT command
+agent/test/cmd/require.t       Test REQUIRE command
+agent/test/cmd/restart.t       Test RESTART command
+agent/test/cmd/resync.t        Test RESYNC command
+agent/test/cmd/run.t           Test RUN command
+agent/test/cmd/save.t          Test SAVE command
+agent/test/cmd/select.t        Test SELECT command
+agent/test/cmd/server.t        Test SERVER command
+agent/test/cmd/split.t         Test SPLIT command
+agent/test/cmd/store.t         Test STORE command
+agent/test/cmd/strip.t         Test STRIP command
+agent/test/cmd/subst.t         Test SUBST command
+agent/test/cmd/tr.t            Test TR command
+agent/test/cmd/umask.t         Test UMASK command
+agent/test/cmd/unique.t        Test UNIQUE command
+agent/test/cmd/unknown.t       Make sure unknown command defaults correctly
+agent/test/cmd/vacation.t      Test VACATION command
+agent/test/cmd/write.t         Test WRITE command
+agent/test/filter/             Testing the filtering capabilities
+agent/test/filter/address.t    Test various match patterns on address fields
+agent/test/filter/backref.t    Check backreferences
+agent/test/filter/case.t       Normalized header case tests
+agent/test/filter/default.t    Check default behaviour when mail not saved
+agent/test/filter/escape.t     Escape sequences within actions
+agent/test/filter/group.t      Selector combination tests
+agent/test/filter/hook.t       Ensure hooks are correctly invoked
+agent/test/filter/list.t       Check matching on lists like To and Newsgroups
+agent/test/filter/loop.t       Check loop detection
+agent/test/filter/macros.t     Check optional macro subsitution in patterns
+agent/test/filter/mode.t       Make sure mode selection logic works
+agent/test/filter/multiple.t   Check multiple selectors
+agent/test/filter/not.t        Negated pattern tests
+agent/test/filter/pattern.t    Check patterns specification and loading
+agent/test/filter/range.t      Selector range tests
+agent/test/filter/status.t     Action status updating tests
+agent/test/level               Default logging level for tests
+agent/test/mail                The mail used by testing routines
+agent/test/misc/               Directory for miscellaneous tests
+agent/test/misc/compress.t     Folder compression checks
+agent/test/misc/mh.t           MH-style folder checks
+agent/test/misc/mmdf.t         MMDF-style mailbox checks
+agent/test/misc/newcmd.t       Filter command extension tests
+agent/test/misc/usrmac.t       User-defined macros checks
+agent/test/option/             Tests the options to the mailagent program
+agent/test/option/F.t          Test -F option
+agent/test/option/I.t          Test -I option
+agent/test/option/L.t          Test -L option
+agent/test/option/V.t          Test -V option
+agent/test/option/c.t          Test -c option
+agent/test/option/d.t          Test -d option
+agent/test/option/e.t          Test -e option
+agent/test/option/f.t          Test -f option
+agent/test/option/h.t          Test -h option
+agent/test/option/i.t          Test -i option
+agent/test/option/l.t          Test -l option
+agent/test/option/o.t          Test -o option
+agent/test/option/q.t          Test -q option
+agent/test/option/r.t          Test -r option
+agent/test/option/s.t          Test -s option
+agent/test/option/t.t          Test -t option
+agent/test/option/what.t       Ensure good behaviour with unknown option
+agent/test/pl/                 Perl libraries for the regression test suite
+agent/test/pl/cmd.pl           Initializes command paths
+agent/test/pl/filter.pl        Set up environment for filter tests
+agent/test/pl/init.pl          Variable initializations
+agent/test/pl/logfile.pl       Logging file checking
+agent/test/pl/mail.pl          Modifies mail components
+agent/test/pl/misc.pl          Set up for miscellaneous tests
+agent/test/pl/mta.pl           Trivial MTA and NTA for tests
+agent/test/rules               Rules used by filtering tests
+bin/                       Directory for uninstalled binaries
+bin/perload                The dataloading/autoloading perl translator
+config_h.SH                Produces config.h
+confmagic.h                Magic symbol remapping
+install.SH                 Installation script
+misc/                      Miscellaneous server commands
+misc/README                Introduction to the misc directory
+misc/fakesend/README       Presentation of the FAKESEND command
+misc/fakesend/fakesend.pl  Implementation of user-defined FAKESEND command
+misc/fakesend/freplcomps   Sample MH reply components for FAKESEND usage
+misc/fakesend/mh_profile   Relevant MH profile sample for frepl and freplq
+misc/getcost/README        Presentation of the spam-filter getcost
+misc/getcost/getcost       The getcost script
+misc/getcost/rules         Sample rules to plug getcost in
+misc/getcost/spamconfig    A sample ~/.spamconfig file
+misc/mime/README           Introduction to the un-MIME filter
+misc/mime/rules            Rules that can be used to trigger unmime
+misc/mime/unmime           The unmime script for MIME message processing
+misc/news/README           Some notes about the news <=> mail gateway
+misc/news/ml.map           Example of news -> mail mappings
+misc/news/newsgate         The news -> mail gateway
+misc/news/rules            Mailagent rules for the mail -> news gateway
+misc/pbounce/README        Some notes about the PATBOUNCE command
+misc/pbounce/mailagent.cf  Template for inclusion into your ~/.mailagent
+misc/pbounce/newcmd.cf     Configuration for PATBOUNCE plug-in
+misc/pbounce/patbounce.pl  Implementation of user-defined PATBOUNCE command
+misc/pbounce/rules         Sample rules shwowing how PATBOUNCE can be used
+misc/shell/                Command to run arbitrary shell commands
+misc/shell/README          Warning, should be read carefully
+misc/shell/server.cf       Configuration of this server command
+misc/shell/shell           The shell command itself
+misc/unkit/                Command to automatically unkit messages
+misc/unkit/README          Some notes about the UNKIT command
+misc/unkit/kitok.msg       An example of message to be sent when kit received
+misc/unkit/mailagent.cf    Template for inclusion into your ~/.mailagent
+misc/unkit/newcmd.cf       Configuration of the new command
+misc/unkit/rules           Rules to be added to handle kit messages
+misc/unkit/unkit.pl        Implementation of the user-defined UNKIT command
+patchlevel.h               Current version number and patch level

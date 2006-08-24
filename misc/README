@@ -1,0 +1,25 @@
+This directory contains:
+
+	- fakesend : code for user-defined FAKESEND comamnd
+	- getcost  : a score-based SPAM filter
+	- mime     : an example of how to un-MIME all messages that don't need MIME
+	- news     : a complete news <=> mail gateway
+	- pbounce  : an example of mailer-daemon post-processing filter
+	- shell    : an example of server command
+	- unkit    : an example of filtering command extension
+
+Those files are not installed, they are only provided as living examples.
+There is a README file in each of those directories telling you more
+about what they hold.
+
+There are several ways to view these examples:
+
+1) As real-life processing, code that you should be able to reuse or plug-in
+   into your own processing if you have similar problems.
+
+2) A repository of common useful extensions that you can study to learn more
+   and create your own.
+
+Feel free to share other successful experiences with me. I'll include them
+there in future releases. When there will be too many of them, it will be
+time to create CMAN, the Comprehensive Mailagent Archive Network ;-)

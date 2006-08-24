@@ -1,0 +1,25 @@
+# Check for mail every minute
+MAILCHECK=60
+export MAILCHECK
+
+# Where is the system mailbox ?
+if test "$MAIL"; then
+	mailbox=$MAIL
+elif test -d /usr/mail; then
+	mailbox=/usr/mail/ram
+else
+	mailbox=/usr/spool/mail/ram
+fi
+
+# List of folders to look at for new mail
+MAILPATH=$mailbox
+
+# List all the folders to be scanned for, one per line
+if test -f $HOME/.mailfolders; then
+	MAILPATH=`sed \
+		-e '/^[ 	]*#/d' \
+		-e "s|~|$HOME|g" <$HOME/.mailfolders \
+		| tr '\012' ':'`$mailbox
+fi
+
+export MAILPATH

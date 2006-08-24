@@ -1,0 +1,21 @@
+#
+# Configuration for UNKIT
+#
+
+x_unkit_dir    : ~/tmp/unkit	# Directory where UNKIT works (default ~/kit)
+x_unkit_remove : YES			# Remove temporary files upon exctraction
+x_unkit_pname  : .kpart			# Leading temporary file name (default .kp)
+x_unkit_opt    : -b				# Additional unkit option
+x_unkit_log    : kitlog			# Where UNKIT logs what it does
+x_unkit_notify : ~/mail/kitok	# Message to be sent when kit received
+x_unkit_info   : README			# File name for kit-embeded instructions
+
+#
+# The following are not implemented yet...
+#
+
+x_unkit_sizemax: 1000000		# Do not automatically unkit past this size
+x_unkit_timeout: 3d				# Timeout before discarding (3 days)
+x_unkit_output : YES			# Do we want any output mailed back if ok?
+x_unkit_trust  : ~/mail/trust	# Trusted people list (regexp form)
+

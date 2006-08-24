@@ -1,0 +1,37 @@
+#
+# Process mailder-daemon messages via PATBOUNCE when related to some pat mail.
+# Otherwise, stuff them in a low-low priority folder, for fun!
+#
+
+From: postmaster, mailer-daemon, uucp	{ REJECT BAD };
+
+#
+# Bounces messages in response to "@SH package" commands and to dist's
+# patsend/patnotify messages. The first are tagged with an X-Mailer: mailagent
+# whilst the latter are tagged with X-Mailer: dist.
+#
+<BAD>
+	Body:
+		/^X-Mailer:\s+dist/,
+		/^X-Mailer:\s+mailagent/
+			{ REJECT BAD_AGENT };
+
+#
+# Use negative selectors to get an AND. Each of the following two rules match
+# if, and only if, all the patterns below actually match at the same time.
+# Had we not used this double negation, the patterns would have been OR'ed.
+#
+<BAD_AGENT>
+	!Body:
+		!/^Precedence:\s+bulk/,
+		!/^Here is the answer to your request:/i,
+		!/^\s+package\s/
+			{ PATBOUNCE; DELETE };
+<BAD_AGENT>
+	!Body:
+		!/^Precedence:\s+bulk/,
+		!/^Subject:.*patch/i
+			{ PATBOUNCE; DELETE };
+
+<BAD, BAD_AGENT>	{ SAVE bad };
+

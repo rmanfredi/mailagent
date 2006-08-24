@@ -1,0 +1,168 @@
+INTRO
+
+This version of mailagent has been written by Raphael Manfredi based on
+previous work from Larry Wall, published in dist-2.0.
+
+HISTORY
+
+The mailagent history is somewhat linked to the dist package history. When
+I discovered dist-2.0 in August 1990 and began extending metaconfig and the
+pat tools, I also began extending Larry Wall's mailagent, which was included
+in dist-2.0 along with the mailpatch command.
+
+I started adding mailhelp, maildist and maillist because I needed them, and
+then left France in March 1991 to go write an Eiffel compiler until March 1993.
+Since I was getting a lot of mail at ISE, I felt the need for a real mail
+filter and not just an @SH command processor. Moreover, I was getting tired of
+having "Command mails" showing in my mailbox. The only mail filter I knew at
+that time was ELM's, and it was not meeting my requirements.
+
+Therefore, I started extending mailagent late 1991 up to the point where it
+became a real and flexible mail filter (according to my standards anyway)
+and since I thought others would like to play with it too, I released it
+as a beta 3.0 (known as version 2.9) on comp.sources.misc in July 1992 after
+7 months of hard work.
+
+I got a lot of positive feedback on this program, and therefore I continued
+to extend it. I also began to see some limitations in the 2.9 version and
+started adding new features (like perl escapes, user-defined commands,
+etc...). I originally intended to make version 3.0 part of dist-3.0, but
+mailagent was starting to get a life of its own and not really a part of dist.
+However, @SH commands like ``package'' are meant to be used in conjunction
+with metaconfig, one of dist's components.
+
+In March 1993, I left ISE and returned to France to join A.C.R.I.. Although
+mailagent-3.0 was virtually finished by that time, I needed to release dist-3.0
+first due to some intensive user-pressure ;-). It's only late October 1993 that
+I found the time to finalize the manual page and add all the small features
+stacked in my TODO list...
+
+CREDITS
+
+My first thanks will go to Larry Wall <lwall@netlabs.com> who wrote perl
+in the first place. I would never have dreamed of implementing mailagent
+from scratch if perl had not been invented.
+
+Then I'd like to thank all the early mailagent users for their useful input,
+suggestions, encouragement, contributions, constructive criticism or bug
+reports, and especially (by alphabetical order on the first name):
+
+	Akihiro Hashimoto <cik1a03@dominic.ipc.chiba-u.ac.jp>
+	Andrew Hardie <ash@cellar.demon.co.uk>
+	Andy Glew <glew@ichips.intel.com>
+	Arthur Siffert <siffert@spot.Colorado.EDU>
+	Bertrand Meyer <bertrand@eiffel.com>
+	Bill Campbell <billc@sierra.com>
+	Bill Wohler <wohler@hw1175.sap-ag.de>
+	Bjoern Stabell <bjoerns@stud.cs.uit.no>
+	Brent Chapman <brent@GreatCircle.COM>
+	CJ Canon <Clement.J.Canon@arp.anu.edu.au>
+	Charles A. Lind <lind@eng.umd.edu>
+	Chris Lewis <clewis@ferret.ocunix.on.ca>
+	Christian Bertin <bertin@acri.fr>
+	Christoph von Stuckrad <stucki@math.fu-berlin.de>
+	Christopher Davis <ckd@eff.org>
+	Dan O'Neill <dano@Cadence.COM>
+	Dan Pierson <pierson@kukri.enet.dec.com>
+	Darrell Schiebel <dschieb@muse.cv.nrao.edu>
+	David Giddy <d.giddy@trl.oz.au>
+	David Vincenzetti <vince@dsi.unimi.it>
+	David W. Tamkin <dattier@ddsw1.mcs.com>
+	Edward Feustel <efeustel@ida.org>
+	Eric M. Carroll <eric@enfm.utcc.utoronto.ca>
+	Erland Unruh <Erland.Unruh@malmo.trab.se>
+	Forrest Aldrich <visgraph!forrie>
+	Geoffrey Hart <ghart@ems.cdc.com>
+	George Entenman <ge@mcnc.org>
+	George Smith <gbs@stratus.swdc.stratus.com>
+	George W. Wood <wood@ibmoto.com>
+	Graham Stoney <greyham@research.canon.oz.au>
+	Henry Kautz <kautz@research.att.com>
+	J. Mark Noworolski <jmn@crown.Berkeley.EDU>
+	JJ Lay <csjjlay@knuth.mtsu.edu>
+	James Ault <aultj@rpi.edu>
+	Jan Polcher <polcher@lmd.ens.fr>
+	Jan-Piet Mens <jpm@Logix.DE>
+	Janna Wemekamp <jw@cxcbr.cx.oz.au>
+	Jean-Marc Calvez <calvez@acri.fr>
+	Jean-Marc Eurin <eurin@acri.fr>
+	Jim McCoy <mccoy@ccwf.cc.utexas.edu>
+	John Plate <plate@infotek.dk>
+	Jost Krieger <x920031@rubb.rz.ruhr-uni-bochum.de>
+	Harald Koch <chk@enfm.utcc.utoronto.ca>
+	Keith Pyle <keith@ibmoto.com>
+	Keith Rose <rose@ultryx.com>
+	Kent Landfield <kent@imd.sterling.com>
+	Khalid Sattar <khalid@harlequin.co.uk>
+	Kresten Krab Thorup <krab@iesd.auc.dk>
+	Larry W. Virden <lvirden@cas.org>
+	Mark Allman <mallman@oucsace.cs.ohiou.edu>
+	Mark Kristie <clueless@camelot.bradley.edu>
+	Mats Lidell <Mats.Lidell@eua.ericsson.se>
+	Matthew Simmons <zarthac@camelot.bradley.edu>
+	Michael Elkins <michael@jarthur.Claremont.EDU>
+	Michael Peppler <mpeppler@itf0.itf.ch>
+	NW Thomson <nige@kauri.vuw.ac.nz>
+	Nigel Metheringham <nigelm@ohm.york.ac.uk>
+	Ofer Inbar <cos@chaos.cs.brandeis.edu>
+	Pascal Poissonnier <ppoisson@acri.fr>
+	Patrick Labbaye <labbaye@acri.fr >
+	Paul Raines <raines@bohr.physics.upenn.edu>
+	Peter J Diaz de Leon <peter@miller.cs.uwm.edu>
+	Peter N. Wan <peter@cc.gatech.edu>
+	Ralf E. Stranzenbach <ralf@reswi.en.open.de>
+	Richard Schneider <rschneid@erc.epson.com>
+	Robert Brown <robertb@Barra.COM>
+	Scott A. McIntyre <scott@shrug.dur.ac.uk>
+	Scott Blachowicz <scott@statsci.com>
+	Scott Robinson <shr@ichips.intel.com>
+	Scott Schwartz <schwartz@groucho.cs.psu.edu>
+	Sean Casey <sean@ms.uky.edu>
+	Shigeya Suzuki <shigeya@foretune.co.jp>
+	Soumendra Daas <dos@remus.ee.byu.edu>
+	Sterling IMD <root@imd.sterling.com>
+	Steve Hill <steveh@okam.corp.sgi.com>
+	Syd Weinstein <syd@dsinc.dsi.com>
+	Terry Hull <terry@eece.ksu.edu>
+	Thomas Richter <richter@chemie.fu-berlin.de>
+	Thunder-Thumbs <siffert@rintintin.Colorado.EDU>
+	Tom Christiansen <tchrist@wraeththu.cs.colorado.edu>
+	Tom Limoncelli <tom_limoncelli@Warren.MENTORG.COM>
+	Tom Zheng <tzheng@cs.purdue.edu>
+	Valery Alexeev <alexeev@math.utah.edu>
+	Wes Price <ww2@bullwinkle.ssc.gov>
+	Wolfram Schmidt <wschmidt@iao.fhg.de>
+	Yeung Chee Wai <cheewai@uxmail.ust.hk>
+	alexeev@math.utah.edu
+	drw@bourbaki.mit.edu
+	jim@morse.ilo.dec.com
+	rschneid@callisto.erc.epson.com
+	rsmith@proteus.arc.nasa.gov
+	s090@brems.ii.uib.no
+	sondeen@ISI.EDU
+
+If I forgot your name, please let me know, and accept my apologies -- not
+necessarily in that order ;-).
+
+Deepest thanks go to:
+
+	Christian Bertin <bertin@acri.fr>
+	Eric M. Carroll <eric@enfm.utcc.utoronto.ca>
+	Graham Stoney <greyham@research.canon.oz.au>
+	Jean-Marc Eurin <eurin@acri.fr>
+
+for their active contributions, with a special mention to Jean-Marc Eurin
+for carefully reviewing the release, installing it and proofreading the (long)
+manual page before my official posting to comp.sources.misc.
+
+I would also like to thank Manoj Srivastava <srivasta@datasync.com>, who
+did a wonderful job as Debian packager for mailagent.
+
+Finally, thank you Shigeya Suzuki <shigeya@foretune.co.jp> for hosting the
+agent-users mailing list. Send mail to majordomo@foretune.co.jp to subscribe.
+
+	Raphael Manfredi <ram@acri.fr>
+	Lyon, France, December 1993
+
+	Raphael Manfredi <Raphael_Manfredi@pobox.com>
+	Grenoble, France, March 2001

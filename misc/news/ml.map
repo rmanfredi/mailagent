@@ -1,0 +1,39 @@
+#
+# $Id: ml.map,v 3.0.1.2 2001/03/13 13:16:30 ram Exp ram $
+#
+# $Log: ml.map,v $
+# Revision 3.0.1.2  2001/03/13 13:16:30  ram
+# patch71: typo fixes in leading comment
+#
+# Revision 3.0.1.1  2001/01/10 16:59:55  ram
+# patch69: created
+#
+#
+
+#
+# This file should be installed in /etc/news
+#
+# It is used by newsgate to redirect news posting to the listed newsgroups
+# to their respective mailing lists.  Users don't call newsgate directly,
+# it is invoked by the news server.
+#
+# For INN, add this line to /etc/news/newsfeeds:
+#
+#   ml-gateway!:!*,ml.*/!local\
+#        :Tp:/usr/bin/newsgate -log /var/log/news/gate.log
+#
+# (the leading !* entry is to remove all ME: default settings)
+#
+# You must have sendmail correctly configured on the machine you're using
+# newsgate for this to work.  The "ml" prefix here is just my convention
+# for mail-lists that I feed to my local news server.
+#
+
+ml.softs.amanda.hackers			amanda-hackers@amanda.org
+ml.softs.amanda.users			amanda-users@amanda.org
+ml.softs.suck					suck-ml@3ware.co.jp
+ml.debian.fr					debian-french@lists.debian.org
+ml.linux.abit					linux-abit@geek.net
+ml.linux.kernel					linux-kernel@vger.kernel.org
+ml.lang.perl.porters			perl5-porters@perl.org
+

@@ -1,0 +1,18 @@
+Subject: This is a recording... [Re: %R]
+Organization: %o
+Precedence: bulk
+
+[This is a recording -- Last revision was made on %T (month/day)]
+
+Hello %N:
+
+I have received your message of %[Date], whose subject
+was "%s" and dropped it into one
+of %u's mailbox. I will send you such an acknowledgment only once a day.
+(Your mail was received by a program, not by a person, in case you wonder.)
+
+%U told me:
+
+Suitable vacation message goes here...
+
+-- mailagent speaking for %u

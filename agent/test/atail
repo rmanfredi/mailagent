@@ -1,0 +1,79 @@
+: # feed this into perl
+	eval 'exec perl -S $0 "$@"'
+		if $running_under_some_shell;
+
+# $Id: atail,v 3.0.1.1 1994/09/22 14:40:37 ram Exp ram $
+#
+#  Copyright (c) 1990-2006, Raphael Manfredi
+#  
+#  You may redistribute only under the terms of the Artistic License,
+#  as specified in the README file that comes with the distribution.
+#  You may reuse parts of this distribution only within the terms of
+#  that same Artistic License; a copy of which may be found at the root
+#  of the source tree for mailagent 3.0.
+#
+# $Log: atail,v $
+# Revision 3.0.1.1  1994/09/22  14:40:37  ram
+# patch12: created
+#
+
+# Active monitoring of out/agentlog. This is going to be a CPU hog, but is
+# intended to debug stall cases or weird mailagent errors.
+# Launched automatically with the -m (monitor) option of TEST.
+# Aborts when parent becomes init after 5 seconds of delay, just in case
+# the TEST program dies without having a chance to kill us.
+
+$LOG = 'out/agentlog';		# Log file
+$open = 0;					# True when file opened
+$size = 0;					# Last file size
+
+$SIG{'ALRM'} = 'check_parent';
+alarm(5);
+
+select STDOUT;
+$| = 1;
+
+for (;;) {
+	&close_file if !-e $LOG && $open;
+	next unless -f _;
+	&new_file unless $open;
+	&check_size if $open;
+}
+
+# Log file disappeared
+sub close_file {
+	print "** Log removed\n";
+	close LOG;
+	$open = 0;
+	$size = 0;
+}
+
+# File reappeared
+sub new_file {
+	print "** New log file\n";
+	open(LOG, $LOG);
+	$open = 1;
+}
+
+# Print whatever there is in the file after $size bytes
+sub check_size {
+	$now = -s _;
+	if ($now < $size) {
+		print "** Replaced log file\n";
+		open(LOG, $LOG);
+		$size = 0;
+	}
+	seek(LOG, $size, 0);
+	sysread(LOG, $buf, $now - $size);
+	$size = $now;
+	print $buf;
+}
+
+# Make sure our parent is not init
+sub check_parent {
+	die "atail: parent process died, exiting\n" if getppid == 1;
+	# Don't know whether perl re-instantiates handlers when kernel doesn't
+	$SIG{'ALRM'} = 'check_parent';
+	alarm(5);
+}
+

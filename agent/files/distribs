@@ -1,0 +1,24 @@
+# Distributions (under vi, use ':set ts=4')
+
+# prog version 		path 				 archiv	.Z patches
+
+kit		1.0		~/home/projects/kit			n	n	o
+kit		2.0		~/home/projects/kit			n	n	y
+dist	2.0		~/home/projects/dist		n	n	y
+matrix	1.1		~/home/projects/matrix		n	n	y
+cshar	3.0		~/home/projects/cshar-3.0	n	n	y
+file	---		~/arch/dist/file			y	y	n
+rcs		5.5		~/arch/dist/rcs-5.5			y	y	n
+cops	---		~/arch/dist/cops			y	y	n
+flex	2.3		~/arch/dist/flex2.3			y	y	n
+xfmt	---		~/arch/dist/xfmt			y	y	n
+et		---		~/arch/dist/et				y	y	n
+less	123		~/arch/dist/less			y	y	n
+undel	2.0		~/arch/dist/undel2			y	y	n
+perl	3.0		~/arch/dist/perl-3.0		n	n	n
+perl	4.0		~/arch/dist/perl-4.0		n	n	p
+patch	2.0		~/arch/dist/patch			y	y	n
+
+#rcs	4.3		~/arch/dist/rcs.4_3			y	y	n
+#undel	1.0		~/arch/dist/UNDEL			y	y	n
+#dither	1.0		~/arch/dist/DITHER			y	y	y
