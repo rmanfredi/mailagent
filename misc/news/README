@@ -37,6 +37,28 @@ following switches:
     -odb    delivery in background
     -oi     a single "." is not the end of a message
 
+----------------------------------------------------------------------
+
+Here are sample configurations for INN and INN2.  This configuration
+gateways the groups in the ml.* hierearchy to the newsgate program,
+which will then dispatch to the proper addresses, as defined in the
+/etc/news/ml.map file.
+
+The INN and INN2 configurations are made via /etc/news/newsfeeds.
+
+INN newsfeeds configuration:
+
+ml-gateway!:!*,ml.*/!local\
+	:Tp:/usr/local/bin/newsgate -log /var/log/news/newsgate.log
+
+INN2 newsfeeds configuration (foo@example.com will be ingored):
+
+ml-gateway!:!*:W*,Tp:\
+	sm %s | /usr/local/bin/newsgate -log /var/log/news/newsgate.log *
+foo@example.com:ml.*/!local:Tm:ml-gateway!
+
+----------------------------------------------------------------------
+
 Have fun!
 
 Raphael Manfredi <Raphael_Manfredi@pobox.com>

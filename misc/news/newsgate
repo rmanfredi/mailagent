@@ -3,7 +3,7 @@
 		if $running_under_some_shell;
 
 #
-# $Id: newsgate,v 3.0.1.2 2001/03/13 13:17:03 ram Exp ram $
+# $Id$
 #
 #  Copyright (c) 1990-2006, Raphael Manfredi
 #  
@@ -101,7 +101,7 @@ my $skipping_header = 0;
 my %header;
 my $field;
 
-while (<>) {
+while (<STDIN>) {
 	last if /^$/;
 	if (
 		/^Path:/i			||
@@ -211,7 +211,7 @@ print MAILER "To: ", join(", ", @to), "\n";
 print MAILER $header;
 print MAILER "In-Reply-To: $in_reply_to\n" if length $in_reply_to;
 print MAILER "X-Mailer: $me $VERSION at $cname\n\n";	# To prevent loops
-while (<>) {
+while (<STDIN>) {
 	print MAILER;
 }
 close MAILER;

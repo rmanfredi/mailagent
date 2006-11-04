@@ -1,5 +1,5 @@
 #
-# $Id: ml.map,v 3.0.1.2 2001/03/13 13:16:30 ram Exp ram $
+# $Id$
 #
 # $Log: ml.map,v $
 # Revision 3.0.1.2  2001/03/13 13:16:30  ram
@@ -24,6 +24,12 @@
 #
 # (the leading !* entry is to remove all ME: default settings)
 #
+# For INN2, add those lines to /etc/news/newsfeeds:
+#
+#   ml-gateway!:!*:W*,Tp:\
+#         sm %s | /usr/bin/newsgate -log /var/log/news/newsgate.log *
+#   foo@example.com:ml.*/!local:Tm:ml-gateway!
+#
 # You must have sendmail correctly configured on the machine you're using
 # newsgate for this to work.  The "ml" prefix here is just my convention
 # for mail-lists that I feed to my local news server.
@@ -33,7 +39,6 @@ ml.softs.amanda.hackers			amanda-hackers@amanda.org
 ml.softs.amanda.users			amanda-users@amanda.org
 ml.softs.suck					suck-ml@3ware.co.jp
 ml.debian.fr					debian-french@lists.debian.org
-ml.linux.abit					linux-abit@geek.net
 ml.linux.kernel					linux-kernel@vger.kernel.org
 ml.lang.perl.porters			perl5-porters@perl.org
 
