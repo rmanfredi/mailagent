@@ -363,15 +363,14 @@ sub match_var {
 	} else {
 		$buffer = $Header{$selector};
 	}
-	$* = 1;								# Multi-line matching is attempted
-	@matched = eval '($buffer =~ ' . $pattern . ');';
+	# Ensure multi-line matching by adding trailing "m" option to pattern
+	@matched = eval '($buffer =~ ' . $pattern . 'm);';
 	# If buffer is empty, we have to recheck the pattern in a non array context
 	# to see if there is a match. Otherwise, /(.*)/ does not seem to match an
 	# empty string as it returns an empty string in $matched[0]...
-	$matched[0] = eval '$buffer =~ ' . $pattern if $buffer eq '';
+	$matched[0] = eval '$buffer =~ ' . $pattern . 'm' if $buffer eq '';
 	&eval_error;						# Make sure eval worked
 	&update_backref(*matched);			# Record non-null backreferences
-	$* = 0;
 	$matched[0];						# Return matching status
 }
 

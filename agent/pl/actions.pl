@@ -863,6 +863,7 @@ sub post {
 			/^Return-Receipt-To:/i	||		# Sendmail's acknowledgment
 			/^Received:/i			||		# We want to remove received
 			/^Precedence:/i			||
+			/^X-Complaints-To:/i	||		# INN2 does not like this field
 			/^Errors-To:/i					# Error report redirection
 		) {
 			$last_was_header = 1;			# Mark we discarded the line
@@ -1627,6 +1628,9 @@ sub perl {
 	unless (chdir $cf'home) {
 		&add_log("WARNING cannot chdir to $cf'home: $!") if $loglvl > 5;
 	}
+
+	$script =~ s/^\s*~/$cf'home/;	# ~ substitution
+	$script =~ s/\b~/$cf'home/g;	# ~ substitution as first letter in word
 
 	# Set up the @ARGV array, by parsing the $script variable with &shellwords.
 	# Note that the @ARGV array is held in the main package, but since the

@@ -15,8 +15,7 @@
 # Quotation removal routine
 sub q {
 	local($_) = @_;
-	local($*) = 1;
-	s/^://g;
+	s/^://gm;
 	$_;
 }
 

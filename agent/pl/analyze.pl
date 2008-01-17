@@ -108,15 +108,12 @@ sub analyze_mail {
 		local(@filter) = split(/\n/, $header);	# Look for each X-Filter
 		local($address) = &email_addr;			# Our e-mail address
 		local($done) = 0;						# Already processed ?
-		local($*) = 0;
 		local($_);
 		foreach (@filter) {						# Maybe we'll find ourselves
 			if (/mailagent.*for (\S+)/) {		# Mark left by us ?
 				$done = 1 if $1 eq $address;	# Yes, we did that
-				$* = 1;
 				# Remove that X-Filter line, LEAVE will add one anyway
-				$Header{'Head'} =~ s/^X-Filter:\s*mailagent.*for $address\n//;
-				$* = 0;
+				$Header{'Head'} =~ s/^X-Filter:\s*mailagent.*for $address\n//m;
 				last;
 			}
 		}

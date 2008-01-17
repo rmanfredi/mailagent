@@ -232,12 +232,10 @@ sub header_check {
 	# There is usually one Apparently-To line per address. Remove all new lines
 	# in the header line and replace them with ','. Likewise for To: and Cc:.
 	# although it is far less likely to occur.
-	local($*) = 1;
 	foreach $field ('Apparently-To', 'To', 'Cc') {
-		$Header{$field} =~ s/\n/,/g;	# Remove new-lines
-		$Header{$field} =~ s/,$/\n/;	# Restore last new-line
+		$Header{$field} =~ s/\n/,/gm;	# Remove new-lines
+		$Header{$field} =~ s/,$/\n/m;	# Restore last new-line
 	}
-	$* = 0;
 
 	# If no To: field, then maybe there is an Apparently-To: instead. If so,
 	# make them identical. Otherwise, assume the mail was directed to the user.
