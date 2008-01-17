@@ -217,7 +217,6 @@ struct pool {
 private int queued = 0;			/* True when mail queued safely */
 private struct mail mail;		/* Where mail is expected to lie */
 
-extern int errno;				/* System call error status */
 extern char *malloc();			/* Memory allocation */
 extern char *realloc();			/* Re-allocation of memory pool */
 extern char *logname();			/* User's login name */

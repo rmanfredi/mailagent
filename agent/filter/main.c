@@ -78,7 +78,6 @@ private int set_real_gid();	/* Reset real gid */
 private void no_setid();	/* Option not allowed when running set[ug]id */
 
 extern void env_home();		/* Only for tests */
-extern int errno;
 
 
 public void main(argc, argv, envp)

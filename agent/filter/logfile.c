@@ -45,6 +45,7 @@
 #include "config.h"
 #include "portable.h"
 #include <stdio.h>
+#include <errno.h>
 #include <sys/types.h>
 
 #ifdef I_TIME

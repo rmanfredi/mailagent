@@ -72,7 +72,6 @@
 private char lockfile[MAX_STRING];		/* Location of main filter lock file */
 private int locked = 0;					/* Did we lock successfully? */
 
-extern int errno;						/* System error status */
 extern Time_t time();					/* Current time */
 
 public int filter_lock(dir)
