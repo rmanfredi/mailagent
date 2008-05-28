@@ -45,9 +45,15 @@
 
 #include "config.h"
 #include "portable.h"
+
+#include <stdio.h>
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+
+#ifdef I_UNISTD
+#include <unistd.h>
+#endif
 
 #ifdef I_FCNTL
 #include <fcntl.h>
@@ -63,6 +69,8 @@
 #endif
 
 #include "parser.h"
+#include "msg.h"
+#include "logfile.h"
 #include "lock.h"
 #include "confmagic.h"
 

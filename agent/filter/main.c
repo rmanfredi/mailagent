@@ -59,6 +59,15 @@
 #include <signal.h>
 #include <sys/types.h>
 #include <errno.h>
+
+#ifdef I_UNISTD
+#include <unistd.h>
+#endif
+
+#ifdef I_STDLIB
+#include <stdlib.h>
+#endif
+
 #include "logfile.h"
 #include "io.h"
 #include "hash.h"
@@ -78,9 +87,9 @@ private int set_real_gid();	/* Reset real gid */
 private void no_setid();	/* Option not allowed when running set[ug]id */
 
 extern void env_home();		/* Only for tests */
+extern void my_exit();
 
-
-public void main(argc, argv, envp)
+public int main(argc, argv, envp)
 int argc;
 char **argv;
 char **envp;
@@ -178,6 +187,7 @@ char **envp;
 	process();								/* Process mail */
 
 	my_exit(EX_OK);		/* We did it */
+	return 0;			/* Shut up compielr warnings */
 }
 
 private int set_real_uid(ruid)

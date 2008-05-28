@@ -29,7 +29,19 @@
 
 #include "config.h"
 #include "portable.h"
+
+#ifdef I_MALLOC
+#include <malloc.h>
+#endif
+
+#ifdef I_STRING
+#include <string.h>
+#else
+#include <strings.h>
+#endif
+
 #include "hash.h"
+#include "msg.h"
 #include "confmagic.h"
 
 #ifndef lint
@@ -41,8 +53,6 @@ private uint32 hashcode();			/* The hahsing function */
 private int prime();				/* Is a number a prime one? */
 private uint32 nprime();			/* Find next prime number */
 
-extern char *malloc();				/* Memory allocation */
-extern char *calloc();				/* Character allocation */
 extern char *strsave();				/* Save string in memory */
 
 public int ht_create(ht, n)
@@ -58,6 +68,7 @@ int n;
 	int hsize;			/* Size of created table */
 	char **array;		/* For array creation (keys/values) */
 	
+	(void) rcsid;					/* Shut up compiler warning */
 	hsize = nprime((5 * n) / 4);	/* Table's size */
 
 	array = (char **) calloc(hsize, sizeof(char *));	/* Array of keys */

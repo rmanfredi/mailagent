@@ -95,6 +95,7 @@
 
 #include "config.h"
 #include "portable.h"
+
 #include <sys/types.h>
 #include <stdio.h>
 #include <errno.h>
@@ -102,6 +103,12 @@
 
 #ifdef I_UNISTD
 #include <unistd.h>		/* R_OK and friends */
+#endif
+
+#ifdef I_MALLOC
+#include <malloc.h>
+#else
+extern char *malloc();
 #endif
 
 #ifdef I_SYS_WAIT
@@ -157,12 +164,14 @@
 #define R_OK	4			/* Test for read permission */
 #endif
 
+#include "io.h"
 #include "hash.h"
 #include "parser.h"
 #include "lock.h"
 #include "logfile.h"
 #include "environ.h"
 #include "sysexits.h"
+#include "msg.h"
 #include "confmagic.h"
 
 #define BUFSIZE		1024			/* Amount of bytes read in a single call */
@@ -185,7 +194,7 @@ private FILE *stream_by_fd[] = {
 	0,		/* ... 1 */
 	0,		/* ... 2 */
 };
-#define STDIO_FDS	(sizeof(stream_by_fd) / sizeof(FILE *))
+#define STDIO_FDS	(int) (sizeof(stream_by_fd) / sizeof(FILE *))
 
 private char *agent_lockfile();	/* Name of the mailagent lock */
 private int get_lock();			/* Attempt to get a lockfile */
@@ -217,13 +226,13 @@ struct pool {
 private int queued = 0;			/* True when mail queued safely */
 private struct mail mail;		/* Where mail is expected to lie */
 
-extern char *malloc();			/* Memory allocation */
-extern char *realloc();			/* Re-allocation of memory pool */
 extern char *logname();			/* User's login name */
 extern char *strsave();			/* Save string somewhere in core */
+extern void my_exit();
 extern int loglvl;				/* Logging level */
 
 private struct pool *pool_alloc(size)
+int size;
 {
 	/* Allocate a new pool of given size, or fail if not enough memory */
 
@@ -245,6 +254,8 @@ private struct pool *pool_alloc(size)
 
 failed:
 	fatal("out of memory");
+	/* NOTREACHED */
+	return NULL;				/* Shut up compiler warnings */
 }
 
 private struct pool *pool_init(size)
@@ -295,7 +306,7 @@ int len;				/* Amount of data in buf to transfer */
 	struct pool *lp = *pool;		/* Local pool pointer */
 	int fit;						/* Amount of data that can fit */
 
-	while (fit = len) {				/* Assume everything will fit */
+	while ((fit = len)) {			/* Assume everything will fit */
 		if ((lp->offset + len) > lp->size)
 			fit = lp->size - lp->offset;
 
@@ -371,7 +382,7 @@ private void read_stdin()
 
 	pool = pool_init(CHUNK);
 
-	while (n = read(0, buf, BUFSIZE)) {
+	while ((n = read(0, buf, BUFSIZE))) {
 		if (n == -1) {
 			add_log(1, "SYSERR read: %m (%e)");
 			fatal("I/O error while reading mail");
@@ -686,7 +697,8 @@ char *path;			/* The path under which we should look for program */
 
 	for (ep = cp = path; ep && *cp; cp = ep ? (ep + 1) : ep) {
 		ep = index(cp, ':');				/* Lookup next `:' separator */
-		len = ep ? (ep - cp) : strlen(cp);	/* Slurp remaining if not found */
+		len = ep ? (ep - cp) :
+			(int) strlen(cp);				/* Slurp remaining if not found */
 		if ((len + proglen + 1) > MAX_STRING) {
 			add_log(4, "WARNING skipping directory while looking for %s", prog);
 			continue;
@@ -925,15 +937,15 @@ public int emergency_save()
 		goto ok;
 	if ((home != (char *) 0) && (char *) 0 != (where = save_file(home)))
 		goto ok;
-	if (where = save_file("/usr/spool/uucppublic"))
+	if ((where = save_file("/usr/spool/uucppublic")))
 		goto ok;
-	if (where = save_file("/var/spool/uucppublic"))
+	if ((where = save_file("/var/spool/uucppublic")))
 		goto ok;
-	if (where = save_file("/usr/tmp"))
+	if ((where = save_file("/usr/tmp")))
 		goto ok;
-	if (where = save_file("/var/tmp"))
+	if ((where = save_file("/var/tmp")))
 		goto ok;
-	if (where = save_file("/tmp"))
+	if ((where = save_file("/tmp")))
 		goto ok;
 
 	/*
@@ -1258,7 +1270,7 @@ int ruid;				/* Real uid */
 				filename);
 			return 0;
 		}
-		if (buf.st_uid != ruid) {
+		if ((int) buf.st_uid != ruid) {
 			add_log(1, "ERROR cannot append to %s (not owned by UID %d)",
 				filename, ruid);
 			return 0;
@@ -1292,7 +1304,7 @@ int ruid;				/* Real uid */
 			add_log(2, "ERROR can't locate %s after opening", filename);
 			return 0;
 		}
-		if (buf.st_uid != ruid) {
+		if ((int) buf.st_uid != ruid) {
 			close(fd);
 			add_log(1, "ERROR cannot append to %s (not owned by UID %d)",
 				filename, ruid);

@@ -36,13 +36,20 @@
 
 #include "config.h"
 #include "portable.h"
+#include "logfile.h"
 #include "hash.h"
+#include "msg.h"
 #include <stdio.h>
 
 #ifdef I_STRING
 #include <string.h>
 #else
 #include <strings.h>
+#endif
+#ifdef I_MALLOC
+#include <malloc.h>
+#else
+extern char *malloc();				/* Memory allocation */
 #endif
 #include "confmagic.h"
 
@@ -56,7 +63,6 @@
  */
 private struct htable henv;			/* The associative array for env */
 
-extern char *malloc();				/* Memory allocation */
 extern char *strsave();				/* String saving */
 
 public void print_env(fd, envp)
@@ -85,7 +91,7 @@ char **envp;
 	if (-1 == ht_create(&henv, ENV_VARS))
 		return -1;					/* Cannot create H table */
 
-	while (env = *envp++) {
+	while ((env = *envp++)) {
 		strncpy(env_line, env, MAX_STRING);
 		ptr = index(env_line, '=');
 		if (ptr == (char *) 0) {

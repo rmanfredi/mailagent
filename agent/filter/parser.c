@@ -434,7 +434,7 @@ int flags;	/* MAY_PANIC | MUST_OWN */
 	} else
 		*parent = '\0';				/* Null string */
 	strcat(parent, file);			/* Append file to get an absolute path */
-	if (c = rindex(parent, '/'))
+	if ((c = rindex(parent, '/')))
 		*c = '\0';					/* Strip down last path component */
 
 	add_log(17, "checking directory %s", parent);
@@ -551,7 +551,7 @@ char *dflt;		/* Default value to be used if option not defined */
 
 	char buffer[MAX_STRING];
 	char *namestr;		/* String in H table */
-	char *val;			/* Returned value */
+	char *val = dflt;	/* Returned value */
 
 	namestr = ht_value(&symtab, name);
 	if (namestr == (char *) 0) {
@@ -561,7 +561,6 @@ char *dflt;		/* Default value to be used if option not defined */
 			fatal(buffer);
 			/* NOTREACHED */
 		case CF_DEFAULT:	/* May use default if variable not defined */
-			val = dflt;
 			break;
 		default:
 			fatal("BUG: get_confval");
@@ -602,7 +601,7 @@ char *value;
 	char *ptr = buffer;				/* To iterate over the buffer */
 
 	strcpy(buffer, value);			/* Make a copy of original line */
-	while (*value++ = *ptr)			/* Line is updated in-place */
+	while ((*value++ = *ptr)) {		/* Line is updated in-place */
 		switch(*ptr++) {
 		case '~':					/* Replace by home directory */
 			add_home(&value);
@@ -611,6 +610,7 @@ char *value;
 			add_variable(&value, &ptr);
 			break;
 		}
+	}
 }
 
 private void add_home(to)
@@ -631,7 +631,7 @@ char **to;						/* Pointer to address in substituted text */
 	if (symbol != (char *) 0)				/* Yes, we did */
 		ptr = symbol;						/* Use it for ~ substitution */
 
-	while (*value++ = *ptr++)	/* Copy string */
+	while ((*value++ = *ptr++))	/* Copy string */
 		;
 
 	*to = value - 1;			/* Update position in substituted string */
@@ -650,7 +650,7 @@ char **from;					/* Pointer to address in original text */
 	char *dol_value;			/* $value of variable */
 
 	/* Get variable's name */
-	while (*name++ = *ptr) {
+	while ((*name++ = *ptr)) {
 		if (isalnum(*ptr) || *ptr == '_')
 			ptr++;
 		else
@@ -666,7 +666,7 @@ char **from;					/* Pointer to address in original text */
 		return;
 
 	/* Do the variable substitution */
-	while (*value++ = *dol_value++)
+	while ((*value++ = *dol_value++))
 		;
 	
 	*to = value - 1;			/* Update pointer to substituted text */
@@ -694,7 +694,7 @@ int line;						/* The line number, for error reports */
 	if (*path == '\0')					/* A line full of spaces */
 		return;							/* Ignore it */
 
-	while (*nptr++ = *path) {			/* Copy everything until non alphanum */
+	while ((*nptr++ = *path)) {			/* Copy everything until non alphanum */
 		if (*path == '_') {
 			/* Valid variable character, although not 'isalnum' */
 			path++;
@@ -732,7 +732,7 @@ char *line;
 	char *first = (char *) 0;		/* First space in sequence */
 	char c;							/* Character at current position */
 
-	while (c = *line++) {
+	while ((c = *line++)) {
 		if (isspace(c) && first != (char *) 0)
 			continue;
 		if (c == '#') {					/* This has to be a comment */
@@ -823,7 +823,7 @@ char *host;
 	if (host == (char *) 0)
 		return (char *) 0;
 
-	while (c = *host) {				/* Lower-case name */
+	while ((c = *host)) {			/* Lower-case name */
 		if (isupper(c))
 			*ptr = tolower(c);
 		else {

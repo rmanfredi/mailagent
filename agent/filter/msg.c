@@ -57,7 +57,7 @@
 
 #define MAX_STRING	1024		/* Maximum length for error string */
 
-extern Pid_t progpid;			/* Program PID */
+extern void my_exit();
 
 /* VARARGS2 */
 public void say(msg, arg1, arg2, arg3, arg4, arg5)

@@ -40,6 +40,8 @@
 #define MAX_LEN		1024		/* Maximum length for strings */
 #define PADSTR		"..pad.. "	/* Pad string, for comment */
 
+#include <stdio.h>
+
 #ifdef I_SYS_TYPES
 #include <sys/types.h>
 #endif
@@ -48,6 +50,10 @@
 #include <string.h>
 #else
 #include <strings.h>
+#endif
+
+#ifdef I_STDLIB
+#include <stdlib.h>
 #endif
 
 #include <utmp.h>
@@ -70,7 +76,7 @@ char *padstr = PADSTR;
 		strcat(fields, "'line', "); \
 		last_off += line_len;
 
-main()
+int main()
 {
 	struct utmp *utmp = (struct utmp *) 0;
 	char comment[MAX_LEN];

@@ -48,6 +48,10 @@
 #include <errno.h>
 #include <sys/types.h>
 
+#ifdef I_MALLOC
+#include <malloc.h>
+#endif
+
 #ifdef I_TIME
 # include <time.h>
 #endif
@@ -58,6 +62,12 @@
 # define KERNEL
 # include <sys/time.h>
 # undef KERNEL
+#endif
+
+#ifdef I_STRING
+#include <string.h>
+#else
+#include <strings.h>
 #endif
 
 /* Get the O_* constants */
@@ -88,7 +98,6 @@ public char *progname = "ram";	/* Program name */
 public Pid_t progpid = 0;		/* Program PID */
 
 extern Time_t time();			/* Time in seconds since the Epoch */
-extern char *malloc();			/* Memory allocation */
 extern char *strsave();			/* Save string in memory */
 extern int errno;				/* System error report variable */
 
@@ -200,8 +209,8 @@ char *to;
 
 	int len;							/* Length of substituted text */
 
-	while (*to++ = *from)
-		if (*from++ == '%')
+	while ((*to++ = *from)) {
+		if (*from++ == '%') {
 			switch (*from) {
 			case 'm':					/* %m is the English description */
 				len = add_error(to - 1);
@@ -214,6 +223,8 @@ char *to;
 				from++;
 				break;
 			}
+		}
+	}
 }
 
 private int add_error(where)

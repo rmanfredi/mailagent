@@ -38,11 +38,33 @@
 
 #include "config.h"
 #include "portable.h"
+
+#include <stdio.h>
+
+#ifdef I_MALLOC
+#include <malloc.h>
+#else
+extern char *malloc();
+#endif
+
+#ifdef I_STRING
+#include <string.h>
+#else
+#include <strings.h>
+#endif
+
+#ifdef I_STDLIB
+#include <stdlib.h>
+#endif
+
 #include <ctype.h>
+
 #include "sysexits.h"
+#include "msg.h"
+#include "logfile.h"
 #include "confmagic.h"
 
-extern char *malloc();				/* Memory allocation */
+extern void my_exit();
 
 public char *strsave(string)
 char *string;

@@ -31,6 +31,7 @@
 #define _logfile_h_
 
 #include "config.h"
+#include <sys/types.h>
 
 /* Routine defined by logging package */
 extern void add_log();			/* Add logging message */
