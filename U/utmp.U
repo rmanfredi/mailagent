@@ -13,12 +13,12 @@
 ?MAKE:	-pick add $@ %<
 ?S:utmp:
 ?S:	The path of the utmp file where logins are recorded on the system.
-?S:	Typically something like '/etc/utmp' or '/var/adm/utmp'.
+?S:	Typically something like '/etc/utmp' or '/var/run/utmp'.
 ?S:.
 : determines where the utmp file lies
 echo " "
 case "$utmp" in
-'') dflt=`./loc utmp /etc/utmp /etc /var/adm /usr/etc`;;
+'') dflt=`./loc utmp /etc/utmp /etc /var/adm /usr/etc /var/run`;;
 *) dflt="$utmp";;
 esac
 fn='l/:utmp'
