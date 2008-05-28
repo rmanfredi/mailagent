@@ -370,6 +370,8 @@ if ($mbox_mail) {
 # message will be skipped anyway, so it's not that critical.
 #
 
+my $process_queue = 1;
+
 if (!$run_queue) {				# Do not enter here if -q
 	if (0 != &pmail($file_name, 0)) {
 		&add_log("ERROR while processing main message--queing it") if $loglvl;
@@ -377,26 +379,32 @@ if (!$run_queue) {				# Do not enter here if -q
 		unlink $lockfile;
 		exit 0;					# Do not continue
 	} 
+
+	# If invoked from a tty and not in test mode, do not process queue
+	$process_queue = 0 if -t STDOUT && !$test_mode; 
 }
 
-unless ($test_mode) {
-	# Fork a child: we have to take care of the filter script which is waiting
-	# for us to finish processing of the delivered mail.
-	&fork_child() unless $run_queue;
+if ($process_queue) {
+	unless ($test_mode) {
+		# Fork a child: we have to take care of the filter script which is
+		# waiting for us to finish processing of the delivered mail.
+		&fork_child() unless $run_queue;
 
-	# From now on, we are in the child process... Don't sleep at all if logging
-	# level is greater that 11 or if $run_queue is true. Logging level of 12
-	# and higher are for debugging and should not be used on a permanent basis
-	# anyway.
+		# From now on, we are in the child process...
+		# Don't sleep at all if logging level is greater that 11
+		# or if $run_queue is true. Logging level of 12 and higher are
+		# for debugging and should not be used on a permanent basis
+		# anyway.
 
-	$sleep = 1;					# Give others a chance to queue their mail
-	$sleep = 0 if $loglvl > 11 || $run_queue;
+		$sleep = 1;					# Give others a chance to queue their mail
+		$sleep = 0 if $loglvl > 11 || $run_queue;
 
-	do {						# Eventually process the queue
-		sleep 30 if $sleep;		# Wait in case new mail arrives
-	} while (&pqueue);
-} else {
-	&pqueue;					# Process the queue once in test mode
+		do {						# Eventually process the queue
+			sleep 30 if $sleep;		# Wait in case new mail arrives
+		} while (&pqueue);
+	} else {
+		&pqueue;					# Process the queue once in test mode
+	}
 }
 
 # Mailagent is exiting. Remove lock file as early as possible to avoid a
