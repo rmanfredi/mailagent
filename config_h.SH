@@ -1,29 +1,35 @@
+case "$CONFIG_SH" in
+'') CONFIG_SH=config.sh;;
+esac
+case "$CONFIG_H" in
+'') CONFIG_H=config.h;;
+esac
 case $CONFIG in
 '')
-	if test -f config.sh; then TOP=.;
-	elif test -f ../config.sh; then TOP=..;
-	elif test -f ../../config.sh; then TOP=../..;
-	elif test -f ../../../config.sh; then TOP=../../..;
-	elif test -f ../../../../config.sh; then TOP=../../../..;
+	if test -f $CONFIG_SH; then TOP=.;
+	elif test -f ../$CONFIG_SH; then TOP=..;
+	elif test -f ../../$CONFIG_SH; then TOP=../..;
+	elif test -f ../../../$CONFIG_SH; then TOP=../../..;
+	elif test -f ../../../../$CONFIG_SH; then TOP=../../../..;
 	else
-		echo "Can't find config.sh."; exit 1
+		echo "Can't find $CONFIG_SH."; exit 1
 	fi
-	. $TOP/config.sh
+	. $TOP/$CONFIG_SH
 	;;
 esac
 case "$0" in
 */*) cd `expr X$0 : 'X\(.*\)/'` ;;
 esac
-echo "Extracting config.h (with variable substitutions)"
-sed <<!GROK!THIS! >config.h -e 's!^#undef\(.*/\)\*!/\*#define\1 \*!' -e 's!^#un-def!#undef!'
+echo "Extracting $CONFIG_H (with variable substitutions)"
+sed <<!GROK!THIS! >$CONFIG_H -e 's!^#undef\(.*/\)\*!/\*#define\1 \*!' -e 's!^#un-def!#undef!'
 /*
  * This file was produced by running the config_h.SH script, which
- * gets its values from config.sh, which is generally produced by
+ * gets its values from $CONFIG_SH, which is generally produced by
  * running Configure.
  *
  * Feel free to modify any of this as the need arises.  Note, however,
  * that running config_h.SH again will wipe out any changes you've made.
- * For a more permanent change edit config.sh and rerun config_h.SH.
+ * For a more permanent change edit $CONFIG_SH and rerun config_h.SH.
  *
  * \$Id$
  */
@@ -44,10 +50,12 @@ sed <<!GROK!THIS! >config.h -e 's!^#undef\(.*/\)\*!/\*#define\1 \*!' -e 's!^#un-
  */
 #if $cpp_stuff == 1
 #define STRINGIFY(a)"a"
-#define SQuoTe(a)"a
-#define EQuoTe(a)a"
+#define SQuoTe(a)${cpp_quote}a
+#define EQuoTe(a)a${cpp_quote}
 #endif
 #if $cpp_stuff == 42
+#define CaTiFy(a,b) a ## b
+#define CAT2(a,b) CaTiFy(a,b)
 #define StGiFy(a)# a
 #define STRINGIFY(a)StGiFy(a)
 #endif
@@ -104,6 +112,16 @@ sed <<!GROK!THIS! >config.h -e 's!^#undef\(.*/\)\*!/\*#define\1 \*!' -e 's!^#un-
  *	This symbol, if defined, indicates that the getopt() routine exists.
  */
 #$d_getopt HAS_GETOPT		/**/
+
+/* HAS_GNULIBC:
+ *	This symbol, if defined, indicates to the C program that 
+ *	the GNU C library is being used.  A better check is to use
+ *	the __GLIBC__ and __GLIBC_MINOR__ symbols supplied with glibc.
+ */
+#$d_gnulibc HAS_GNULIBC  	/**/
+#if defined(HAS_GNULIBC) && !defined(_GNU_SOURCE)
+#define _GNU_SOURCE
+#endif
 
 /* HAS_RENAME:
  *	This symbol, if defined, indicates that the rename routine is available
@@ -227,6 +245,18 @@ sed <<!GROK!THIS! >config.h -e 's!^#undef\(.*/\)\*!/\*#define\1 \*!' -e 's!^#un-
  *	This manifest constant tells the C program to include <fcntl.h>.
  */
 #$i_fcntl I_FCNTL	/**/
+
+/* I_MALLOC:
+ *	This symbol, if defined, indicates to the C program that it should
+ *	include <malloc.h>.
+ */
+#$i_malloc I_MALLOC		/**/
+
+/* I_STDLIB:
+ *	This symbol, if defined, indicates that <stdlib.h> exists and should
+ *	be included.
+ */
+#$i_stdlib I_STDLIB		/**/
 
 /* I_STRING:
  *	This symbol, if defined, indicates to the C program that it should
