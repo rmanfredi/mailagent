@@ -881,6 +881,9 @@ sub post {
 		}
 		next if /^\s/ && $last_was_header;	# Skip removed header continuations
 		$last_was_header = 0;				# We decided to keep header line
+		# Ensure that we always put a single space after the field name
+		# (before possibly emitting a newline for the continuation)
+		s/^([\w-]+):(\S)/$1: $2/ || s/^([\w-]+):$/$1: /;
 		print NEWS $_, "\n";
 	}
 
