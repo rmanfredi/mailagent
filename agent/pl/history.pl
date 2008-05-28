@@ -94,12 +94,33 @@ sub history_tag {
 		if ($time > 0) {			# Message already recorded
 			local($tagmsg) = $tag eq '' ? '' : " ($tag)";
 			&add_log("history duplicate <$msg_id>" . $tagmsg) if $loglvl > 6;
-			$seen++;
+			$seen++ unless history_ignore($msg_id, $tag);
 		} else {					# Record message (appending)
 			&dbr'update($host, 'HISTORY', 0, @regexp);
 		}
 	}
 	return $seen;					# Return seen status
+}
+
+# Look at whether we should ignore the duplicate if -U was given
+# We ignore the first match for a given tag, so if one of the tags here
+# was already recorded in %ignored_history_tag, we ignore the -U switch.
+# The reason is that different paths in the rules could lead to a UNIQUE
+# command that is meant to trap the fact the message was already seen...
+# Return TRUE if we need to ignore the duplicate for this time
+sub history_ignore {
+	my ($msg_id, $tag) = @_;
+	return 0 unless $disable_unique;		# return unless -U given
+	if ($ignored_history_tag{$tag}++) {
+		# We already ignored once for this tag
+		add_log("not ignoring this duplicate <$msg_id>$tagmsg despite -U")
+			if $loglvl > 6;
+		return 0
+	}
+	my $tagmsg = $tag eq '' ? '' : " ($tag)";
+	add_log("ignoring duplicate <$msg_id>$tagmsg since you gave -U")
+		if $loglvl > 6;
+	return 1;				# Ignore this duplicate
 }
 
 # Obsolete -- will be removed in next release

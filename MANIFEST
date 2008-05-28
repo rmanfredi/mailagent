@@ -273,6 +273,7 @@ agent/test/option/F.t          Test -F option
 agent/test/option/I.t          Test -I option
 agent/test/option/L.t          Test -L option
 agent/test/option/V.t          Test -V option
+agent/test/option/U.t          Test -U option
 agent/test/option/c.t          Test -c option
 agent/test/option/d.t          Test -d option
 agent/test/option/e.t          Test -e option

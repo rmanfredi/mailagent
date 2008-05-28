@@ -17,29 +17,47 @@ written, making it possible for someone to be able to understand and modify
 them.
 
 Running the whole test suite takes a long time. On my machine with 40 Mb of
-main memory, it requires 12 minutes to complete. It may take a lot longer
-if you do not have at least 16 Mb of RAM.
+main memory, it requires 12 minutes to complete (in 1991). It may take a lot
+longer if you do not have at least 16 Mb of RAM.
+
+The following options are available to TEST:
+
+	-i		incremental, rerun only failed tests
+	-m		monitor logfile with "atail"
+	-n		use the non-dataloaded version
+	-o		allow outdated mailagent / filter
+	-s		stop at first error
 
 The option -i turns the incremental mode on. This proved really nice to
 me when I was writing this suite, as I was able to skip all the successful
-tests and focus only on those which failed or the new ones. The -s option will
-cause the test suite to stop at the first error. Normally, only failed basic
-tests abort the process. The -o option will not restart the tests from scratch,
-even if the mailagent or filter is newer than the current OK file. Option -n
-will test the non-dataloaded version of the mailagent (because of some bugs
-with eval() which cause the dataloaded version to dump core via a segmentation
-violation).
+tests and focus only on those which failed or the new ones.
+
+The -s option will cause the test suite to stop at the first error. Normally,
+only failed basic tests abort the process.
+
+The -o option will not restart the tests from scratch, even if the mailagent
+or filter is newer than the current OK file.
+
+Option -n will test the non-dataloaded version of the mailagent (because
+of some bugs with eval() which cause the dataloaded version to dump core
+via a segmentation violation).
 
 The -m option is for desperate cases. It launches the atail process in the
 background (a real CPU hog) to monitor all changes to the out/agentlog file.
 This may be really convenient when debugging a test suite failure...
 
-I don't know why I spent some time documenting all this, as I don't expect
-anybody to have any chance working on this suite. Anyway, it might be nice
-knowing that all the successful tests are recorded in an OK file, along
-with the time stamp of the test, so we may re-run those which were updated
-since last run. In the event the mailagent or the filter are modified, the
-tests are re-run throughoutfully.
+Specifying a list of files on the command line will only run these tests.
+For instance:
+
+	./TEST options/i.t
+
+I don't know why I spent some time documenting all this (in 1992), as I
+don't expect anybody to have any chance working on this suite. Anyway, it
+might be nice knowing that all the successful tests are recorded in an OK
+file, along with the time stamp of the test, so we may re-run those which
+were updated since last run. In the event the mailagent or the filter are
+modified, the tests are re-run throughoutfully.  NB: in 2008, I'm glad I
+did document all that. :-)
 
 The file 'level' is optional. If present, it gives the default logging level
 to be applied when most of the tests are run (i.e. for those who do not require

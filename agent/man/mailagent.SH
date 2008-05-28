@@ -166,7 +166,7 @@ $spitshell >mailagent.$manext <<!GROK!THIS!
 .SH NAME
 mailagent \- an automatic mail-processing tool
 .SH SYNOPSIS
-\fBmailagent\fR [ \fB\-dhilqtFIV\fR ] [ \fB\-s{umaryt}\fR ]
+\fBmailagent\fR [ \fB\-dhilqtFIVU\fR ] [ \fB\-s{umaryt}\fR ]
 [ \fB\-f\fI file\fR ]
 [ \fB\-e\fI rule\fR ] [ \fB\-c\fI config\fR ] [ \fB\-L\fI loglevel\fR ]
 [ \fB\-r\fI rulefile\fR ] [ \fB\-o\fI override\fR ] [ \fImailfile\fR ]
@@ -1035,7 +1035,9 @@ Force processing on already seen messages. Usually, \fImailagent\fR enters
 the special \fI_SEEN_\fR mode when it detects an \fIX-Filter:\fR line issued
 by itself, but this option will have it continue as usual (although vacation
 messages are disabled). Use this option when post-processing mail already
-filtered.
+filtered. Also look at the
+.B \-U
+switch if you are using the RECORD or UNIQUE actions in some rules.
 .TP
 .B \-h
 Print out a usage message on the standard error and exit.
@@ -1105,6 +1107,16 @@ configuration file.
 .TP
 .B \-V
 Print version number and exit.
+.TP
+.B \-U
+Prevent the UNIQUE and RECORD commands from rejecting an already processed
+Message-ID the first time they are run on a given message.
+This is useful when processing messages that have been dropped in the
+.I emergdir
+directory due to some abnormal (but transient) condition and you wish to
+reprocess the message. Also see the
+.B \-F
+switch if you are re-processing messages.
 .PP
 If you invoke mailagent without options and without any arguments, the
 program waits for a mail on its standard input. If an argument is provided, it

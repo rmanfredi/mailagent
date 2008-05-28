@@ -241,6 +241,9 @@ while ($ARGV[0] =~ /^-/) {
 		print STDERR "$prog_name $mversion PL$patchlevel\n";
 		exit 0;
 	}
+	elsif ($_ eq '-U') {	# Do not allow UNIQUE to reject / abort
+		++$disable_unique;
+	}
 	elsif ($_ eq '-TEST') {	# Mailagent run via TEST (undocumented feature)
 		++$test_mode;
 	}
@@ -411,7 +414,7 @@ exit 0;
 # Print usage and exit
 sub usage {
 	print STDERR <<EOF;
-Usage: $prog_name [-dhilqtFIV] [-s{umaryt}] [-f file] [-e rules] [-c config]
+Usage: $prog_name [-dhilqtFIVU] [-s{umaryt}] [-f file] [-e rules] [-c config]
        [-L level] [-r file] [-o def] [mailfile]
   -c : specify alternate configuration file.
   -d : dump filter rules (special).
@@ -429,6 +432,7 @@ Usage: $prog_name [-dhilqtFIV] [-s{umaryt}] [-f file] [-e rules] [-c config]
   -I : install configuration and perform sanity checks.
   -L : force logging level.
   -V : print version number and exits.
+  -U : prevent UNIQUE from rejecting an already processed Message-ID.
 EOF
 	exit 1;
 }

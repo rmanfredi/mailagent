@@ -98,6 +98,17 @@ umask 022;		# Ensure none of the files are world writable
 
 select(STDOUT);
 $| = 1;
+
+# If they specified a list of files, run them and do not update "OK"
+# nor print any summary status.
+
+if (@ARGV) {
+	foreach my $file (@ARGV) {
+		run_file($file);
+		exit($failed ? 1 : 0) ;
+	}
+}
+
 open(OK, ">>OK");
 select(OK);
 $| = 1;		# We may safely interrupt
@@ -185,7 +196,7 @@ sub result {
 
 sub run {
 	local($dir) = @_;
-	chdir $dir || die "Cannot chdir to $dir: $!\n";
+	chdir $dir or die "Cannot chdir to $dir: $!\n";
 	local(@files) = <*.t>;
 	local($test);
 	local($output);
@@ -200,7 +211,22 @@ sub run {
 		&result($test, $output);
 		&basic_failed if $dir eq 'basic' && $failed;
 	}
-	chdir '..' || die "Cannot chdir back to ..: $!\n";
+	chdir '..' or die "Cannot chdir back to ..: $!\n";
+}
+
+sub run_file {
+	my ($path) = @_;
+	my ($dir, $file) = $path =~ m|^(.*)/(.*)|;
+	my $test = "$dir/$file";
+	unless (-f $test) {
+		warn "WARNING: ignoring missing $path\n";
+		return;
+	}
+	&print($dir, $file);
+	chdir $dir or die "Cannot chdir to $dir: $!\n";
+	$output = `perl $file`;
+	&result($test, $output);
+	chdir $pwd or die "Cannot chdir back to ..: $!\n";
 }
 
 sub basic_failed {
