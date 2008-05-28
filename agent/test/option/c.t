@@ -21,8 +21,7 @@
 do '../pl/init.pl';
 $output = `cat ../mail | $mailagent -c foo 2>&1`;
 $? != 0 || print "1\n";		# Cannot open config file
-$* = 1;
-$output =~ /^\*\*.*not processed/ || print "2\n";
+$output =~ /^\*\*.*not processed/m || print "2\n";
 chdir '../out';
 $user = $ENV{'USER'};
 unlink "$user";

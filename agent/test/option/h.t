@@ -18,6 +18,5 @@
 do '../pl/init.pl';
 $output = `$mailagent -h 2>&1`;
 $? != 0 || print "1\n";		# -h -> exit status 1
-$* = 1;
-$output =~ /-h : print/ || print "2\n";
+$output =~ /-h : print/m || print "2\n";
 print "0\n";
