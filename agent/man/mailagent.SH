@@ -1032,7 +1032,7 @@ they were freshly arrived from the mail delivery subsystem.
 .TP
 .B \-F
 Force processing on already seen messages. Usually, \fImailagent\fR enters
-the special \fI_SEEN_\fR mode when it detects an \fIX-Filter:\fR line issued
+the special \fI_SEEN_\fR state when it detects an \fIX-Filter:\fR line issued
 by itself, but this option will have it continue as usual (although vacation
 messages are disabled). Use this option when post-processing mail already
 filtered. Also look at the
@@ -1360,7 +1360,7 @@ From: ram
 From: r[oa]*
 
 # Match \fIgue@eiffel.fr\fR but not \fIalgue@eiffel.fr\fR
-To Cc: gue@eiffel.fr
+To Cc: /^gue@eiffel\\\\.fr/
 
 # This will match \fIgue@eiffel.fr\fR as well as \fIalgue@eiffel.com\fR
 To Cc: /gue@eiffel/
@@ -1852,9 +1852,10 @@ to enable consecutive bells. Otherwise, \fIxterm\fR will swallow them during
 .TP
 BEGIN [\fB\-ft\fR] \fIstate\fR
 Enter a new state. An explicit REJECT or RESTART is necessary to abort the
-processing of the current rule. The processing begins in state INITIAL.
+processing of the current rule. The processing begins in the state INITIAL.
 If the \fB\-f\fR (resp. \fB\-t\fR) flag is specified, then the state change
 only occurs if the last command status indicated a failure (resp. a success).
+A state name can contain alphanumeric characters and underscores.
 (Does not modify existing status)
 .TP
 BIFF [\fB\-l\fR] \fIon|off|path\fR
@@ -1909,7 +1910,7 @@ FEED \fIprogram\fR
 Feed the whole message to a program and get the output back as the new
 message. The header structure used by the rules is not updated: an explicit
 RESYNC is necessary. Hence the program appears as a filter for the whole
-message.
+message.  It does not tag the message as having been saved.
 (Returns the status of \fIprogram\fR)
 .TP
 FORWARD \fIaddress(es)\fR
@@ -1923,6 +1924,7 @@ to forward a mail to all the users listed in the file \fIforward_list\fR).
 GIVE \fIprogram\fR
 Give the body of the message to the specified program by feeding its standard
 input. Any output is mailed to the user who runs the \fImailagent\fR.
+Note that the message is not tagged as having been saved.
 (Returns the status of \fIprogram\fR)
 .TP
 KEEP \fIheader_fields_list\fR
@@ -1999,6 +2001,7 @@ not executed, always return success)
 PASS \fIprogram\fR
 Feed the body of the message to the specified program and get a new body
 back from the output of the program.
+Note that the message is not tagged as having been saved.
 (Returns the status of \fIprogram\fR)
 .TP
 PERL \fIscript\fR [\fIarguments\fR]
@@ -2010,6 +2013,9 @@ or returned a non-zero status).
 PIPE \fIprogram\fR
 Pipe the whole message to the specified program, but do not get anything
 back. Any output is mailed to the user who runs the \fImailagent\fR.
+The message is not tagged as having been saved in any case, so you must
+explicitly DELETE it if piping was enough and it did not fail: "REJECT -f"
+is your friend here to avoid unwanted deletion.
 (Returns the status of \fIprogram\fR)
 .TP
 POST [\fB\-lb\fR] \fInewsgroup(s)\fR
@@ -2063,22 +2069,24 @@ PURIFY \fIprogram\fR
 Feed the header into a program and get new header back. No RESYNC is done.
 This may be used to indeed purify the header by removing all the verbose
 stuff added by so many mail transport agents (X-400 like lines for instance).
+Obviously, this does not flag the message as having been saved.
 (Returns the status of \fIprogram\fR)
 .TP
 QUEUE
-Queue mail again. A successful queuing counts as if mail had been saved.
+Queue mail again. A successful queuing counts as if mail has been saved.
 Mail queued that way will not be processed during the next 30 minutes. Note
 that unless mailagent is invoked on a regular basis by \fIcron\fR, the
 mail will remain in the queue until another mail arrives.
 (Fails when mail cannot be queued)
 .TP
-RECORD [\fB\-acr\fR] [\fImode\fR] [\fI(tag-list)\fR]
-Record message in the history and enters mode _SEEN_ if the message was
+RECORD [\fB\-acr\fR] [\fIstate\fR] [\fI(tag-list)\fR]
+Record message in the history and enters state _SEEN_ if the message was
 already present there. If the message is recorded for the first time, processing
 continues normally. Otherwise a REJECT is performed. This behavior may be
 somewhat modified by using some options. See UNIQUE for a complete description
-of the options and arguments. Naturally, when a \fImode\fR is specified, that
+of the options and arguments. Naturally, when a \fIstate\fR is specified, that
 overrides the default _SEEN_.
+A state name can contain alphanumeric characters and underscores.
 .sp
 When a \fItag-list\fR (comma-separated list of names) is specified, the message
 is only recorded and checked against all those tags, but only them. Not
@@ -2086,13 +2094,14 @@ specifying any tag list means any occurrence, whether it is tagged or not.
 See paragraph \fBUsing Tags in Record and Unique\fR for more information.
 (Returns a failure status if mail was already recorded)
 .TP
-REJECT [\fB\-tf\fR] [\fImode\fR]
+REJECT [\fB\-tf\fR] [\fIstate\fR]
 Abort execution of current action, and continue matching. If \fB\-t\fR is
 specified, the reject will occur only if the previous action was successfully
 completed (return status of true), whilst \fB\-f\fR would cause the reject only
-when a failure occurred. If a \fImode\fR is specified, we enter that mode before
-rejection. REJECT resets the matching flag, which means that if no further
-match occurs, the default action will apply.
+when a failure occurred. If a \fIstate\fR is specified, we enter that state
+before rejection. REJECT resets the matching flag, which means that if no
+further match occurs, the default action will apply.
+A state name can contain alphanumeric characters and underscores.
 (Does not alter execution status)
 .TP
 REQUIRE \fIfile\fR [\fIpackage\fR]
@@ -2104,10 +2113,10 @@ equivalent, the file "value" is not important, i.e. it does not have to end
 with a statement returning a true value.
 (Fails if file cannot be loaded)
 .TP
-RESTART [\fB\-tf\fR] [\fImode\fR]
+RESTART [\fB\-tf\fR] [\fIstate\fR]
 Abort execution of current action and restart the matching process from the
 beginning. To avoid loops, each rule may be walked through once in a given
-mode. See REJECT for the meaning of the optional parameters. RESTART resets
+state. See REJECT for the meaning of the optional parameters. RESTART resets
 the matching flag, which means that the default action will apply, should
 no further match occur.
 (Does not alter execution status)
@@ -2118,8 +2127,8 @@ probably useful only when a FEED command was run.
 (Does not alter execution status)
 .TP
 RUN \fIprogram\fR
-Run the specified program and mail any output to the user who runs the
-\fImailagent\fR.
+Run the specified program and mail any output to the user who runs
+\fImailagent\fR.  This action does not flag the message as having been saved.
 (Returns the status of \fIprogram\fR)
 .TP
 SAVE \fIfolder\fR
@@ -2243,7 +2252,7 @@ action rule only. Note that the default umask specified in your config file
 is used to reset \fImailagent\fR's umask at the start of each mail processing.
 (Does not alter execution status)
 .TP
-UNIQUE [\fB\-acr\fR] [\fImode\fR] [\fI(tag-list)\fR]
+UNIQUE [\fB\-acr\fR] [\fIstate\fR] [\fI(tag-list)\fR]
 Record message in the history and tag message as saved if it was
 already present there. If the message is recorded for the first time, processing
 continues normally. Otherwise a REJECT is performed. If \fB\-r\fR was used,
@@ -2254,8 +2263,8 @@ The \fB\-c\fR option may be used alone to
 actually prevent the command from disturbing the execution flow, and to later
 use the return status to see what happened:
 UNIQUE returns a failure status if the message was already recorded.
-If an optional \fImode\fR argument is given, then the automaton will enter that
-mode if the mail was previously in the database.
+If an optional \fIstate\fR argument is given, then the automaton will enter that
+state if the mail was previously in the database.
 See also RECORD, and the paragraph entitled \fBUsing Tags in Record and
 Unique\fR for more information about the \fItag-list\fR.
 (Fails if mail was already recorded)
@@ -2298,7 +2307,7 @@ the REJECT command for instance. To give but a single example, the SAVE
 action would return \fIfailed\fR if it could not save the mail in the specified
 folder. If that SAVE command was followed by a "REJECT -f FAILED", then the
 execution of the current rule would stop and the automaton would continue to
-analyze the mail in the FAILED mode.
+analyze the mail in the FAILED state.
 .PP
 Some of the actions however do not modify this last execution status. Typically,
 those are actions which make decisions based on that status, or simply actions
@@ -2951,12 +2960,22 @@ state is special in the sense it is built-in, it is not matched by ALL, and
 some actions are not made available, namely: BACK, BOUNCE, FEED, FORWARD, GIVE,
 NOTIFY, PASS, PIPE, POST, PURIFY, QUEUE and RUN. Also note that although the
 ONCE and SELECT constructs are enabled, they will not let you execute
-disallowed commands.
+disallowed commands.  Otherwise, the _SEEN_ state behaves like any other state
+you can select or negate, so a <!_SEEN_> guard will not select the rule
+when we are in state _SEEN_.
 .PP
-The _SEEN_ mode makes it easy to deal with mails which loop because of an
-alias loop you have no control on. If no action is found in the _SEEN_ mode,
+The _SEEN_ state makes it easy to deal with mails which loop because of an
+alias loop you have no control on. If no action is found in the _SEEN_ state,
 the mail is left in the mailbox, as usual. Moreover, if no saving is done,
 a LEAVE is executed. This is the normal behavior.
+.PP
+The "X-Filter:" header is only added when the message is saved. Actions such
+as PIPE or GIVE do not flag the message as being saved and therefore they
+do
+.B not
+add that header line.  You can add one via ANNOTATE if you wish to prevent
+loops, in case the program to which you are feeding the message might
+return it to you in some strange way.
 '''
 .SS "Message Files"
 .PP
@@ -3550,7 +3569,7 @@ own it, and it should not be writable by any other individual but you.
 .IP \(bu
 Additionally, you may want to specify whether FOLD is to modify the existing
 execution status and whether or not it will be allowed within the special
-_SEEN_ mode.
+_SEEN_ state.
 .IP \(bu
 Write some rules using the new FOLD command. This is the \fIeasy\fR part!
 Note that your command may also be used within perl hooks as if it were
@@ -3588,14 +3607,14 @@ specified by \fItrue\fR or \fIyes\fR to express truth, and \fIfalse\fR
 or \fIno\fR to express falsehood. If \fIstatus_flag\fR is set to
 true, then the command will modify the last execution status variable.
 If \fIseen_flag\fR is true, then the command may be used when the filter
-is in _SEEN_ mode. The default values are respectively \fItrue\fR and
+is in _SEEN_ state. The default values are respectively \fItrue\fR and
 \fIfalse\fR.
 .PP
 So in our example, we would have written:
 .Ex
 FOLD  ~/mail/cmds/fold.pl  fold  no  yes
 .Ef
-to allow FOLD even in _SEEN_ mode and have it executed without modifying
+to allow FOLD even in _SEEN_ state and have it executed without modifying
 the current value of the \fIlast-command-status\fR variable.
 '''
 .SS Writing An Implementation
@@ -3754,8 +3773,8 @@ view of the environment while running the actions for that particular rule.
 When you want to alter control flow to perform a REJECT, a RESTART or an
 ABORT, you have three choices. If you wish to control that action via an
 option, the same way the standard UNIQUE does (with \fB\-c\fR, \fB\-r\fR or
-\fB\-a\fR), you may call \fI&main'alter_execution(option, mode)\fR giving it
-two parameters: the option letter and the mode you wish to change to before
+\fB\-a\fR), you may call \fI&main'alter_execution(option, state)\fR giving it
+two parameters: the option letter and the state you wish to change to before
 altering the control flow.
 .PP
 You may also want to directly alter the \fI\$wmode\fR and \fI\$cont\fR variables,
@@ -3763,8 +3782,8 @@ but then you'll have to do your own logging if you want some. Or you may
 call low-level routines \fI&main'do_reject\fR, \fI&main'do_restart\fR and
 \fI&main'do_abort\fR to perform the corresponding operation (with logging).
 .PP
-Remember that the mode _SEEN_ is special and directly handled at the
-filter level, and the filter begins in the INITIAL mode. The default
+Remember that the _SEEN_ state is special and directly handled at the
+filter level, and the filter begins in the INITIAL state. The default
 action is to continue with the current rule, which is why there is no
 routine to perform this task.
 .PP
@@ -3912,7 +3931,7 @@ SENDBACK \fIreason\fR
 .Ef
 and we would like that command to modify the existing status, returning
 a failure if the mail cannot be bounced back. Since this command actually
-sends something back, we do not want it to be executed in _SEEN_ mode.
+sends something back, we do not want it to be executed in the _SEEN_ state.
 Here is my implementation (untested):
 .Ex
 sub sendback {
@@ -4665,7 +4684,7 @@ maildir = ~/mail;
 
 All: /^Subject: [Cc]ommand/	{ SAVE cmds; PROCESS };
 
-To: gue@eiffel.fr		{ POST -l mail.gue };
+To: /^gue@eiffel\.fr/		{ POST -l mail.gue };
 Apparently-To: ram,
 Newsgroups: mail.gue		{ BOUNCE gue@eiffel.fr };
 
