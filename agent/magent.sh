@@ -698,10 +698,10 @@ sub mailbox_name {
 	# override value computed by Configure.
 	$maildir = $cf'maildrop if $cf'maildrop ne '';
 	# If Configure gave a valid 'maildir', use it. Otherwise compute one now.
-	unless ($maildir ne '' && -d "$maildir") {
+	unless ($maildir ne '' && -d $maildir) {
 		$maildir = "/usr/spool/mail";		# Default spooling area
-		-d "/usr/mail" && ($maildir = "/usr/mail");
-		-d "$maildir" || ($maildir = "$cf'home");
+		-d $maildir || (-d "/usr/mail" && ($maildir = "/usr/mail"));
+		-d $maildir || ($maildir = $cf'home);
 	}
 	local($mbox) = $cf'user;					# Default mailbox file name
 	$mbox = $cf'mailbox if $cf'mailbox ne '';	# Priority to config variable

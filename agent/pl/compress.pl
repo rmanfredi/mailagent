@@ -62,9 +62,12 @@ sub init {
 
 	unless (open(COMPSPEC, "$cf'compspec")) {
 		# Configure a set of defaults if the user hasn't specified them manually
+		# Fields are: tag extension compression_prog uncompress_prog cat_prog
+		# The following legacy line removed as modern systems lack compress:
+		# compress	.Z	compress	uncompress	zcat
 		&add_compressor(<<'EOT');
-compress	.Z	compress	uncompress	zcat
-gzip		.gz	gzip		gunzip		gunzip -c
+gzip		.gz		gzip		gunzip		gunzip -c
+bzip2		.bz2	bzip2		bunzip2		bzcat
 EOT
 		local($err) = "$!";
 		&'add_log("WARNING cannot open compspec file $cf'compspec: $err")

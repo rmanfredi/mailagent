@@ -328,6 +328,37 @@ sub relay_list {
 	local($i);
 	local($_);
 
+	# All the known top-level domains as of 2006-08-15
+	# with the addition of "loc" and "private".
+	# See http://data.iana.org/TLD/tlds-alpha-by-domain.txt
+	my $tlds_re = qr/
+		a(?:ero|rpa|[c-gil-oq-uwxz])|
+		b(?:iz|[abd-jmnorstvwyz])|
+		c(?:at|o(?:m|op)|[acdf-ik-oruvxyz])|
+		d[ejkmoz]|
+		e(?:du|[cegr-u])|
+		f[ijkmor]|
+		g(?:ov|[abd-ilmnp-uwy])|
+		h[kmnrtu]|
+		i(?:n(?:fo|t)|[del-oq-t])|
+		j(?:obs|[emop])|
+		k[eghimnrwyz]|
+		l(?:[abcikr-vy]|oc)|
+		m(?:il|obi|useum|[acdghk-z])|
+		n(?:ame|et|[acefgilopruz])|
+		o(?:m|rg)|
+		p(?:r(?:ivate|o)|[ae-hk-nrstwy])|
+		qa|
+		r[eouw]|
+		s[a-eg-ortuvyz]|
+		t(?:ravel|[cdfghj-prtvwz])|
+		u[agkmsyz]|
+		v[aceginu]|
+		w[fs]|
+		y[etu]|
+		z[amw]
+	/ix;
+
 	for ($i = 0; $i < @received; $i++) {
 		$received = $_ = $received[$i];
 
@@ -339,7 +370,7 @@ sub relay_list {
 			) {
 				$host = $1;
 				$host .= ".$cf::domain"
-					if $host =~ /^\w/ && $host !~ /\.\w{2,4}$/;
+					if $host =~ /^\w/ && $host !~ /\.$tlds_re$/;
 				push(@hosts, $host);
 			} else {
 				&add_log("WARNING no by in first Received: line '$received'")
@@ -411,7 +442,7 @@ sub relay_list {
 		# if the "real" host name we attempted to guess is an IP address
 		# or looks like a fully qualified domain name.
 
-		$host = $real if $real =~ /\.\w{2,4}$/ || $real =~ /^\[[\d.]+\]$/;
+		$host = $real if $real =~ /\.$tlds_re$/ || $real =~ /^\[[\d.]+\]$/;
 
 		if ($host eq '') {
 			&add_log("NOTICE no relaying origin in Received: line '$received'")
@@ -451,7 +482,7 @@ sub relay_list {
 
 		unless (
 			$host =~ /^\[[\d.]+\]$/							||
-			$host =~ /^[\w-.]+\.\w{2,4}$/					||
+			$host =~ /^[\w-.]+\.$tlds_re$/					||
 			$host =~ /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/
 		) {
 			next if $host =~ /^[\w-]+$/;	# No message for unqualified hosts
