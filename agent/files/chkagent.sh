@@ -25,7 +25,7 @@
 #
 
 # Make sure the mailagent is working well
-lookat='ERROR|FAILED|WARNING|UNLOCKED|FATAL|DUMPED|SYSERR'
+lookat='ERROR|FAILED|UNLOCKED|FATAL|DUMPED|SYSERR'
 
 trap "rm -f $report $output $todaylog $msg" 1 2 3 15
 
