@@ -33,3 +33,4 @@
 compress	.Z		compress		uncompress		zcat
 pack		.z		pack			unpack			pcat
 gzip		.gz		gzip -9			gunzip			gunzip -c
+bzip2		.bz2	bzip2			bunzip2			bzcat
