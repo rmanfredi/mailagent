@@ -1,5 +1,5 @@
-: Makefile.SH generated from Jmake.tmpl and Jmakefile [jmake 3.0 PL48]
-: $X-Id: Jmake.tmpl,v 3.0.1.2 1995/01/11 14:50:21 ram Exp ram $
+: Makefile.SH generated from Jmake.tmpl and Jmakefile [jmake 3.5-25]
+: $X-Id: Jmake.tmpl 8 2006-08-25 22:27:18Z rmanfredi $
 
 case $CONFIG in
 '')
@@ -37,7 +37,7 @@ DIR = $DIR
 # Parameters set by Configure -- edit config.sh if changes are needed
 
 CTAGS = ctags
-MAKE = make
+JCPPFLAGS = $cppflags
 MV = $mv
 RM = $rm -f
 
@@ -50,7 +50,7 @@ SUBDIRS = agent
 $spitshell >>Makefile <<'!NO!SUBS!'
 ########################################################################
 # Jmake rules for building libraries, programs, scripts, and data files
-# $X-Id: Jmake.rules,v 3.0.1.2 1995/01/11 14:49:55 ram Exp ram $
+# $X-Id: Jmake.rules 18 2006-12-27 10:35:09Z rmanfredi $
 
 ########################################################################
 # Start of Jmakefile
@@ -58,7 +58,7 @@ $spitshell >>Makefile <<'!NO!SUBS!'
 # $X-Id: Jmakefile,v 3.0 1993/11/29 13:47:34 ram Exp ram $
 #
 #  Copyright (c) 1990-2006, Raphael Manfredi
-#  
+#
 #  You may redistribute only under the terms of the Artistic License,
 #  as specified in the README file that comes with the distribution.
 #  You may reuse parts of this distribution only within the terms of
@@ -80,27 +80,47 @@ depend::
 	for i in $(SUBDIRS) ;\
 	do \
 		(cd $$i ; echo "Depending" "in $(DIR)$$i..."; \
-			$(MAKE) $(MFLAGS)  depend); \
+			$(MAKE) $(MFLAGS)  depend) || exit 1; \
 	done
+
+all:: revision.h
+
+.FORCE:
+
+revision.h: .FORCE
+	$(TOP)/bin/svn-revision $(TOP) $@
 
 ########################################################################
 # Common rules for all Makefiles -- do not edit
 
-emptyrule::
+all::
 
 clean: sub_clean local_clean
 realclean: sub_realclean local_realclean
 clobber: sub_clobber local_clobber
 
 local_clean::
-	$(RM) core *~ *.o
+	if test -f core; then $(RM) core; fi
+	$(RM) *~ *.o
 
 local_realclean:: local_clean
 	$(RM) -r UU
 
 local_clobber:: local_realclean
 	$(RM) config.sh config.h
+	$(RM) -r .config
 	$(RM) Makefile
+
+install:: local_install sub_install
+install.man:: maybe_install.man sub_install.man
+deinstall:: sub_deinstall local_deinstall
+deinstall.man:: sub_deinstall.man maybe_deinstall.man
+
+install.man-no:
+deinstall.man-no:
+
+maybe_install.man: install.man-no
+maybe_deinstall.man: deinstall.man-no
 
 Makefile.SH: Jmakefile
 	-@if test -f $(TOP)/.package; then \
@@ -110,7 +130,7 @@ Makefile.SH: Jmakefile
 		fi; \
 		echo "	$(JMAKE) -DTOPDIR=$(TOP) -DCURDIR=$(CURRENT)" ; \
 		$(JMAKE) -DTOPDIR=$(TOP) -DCURDIR=$(CURRENT) ; \
-	else touch $@; exit 0; fi
+	else touch $@; fi
 
 Makefile: Makefile.SH
 	/bin/sh Makefile.SH
@@ -130,20 +150,22 @@ subdirs:
 	for i in $(SUBDIRS) ;\
 	do \
 		(cd $$i ; echo $(VERB) "in $(DIR)$$i..."; \
-			$(MAKE) $(MFLAGS) $(FLAGS) $(TARGET)); \
+			$(MAKE) $(MFLAGS) $(FLAGS) $(TARGET)) || exit 1; \
 	done
 
-install::
+sub_install::
 	@$(MAKE) subdirs TARGET=install VERB="Installing" FLAGS=
 
-deinstall::
+sub_deinstall::
 	@$(MAKE) subdirs TARGET=deinstall VERB="Deinstalling" FLAGS=
+	@echo "Back to $(CURRENT) for "deinstall...
 
-install.man::
+sub_install.man::
 	@$(MAKE) subdirs TARGET=install.man VERB="Installing man pages" FLAGS=
 
-deinstall.man::
+sub_deinstall.man::
 	@$(MAKE) subdirs TARGET=deinstall.man VERB="Deinstalling man pages" FLAGS=
+	@echo "Back to $(CURRENT) for "deinstall.man...
 
 sub_clean::
 	@$(MAKE) subdirs TARGET=clean VERB="Cleaning" FLAGS=
@@ -162,7 +184,7 @@ tag::
 	for i in $(SUBDIRS) ;\
 	do \
 		(cd $$i ; echo "Tagging" "in $(DIR)$$i..."; \
-			$(MAKE) $(MFLAGS)  tag); \
+			$(MAKE) $(MFLAGS)  tag) || exit 1; \
 	done
 
 Makefiles::
@@ -172,7 +194,7 @@ Makefiles::
 		echo "Making "Makefiles" in $(DIR)$$i..."; \
 		(cd $$i || exit 1; \
 		if test ! -f Makefile; then /bin/sh Makefile.SH; fi; \
-		$(MAKE) $(MFLAGS) Makefiles) \
+		$(MAKE) $(MFLAGS) Makefiles) || exit 1;\
 	done
 
 Makefiles.SH:: Makefile.SH
@@ -189,13 +211,22 @@ Makefiles.SH:: Makefile.SH
 		/*) newtop="$(TOP)" ;; \
 		esac; \
 		echo "Making Makefiles.SH in $(DIR)$$i..."; \
-		(cd $$i || exit 1; $(MAKE) $(MFLAGS) -f ../Makefile \
-		Makefile TOP=$$newtop CURRENT=$(DIR)$$i;\
-		$(MAKE) $(MFLAGS) Makefiles.SH) \
+		(cd $$i || exit 1; \
+			if test -f Jmakefile; then \
+				$(MAKE) $(MFLAGS) -f ../Makefile \
+					Makefile TOP=$$newtop CURRENT=$(DIR)$$i && \
+				$(MAKE) $(MFLAGS) Makefiles.SH; \
+			fi; \
+		) || exit 1; \
 	done
 
 all::
 	@$(MAKE) subdirs TARGET=all VERB="Making all" FLAGS=
+
+local_install::
+local_deinstall::
+local_install.man::
+local_deinstall.man::
 
 !NO!SUBS!
 chmod 644 Makefile
