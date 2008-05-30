@@ -14,7 +14,7 @@ chkagent.sh:
 	Here is my crontab entry:
 
 		# Check the mailagent log file for the current day
-		55 23 * * *		$HOME/etc/checkagent
+		55 23 * * *		/usr/share/mailagent/chkagent.sh
 
 commands:
 	This file holds the allowed commands for @SH hooks.
