@@ -34,7 +34,9 @@
 #    "|exec /users/ram/mail/filter >>/users/ram/.bak 2>&1"
 
 # Variable HOME *must* correctly be set to your home directory
-HOME=/york/ram
+# This should compute it correctly, if not, hardwire it
+user=`(logname || whoami) 2>/dev/null`
+HOME=`grep ^$user: /etc/passwd | cut -d':' -f 6`
 export HOME
 
 # The PATH variable must also correctly be set. This variable will be
@@ -233,7 +235,6 @@ if cmp $temp $qtemp >/dev/null 2>&1; then
 fi
 
 # Change the name of the temporary file.
-user=`(logname || whoami) 2>/dev/null`
 tmpdir=`echo $temp | sed -e 's/\(.*\)\/.*/\1/'`
 mv $temp $tmpdir/$user.$$
 temp="$tmpdir/$user.$$"
