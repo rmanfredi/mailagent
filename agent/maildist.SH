@@ -54,6 +54,7 @@ $startperl
 
 \$mversion = '$VERSION';
 \$patchlevel = '$PATCHLEVEL';
+\$revision = '$REVISION';
 !GROK!THIS!
 
 $spitshell >>maildist <<'!NO!SUBS!'
@@ -102,7 +103,7 @@ if (!$System{$system}) {
 	print MAILER
 "To: $path
 Subject: No program called $system
-X-Mailer: mailagent [version $mversion PL$patchlevel]
+X-Mailer: mailagent [version $mversion-$revision]
 
 I don't know how to send a program called \"$system\".  Sorry.
 
@@ -127,7 +128,7 @@ if (!$Program{$pname}) {
 	print MAILER
 "To: $path
 Subject: No version $version for $system
-X-Mailer: mailagent [version $mversion PL$patchlevel]
+X-Mailer: mailagent [version $mversion-$revision]
 
 I don't know how to send version $version of $system.  Sorry.
 
@@ -157,7 +158,7 @@ if ($Patch_only{$pname}) {
 	print MAILER
 "To: $path
 Subject: System $system $version is obsolete
-X-Mailer: mailagent [version $mversion PL$patchlevel]
+X-Mailer: mailagent [version $mversion-$revision]
 
 I can't send you version $version of $system. Sorry.
 
@@ -187,7 +188,7 @@ if ($version < $Version{$system}) {
 	print MAILER
 "To: $path
 Subject: Version $version of $system is an old one
-X-Mailer: mailagent [version $mversion PL$patchlevel]
+X-Mailer: mailagent [version $mversion-$revision]
 
 You asked for version $version of $system.
 

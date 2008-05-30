@@ -58,6 +58,7 @@ $startperl
 \$zcat = '$zcat';
 \$mversion = '$VERSION';
 \$patchlevel = '$PATCHLEVEL';
+\$revision = '$REVISION';
 !GROK!THIS!
 $spitshell >>mailpatch <<'!NO!SUBS!'
 
@@ -105,7 +106,7 @@ if (!$System{$system}) {
 	print MAILER
 "To: $path
 Subject: No program called $system
-X-Mailer: mailagent [version $mversion PL$patchlevel]
+X-Mailer: mailagent [version $mversion-$revision]
 
 I don't know how to send patches for a program called $system.  Sorry.
 
@@ -130,7 +131,7 @@ if (!$Program{$pname}) {
 	print MAILER
 "To: $path
 Subject: No patches for $system version $version
-X-Mailer: mailagent [version $mversion PL$patchlevel]
+X-Mailer: mailagent [version $mversion-$revision]
 
 I don't know how to send patches for version $version of $system.  Sorry.";
 	if ($Version{$system} ne '') {
@@ -168,7 +169,7 @@ if (!($Maintained{$pname} || $Patches{$pname})) {
 	print MAILER
 "To: $path
 Subject: $system version $version is not maintained
-X-Mailer: mailagent [version $mversion PL$patchlevel]
+X-Mailer: mailagent [version $mversion-$revision]
 
 I can't send you patches for version $version of $system, because this code
 is not maintained by $cf'name. There are no official patches available either...
@@ -246,7 +247,7 @@ if (!$maxnum) {
 	print MAILER
 "To: $path
 Subject: No patches yet for $system version $version
-X-Mailer: mailagent [version $mversion PL$patchlevel]
+X-Mailer: mailagent [version $mversion-$revision]
 
 There are no patches (yet) for $system version $version. Sorry.
 
@@ -271,7 +272,7 @@ if (! ($patchlist =~ /\d/)) {
 	print MAILER
 "To: $path
 Subject: Invalid patch request for $system $version
-X-Mailer: mailagent [version $mversion PL$patchlevel]
+X-Mailer: mailagent [version $mversion-$revision]
 ";
 	if ($Patches{$pname}) {
 		print MAILER "

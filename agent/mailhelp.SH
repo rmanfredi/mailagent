@@ -46,6 +46,7 @@ $startperl
 
 \$mversion = '$VERSION';
 \$patchlevel = '$PATCHLEVEL';
+\$revision = '$REVISION';
 !GROK!THIS!
 
 $spitshell >>mailhelp <<'!NO!SUBS!'
@@ -77,7 +78,7 @@ open(MAILER, "|$cf'sendmail $cf'mailopt $dest") || &nofork;
 print MAILER
 "To: $dest
 Subject: How to use my mail agent
-X-Mailer: mailagent [version $mversion PL$patchlevel]
+X-Mailer: mailagent [version $mversion-$revision]
 
 ";
 while (<HELP>) {

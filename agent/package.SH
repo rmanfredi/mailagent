@@ -76,6 +76,7 @@ $startperl
 \$zcat = '$zcat';
 \$mversion = '$VERSION';
 \$patchlevel = '$PATCHLEVEL';
+\$revision = '$REVISION';
 \$phostname = '$phostname';
 \$long_filenames = '$d_flexfnam' eq 'define';
 !GROK!THIS!
@@ -133,7 +134,7 @@ if (!$System{$system}) {
 	print MAILER
 "To: $path
 Subject: No program called $system
-X-Mailer: mailagent [version $mversion PL$patchlevel]
+X-Mailer: mailagent [version $mversion-$revision]
 
 I have not heard of a program called $system.  Sorry.
 
@@ -154,7 +155,7 @@ if (!$Program{$pname}) {
 	print MAILER
 "To: $path
 Subject: No package $system version $version
-X-Mailer: mailagent [version $mversion PL$patchlevel]
+X-Mailer: mailagent [version $mversion-$revision]
 
 I don't know anything about version $version of $system.  Sorry.";
 	if ($Version{$system} ne '') {
@@ -189,7 +190,7 @@ if ($version < $Version{$system}) {
 	print MAILER
 "To: $path
 Subject: Version $version of $system is out-of-date
-X-Mailer: mailagent [version $mversion PL$patchlevel]
+X-Mailer: mailagent [version $mversion-$revision]
 
 This short note to warn you that $system version $version is not the
 lattest one available. If you have some interest in $system, I suggest
@@ -216,7 +217,7 @@ if (!($Maintained{$pname} || $Patches{$pname})) {
 	print MAILER
 "To: $path
 Subject: $system version $version is not maintained
-X-Mailer: mailagent [version $mversion PL$patchlevel]
+X-Mailer: mailagent [version $mversion-$revision]
 
 I can't keep you up to date on changes to version $version of $system, because
 this code is not maintained by $cf'name.
@@ -246,7 +247,7 @@ else {
 	print MAILER
 "To: $path
 Subject: I didn't understand your package command
-X-Mailer: mailagent [version $mversion PL$patchlevel]
+X-Mailer: mailagent [version $mversion-$revision]
 
 Your package command requested `$request', and I don't know what that means.
 
@@ -302,7 +303,7 @@ if (!$leavealone && $theirpl ne '-' && $maxnum ne $theirpl) {
 		print MAILER
 "To: $dest
 Subject: The latest patchlevel for $system version $version is $maxnum
-X-Mailer: mailagent [version $mversion PL$patchlevel]
+X-Mailer: mailagent [version $mversion-$revision]
 
 Just a quick note to let you know that the latest patchlevel for $system
 version $version is $maxnum; if you are still at patchlevel $theirpl, I strongly
@@ -429,7 +430,7 @@ sub send_closest {
 	print MAILER
 "To: $path
 Subject: You were not recorded as a $system $version user
-X-Mailer: mailagent [version $mversion PL$patchlevel]
+X-Mailer: mailagent [version $mversion-$revision]
 
 I can't honour your desire to be left alone for $system version $version
 updates because you were not found among the registered users.

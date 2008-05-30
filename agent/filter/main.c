@@ -77,6 +77,7 @@
 #include "lock.h"
 #include "confmagic.h"
 #include "patchlevel.h"
+#include "revision.h"
 
 #define MAX_STRING	2048	/* Maximum string length */
 
@@ -144,7 +145,7 @@ char **envp;
 			env_home();					/* Get HOME from environment */
 			break;
 		case 'V':			/* version number */
-			printf("filter %.1f PL%d\n", VERSION, PATCHLEVEL);
+			printf("filter %.1f-%d\n", VERSION, REVISION);
 			exit(EX_OK);
 			/* NOTRECHED */
 		default:

@@ -149,7 +149,7 @@ sub sendfile {
 "To: $dest
 Subject: $subject$signal
 Precedence: bulk
-X-Mailer: mailagent [version $mversion PL$patchlevel]
+X-Mailer: mailagent [version $mversion-$revision]
 
 Here is the answer to your request:
 
@@ -303,7 +303,7 @@ sub abort {
 	print MAILER
 "To: $path
 Subject: $cmd failed
-X-Mailer: mailagent [version $mversion PL$patchlevel]
+X-Mailer: mailagent [version $mversion-$revision]
 
 Sorry, the $prog_name command failed while sending files.
 

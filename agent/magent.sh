@@ -129,6 +129,7 @@ $startperl
 # Current version number and patchlevel
 \$mversion = '$VERSION';
 \$patchlevel = '$PATCHLEVEL';
+\$revision = '$REVISION';
 
 # Want to lock mailboxes with flock ?
 \$lock_by_flock = '$lock_by_flock';
@@ -238,7 +239,7 @@ while ($ARGV[0] =~ /^-/) {
 		$log_level = int(shift);
 	}
 	elsif ($_ eq '-V') {	# Version number
-		print STDERR "$prog_name $mversion PL$patchlevel\n";
+		print STDERR "$prog_name $mversion-$revision\n";
 		exit 0;
 	}
 	elsif ($_ eq '-U') {	# Do not allow UNIQUE to reject / abort
@@ -506,9 +507,9 @@ sub init_constants {
 	# The filter message
 	local($address) = &email_addr;
 	$FILTER =
-		"X-Filter: mailagent [version $mversion PL$patchlevel] for $address";
+		"X-Filter: mailagent [version $mversion-$revision] for $address";
 	$MAILER =
-		"X-Mailer: mailagent [version $mversion PL$patchlevel]";
+		"X-Mailer: mailagent [version $mversion-$revision]";
 
 	# For header fields alteration
 	$HD_STRIP = 0;				# Strip header fields

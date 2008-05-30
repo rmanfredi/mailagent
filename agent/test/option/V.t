@@ -18,5 +18,5 @@
 do '../pl/init.pl';
 $version = `$mailagent -V 2>&1`;
 $? == 0 || print "1\n";
-$version =~ /PL/ || print "2\n";
+$version =~ /^mailagent \d+\.\d+-\d+/ || print "2\n";
 print "0\n";

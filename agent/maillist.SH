@@ -56,6 +56,7 @@ $startperl
 
 \$mversion = '$VERSION';
 \$patchlevel = '$PATCHLEVEL';
+\$revision = '$REVISION';
 \$phostname = '$phostname';
 !GROK!THIS!
 
@@ -98,7 +99,7 @@ open(XHEAD, ">$tmp_mail") || &fatal("cannot create $tmp_mail");
 print XHEAD
 "To: $dest
 Subject: List of available distributions
-X-Mailer: mailagent [version $mversion PL$patchlevel]
+X-Mailer: mailagent [version $mversion-$revision]
 
 Here are the different packages available. If you want the whole
 distribution, send me the following:

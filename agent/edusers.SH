@@ -43,6 +43,7 @@ $startperl
 
 \$mversion = '$VERSION';
 \$patchlevel = '$PATCHLEVEL';
+\$revision = '$REVISION';
 \$defeditor = '$defeditor';
 \$phostname = '$phostname';
 \$long_filenames = '$d_flexfnam' eq 'define';
