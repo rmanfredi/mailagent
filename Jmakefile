@@ -23,3 +23,10 @@ NoManPages()
 SetSubdirs(agent)
 AddedByConfigure(install mkdep cppstdin)
 DependSubdirs()
+
+all:: revision.h
+
+.FORCE:
+
+revision.h: .FORCE
+	$(TOP)/bin/svn-revision $(TOP) $@
