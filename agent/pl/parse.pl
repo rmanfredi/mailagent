@@ -142,7 +142,7 @@ sub parse_mail {
 				$Header{$last_header} .= $val if $last_header ne '';
 				&add_log("WARNING bad continuation in header, line $.")
 					if $last_header eq '' && $loglvl > 4;
-			} elsif (($field, $value) = /^([\w-]+)\s*:\s*(.*)/) {
+			} elsif (($field, $value) = /^([!-9;-~\w-]+):\s*(.*)/) {
 				# We found a new header field (i.e. it is not a continuation).
 				# Guarantee only one From: header line. If multiple From: are
 				# found, keep the last one.
