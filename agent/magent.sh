@@ -752,7 +752,8 @@ sub fork_child {
 # Report any eval error and returns 1 if error detected.
 sub eval_error {
 	if ($@ ne '') {
-		$@ =~ s/ in file \(eval\) at line \d+//;
+		$@ =~ s/ in file \(eval\) at line \d+//;	# Older perls
+		$@ =~ s/ at \(eval \d+\) line \d+\.//;		# Modern perl 5.x
 		chop($@);
 		&add_log("ERROR $@") if $loglvl > 1;
 	}

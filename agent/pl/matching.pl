@@ -80,15 +80,11 @@ sub perl_pattern {
 }
 
 # Take a pattern as written in the rule file and make it suitable for
-# pattern matching as understood by perl. If the pattern starts with a
-# leading /, nothing is done. Otherwise, a set of / are added.
-# match (1st case).
+# pattern matching as understood by perl. Unless the pattern starts with a
+# leading / or is of the form m||, it is enclosed within slashes.
+# We also enclose the whole pattern within ().
 sub make_pattern {
 	local($_) = shift(@_);
-	unless (m|^/|) {				# Pattern does not start with a /
-		$_ = &perl_pattern($_);		# Simple words specified via shell patterns
-		$_ = "/^$_\$/";				# Anchor pattern
-	}
 	# The whole pattern is inserted within () to make at least one
 	# backreference. Otherwise, the following could happen:
 	#    $_ = '1 for you';
@@ -98,7 +94,15 @@ sub make_pattern {
 	# determine whether it is due to a backreference (2nd case) or a sucessful
 	# match. Knowing we have at least one bracketed reference is enough to
 	# disambiguate.
-	s|^/(.*)/|/($1)/|;		# Enclose whole pattern within ()
+	if (/^m(\W)(.*)\1(\w*)$/) {
+		$_ = "m$1($2)$1$3";
+	} elsif (m|^/(.*)/(\w*)$|) {
+		$_ = "/($1)/$2";
+	} else {
+		# Pattern does not start with a / or is not of the form m|xxx|
+		$_ = &perl_pattern($_);		# Simple words specified via shell patterns
+		$_ = "/^($_)\$/";			# Anchor pattern
+	}
 	$_;						# Pattern suitable for eval'ed matching
 }
 

@@ -105,8 +105,9 @@ $| = 1;
 if (@ARGV) {
 	foreach my $file (@ARGV) {
 		run_file($file);
-		exit($failed ? 1 : 0) ;
+		exit(1) if $failed && $opt_s;
 	}
+	exit($failed ? 1 : 0) ;
 }
 
 open(OK, ">>OK");
