@@ -1387,6 +1387,7 @@ sub header_resync {
 	local($last_header);					# Current normalized header field
 	local($in_header) = 1;					# Bug in the range operator
 	local($value);							# Value of current field
+	my $missing_warned = 0;
 	foreach (split(/\n/, $Header{'All'})) {
 		if ($in_header) {					# Still in header of message
 			if (/^$/) {						# End of header
@@ -1396,9 +1397,10 @@ sub header_resync {
 			if (/^\s/) {					# It is a continuation line
 				s/^\s+/ /;					# Swallow multiple spaces
 				$Header{$last_header} .= $_ if $last_header ne '';
-			} elsif (/^([\w-]+):\s*(.*)/) {	# We found a new header
+			} elsif (/^([!-9;-~\w-]+):\s*(.*)/) {	# We found a new header
 				$value = $2;				# Bug in perl 4.0 PL19
 				$last_header = &header'normalize($1);
+				$missing_warned = 0;
 				# Multiple headers like 'Received' are separated by a new-
 				# line character. All headers end on a non new-line.
 				if ($Header{$last_header} ne '') {
@@ -1412,12 +1414,13 @@ sub header_resync {
 				# Did not identify a header field nor a continuation
 				# Maybe there was a wrong header split somewhere?
 				if ($last_header eq '') {
-					&add_log("ERROR ignoring header garbage: $_")
+					&add_log("ERROR ignoring leading header garbage: $_")
 						if $loglvl > 1;
 				} else {
-					&add_log("ERROR missing continuation for $last_header")
-						if $loglvl > 1;
+					&add_log("ERROR missing continuation for $last_header: $_")
+						if !$missing_warned && $loglvl > 1;
 					$Header{$last_header} .= " " . $_;
+					$missing_warned++;
 				}
 			}
 		} else {
