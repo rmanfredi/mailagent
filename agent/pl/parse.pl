@@ -297,6 +297,7 @@ sub header_check {
 #
 #	Received: from host1 (host2 [xx.yy.zz.tt]) by host3
 #	Received: from host1 ([xx.yy.zz.tt]) by host3
+#	Received: from ?host1? ([xx.yy.zz.tt]) by host3
 #	Received: from host1 by host3
 #	Received: from (host2 [xx.yy.zz.tt]) by host3
 #	Received: from (host1) [xx.yy.zz.tt] by host3
@@ -392,6 +393,10 @@ sub relay_list {
 		# [xx.yy.zz.tt]
 		if (s/^(\[\d+\.\d+\.\d+\.\d+\])\s*//) {
 			$host = $1;				# IP address [xx.yy.zz.tt]
+		}
+		# ?xx.yy.zz.tt? ( [XX.YY.ZZ.TT])
+		elsif (s/^\?[\d\.]+\?\s*\(\s*(\[\d+\.\d+\.\d+\.\d+\])\s*\)\s*//) {
+			$host = $1;
 		}
 		# foo.domain.com (optional)
 		elsif (s/^([\w-.]+)(\(\S+\))?\s*//) {
