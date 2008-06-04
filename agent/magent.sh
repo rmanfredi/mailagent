@@ -529,7 +529,7 @@ sub init_constants {
 sub patch_constants {
 	local($address) = &email_addr;	# Will prefer cf vars to hardwired ones
 	$FILTER =
-		"X-Filter: mailagent [version $mversion PL$patchlevel] for $address";
+		"X-Filter: mailagent [version $mversion-$revision] for $address";
 }
 
 # Initializes environment. All the variables are initialized in XENV array
