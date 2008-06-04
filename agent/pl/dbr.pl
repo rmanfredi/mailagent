@@ -210,7 +210,7 @@ sub recursive_clean {
 	local($dir) = @_;					# Directory to scan
 	local(@contents);					# Contents of the directory
 	unless (opendir(DIR, $dir)) {
-		&'add_log("WARNING cannot open directory $dir: $!") if $'loglvl > 5;
+		&'add_log("ERROR cannot open directory $dir: $!") if $'loglvl > 1;
 		return;
 	}
 	@contents = readdir(DIR);			# Slurp the whole thing
@@ -225,7 +225,7 @@ sub recursive_clean {
 		&clean_file("$dir/$_");
 	}
 	unless (opendir(DIR, $dir)) {
-		&'add_log("WARNING cannot re-open directory $dir: $!") if $'loglvl > 5;
+		&'add_log("ERROR cannot re-open directory $dir: $!") if $'loglvl > 1;
 		return;
 	}
 	@contents = readdir(DIR);			# Slurp the whole thing
@@ -243,7 +243,7 @@ sub clean_file {
 	local($file) = @_;			# File to be cleaned
 	&'add_log("processing $file") if $'loglvl > 18;
 	unless (open(FILE, $file)) {
-		&'add_log("WARNING cannot open file $file: $!") if $'loglvl > 5;
+		&'add_log("ERROR cannot open file $file: $!") if $'loglvl > 1;
 		return;
 	}
 	unless (open(NEW, ">$file.x")) {
