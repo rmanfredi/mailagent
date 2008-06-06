@@ -14,6 +14,7 @@ esac
 case "$0" in
 */*) cd `expr X$0 : 'X\(.*\)/'` ;;
 esac
+revision=`awk '/^#define[ 	]*REVISION/ {print $3}' < $TOP/revision.h`
 echo "Extracting agent/magent (with variable substitutions)"
 $spitshell >magent <<!GROK!THIS!
 $startperl
@@ -129,7 +130,7 @@ $startperl
 # Current version number and patchlevel
 \$mversion = '$VERSION';
 \$patchlevel = '$PATCHLEVEL';
-\$revision = '$REVISION';
+\$revision = '$revision';
 
 # Want to lock mailboxes with flock ?
 \$lock_by_flock = '$lock_by_flock';
