@@ -66,13 +66,20 @@ else
 	echo "Cannot find $logfile" > $report
 fi
 
-# ~/.bak is the output from .forward
-if test -s "$HOME/.bak"; then
+# Determine where they redirect the output from .forward
+fw=$HOME/.forward
+if test -f $fw; then
+	errors=`perl -ne 's/^"(.*)"$/$1/; /(-o|>>)\s*(\S+)/ && print "$2\n"' $fw`
+fi
+case "$errors" in
+'') errors=/dev/null ;;
+esac
+if test -s $errors; then
 	echo " " >> $report
-	echo "*** Errors from ~/.bak:" >> $report
+	echo "*** Errors from $errors:" >> $report
 	echo " " >> $report
-	cat $HOME/.bak >> $report
-	cp /dev/null $HOME/.bak
+	cat $errors >> $report
+	cp /dev/null $errors
 fi
 
 # Look for mails in the emergency directory
