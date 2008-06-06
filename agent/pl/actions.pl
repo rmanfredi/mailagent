@@ -869,6 +869,18 @@ sub post {
 			$last_was_header = 1;			# Mark we discarded the line
 			next;							# Line is skipped
 		}
+		# Skip any RFC-822 header that is not purely made up of [\w-]+
+		# as it is not possible it can be meaningful to the news system.
+		if (/^([!-9;-~\w-]+):/) {
+			my $header = $1;
+			unless ($header =~ /^[\w-]+$/) {
+				&add_log("NOTICE droping RFC-822 header \"$header\" for news")
+					if $loglvl > 5;
+				$last_was_header = 1;		# Mark we discarded the line
+				next;						# Line is skipped
+			}
+			# All headers will now match /^[\w-]+:/
+		}
 		if (/^([\w-]+):/ && exists $single{"\L$1"}) {
 			my $field = lc($1);
 			if ($single{$field}++) {
@@ -883,7 +895,11 @@ sub post {
 		$last_was_header = 0;				# We decided to keep header line
 		# Ensure that we always put a single space after the field name
 		# (before possibly emitting a newline for the continuation)
-		s/^([\w-]+):(\S)/$1: $2/ || s/^([\w-]+):$/$1: /;
+		if (s/^([\w-]+):(\S)/$1: $2/ || s/^([\w-]+):$/$1: /) {
+			my $header = $1;
+			&add_log("NOTICE added space after \"$header:\", for news")
+				if $loglvl > 5;
+		}
 		print NEWS $_, "\n";
 	}
 
@@ -1810,8 +1826,8 @@ sub alter_flow {
 	return 0 if $opt'sw_t && $lastcmd != 0;
 	return 0 if $opt'sw_f && $lastcmd == 0;
 	if ($mode ne '') {
+		&add_log("entering new state $wmode") if $loglvl > 6 && $mode ne $wmode;
 		$wmode = $mode;
-		&add_log("entering new state $wmode") if $loglvl > 6;
 	}
 	&perform;						# This was dynamically bound
 }

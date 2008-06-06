@@ -866,8 +866,8 @@ sub run_saving {
 sub alter_execution {
 	local($option, $mode) = @_;	# Option, mode we have to change to
 	if ($mode ne '') {
+		&add_log("entering new state $wmode") if $loglvl > 6 && $wmode ne $mode;
 		$wmode = $mode;
-		&add_log("entering new state $wmode") if $loglvl > 6;
 	}
 	if ($option eq 'x') {		# Backward compatibility at 3.0 PL24
 		$option = '-c' if $opt'sw_c;
