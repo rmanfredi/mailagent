@@ -237,7 +237,7 @@ sub run_begin {
 	return 0 if $opt'sw_f && !$lastcmd;		# -f means change only if false
 	$newstate = 'INITIAL' unless $newstate;
 	$wmode = $newstate;			# $wmode comes from analyze_mail
-	&add_log("BEGUN new state $newstate") if $loglvl > 4;
+	&add_log("BEGUN [$mfile] state $newstate") if $loglvl > 4;
 	0;
 }
 
@@ -248,8 +248,12 @@ sub run_record {
 	$mode =~ s|^(\w*)\s*\(([^()]*)\).*|$1| && ($tags = $2);
 	local($failed) = 0;
 	if (&history_tag($tags)) {	# Message already seen
-		$wmode = '_SEEN_';		# Enter special mode ($wmode from analyze_mail)
-		&add_log("NOTICE entering seen mode") if $loglvl > 5;
+		if ($mode eq '') {
+			&add_log("NOTICE entering seen mode")
+				if $loglvl > 5 && $wmode ne '_SEEN_';
+			# Enter special mode ($wmode from analyze_mail)
+			$wmode = '_SEEN_';
+		}
 		&alter_execution('x', $mode);
 		$failed = 1;			# Make sure it "fails"
 	}
@@ -866,7 +870,7 @@ sub run_saving {
 sub alter_execution {
 	local($option, $mode) = @_;	# Option, mode we have to change to
 	if ($mode ne '') {
-		&add_log("entering new state $wmode") if $loglvl > 6 && $wmode ne $mode;
+		&add_log("entering new state $mode") if $loglvl > 6 && $wmode ne $mode;
 		$wmode = $mode;
 	}
 	if ($option eq 'x') {		# Backward compatibility at 3.0 PL24
