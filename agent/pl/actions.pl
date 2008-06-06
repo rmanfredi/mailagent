@@ -1826,7 +1826,7 @@ sub alter_flow {
 	return 0 if $opt'sw_t && $lastcmd != 0;
 	return 0 if $opt'sw_f && $lastcmd == 0;
 	if ($mode ne '') {
-		&add_log("entering new state $wmode") if $loglvl > 6 && $mode ne $wmode;
+		&add_log("entering new state $mode") if $loglvl > 6 && $mode ne $wmode;
 		$wmode = $mode;
 	}
 	&perform;						# This was dynamically bound
