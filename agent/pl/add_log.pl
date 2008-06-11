@@ -120,6 +120,8 @@ sub write_log {
 	local($date);
 	local($log);
 
+	return unless length $file;
+
 	local ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) =
 		localtime(time);
 	$date = sprintf("%.2d/%.2d/%.2d %.2d:%.2d:%.2d",

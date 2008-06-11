@@ -92,10 +92,8 @@ sub fatal {
 	}
 
 	# It can happen that we get here before configuration file was read
-	if (defined $loglvl) {
-		&add_log("FATAL $reason") if $loglvl;
-		-t STDIN && print STDERR "$prog_name: $reason\n";
-	}
+	&add_log("FATAL $reason") if defined $loglvl;
+	-t STDIN && print STDERR "$prog_name: $reason\n";
 
 	# Try an emergency save, if mail is not empty
 	if ($Header{'All'} ne '' && 0 == &emergency_save) {
