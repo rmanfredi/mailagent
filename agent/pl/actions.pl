@@ -684,7 +684,17 @@ sub forward {
 	}
 	print MAILER $FILTER, "\n";
 	print MAILER "\n";
-	print MAILER $Header{'Body'};
+	# If sendmail is used and there is no -i flag in the options, we need to
+	# escape dots on a line by themselves.
+	if ($cf'sendmail =~ /\bsendmail\b/ && $cf'mailopt !~ /-i\b/) {
+		my $body = $Header{'Body'};
+		$body =~ s/^\./../gm;
+		print MAILER $body;
+		&add_log("WARNING sendmail used -- you should add -i to mailopt")
+			if $loglvl > 2;
+	} else {
+		print MAILER $Header{'Body'};
+	}
 	close MAILER;
 	local($failed) = $?;		# Status of forwarding
 	if ($failed) {
@@ -716,7 +726,17 @@ sub bounce {
 	}
 	print MAILER $FILTER, "\n";
 	print MAILER "\n";
-	print MAILER $Header{'Body'};
+	# If sendmail is used and there is no -i flag in the options, we need to
+	# escape dots on a line by themselves.
+	if ($cf'sendmail =~ /\bsendmail\b/ && $cf'mailopt !~ /-i\b/) {
+		my $body = $Header{'Body'};
+		$body =~ s/^\./../gm;
+		print MAILER $body;
+		&add_log("WARNING sendmail used -- you should add -i to mailopt")
+			if $loglvl > 2;
+	} else {
+		print MAILER $Header{'Body'};
+	}
 	close MAILER;
 	local($failed) = $?;		# Status of forwarding
 	if ($failed) {

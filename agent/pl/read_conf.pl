@@ -139,7 +139,7 @@ EOM
 	$main'track_all = 1 if $track =~ /on/i;		# Option -t set by config
 	$sendmail = $'mailer if $sendmail eq '';	# No sendmail program specified
 	$sendnews = $'inews if $sendnews eq '';		# No news posting program
-	$mailopt = '-odq' if $mailopt eq '' && $sendmail =~ /sendmail/;
+	$mailopt = '-odq -i' if $mailopt eq '' && $sendmail =~ /sendmail/;
 
 	# Backward compatibility -- RAM, 25/04/94
 	$fromesc = 'ON' unless defined $fromesc;	# If absent from ~/.mailagent

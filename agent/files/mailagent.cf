@@ -89,11 +89,12 @@ vacfixed : OFF					# Turn to on to solely allow vacfile message
 
 # Mail and news transport agents
 # By default, values for sendmail and sendnews are determined at configuration
-# time. The default mailopt is -odq when sendmail is used. The -h option is
-# always added to the sendnews program to indicate headers are already present.
+# time. The default mailopt is "-odq -i" when sendmail is used.
+# The -h option is always added to the sendnews program to indicate headers
+# are already present.
 sendmail : /usr/lib/sendmail
 sendnews : /usr/lib/news/inews
-mailopt  : -odq
+mailopt  : -odq -i
 newsopt  :
 
 

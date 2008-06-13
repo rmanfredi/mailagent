@@ -569,7 +569,7 @@ mailagent will use the value determined by Configure.
 .TP
 .I mailopt
 Options to be passed to the mailer (see \fIsendmail\fR). (optional, suggested:
--odq, when using sendmail).
+-odq -i, when using sendmail).
 .TP
 .I maxcmds
 Maximum number of commands that are allowed to be executed by a SERVER command
