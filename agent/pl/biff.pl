@@ -241,8 +241,7 @@ sub body {
 	my $content;
 	$content = unmime(\@body) if $'Header{'Mime-Version'};
 
-	&'add_log("retained content for biffing is $content")
-		if length($content) && $'loglvl > 8;
+	&'add_log("biffing entity is $content") if length($content) && $'loglvl > 8;
 
 	strip_html(\@body) if $content =~ /html\b/;
 	&trim(*body) if $trim;		# Smart trim of leading reply text
@@ -475,7 +474,7 @@ sub unmime {
 			@entity = ();
 			my $end = !skip_past($aref, $boundary, \@entity);
 			$grabbed = 1;		# Avoid skipping at next loop iteration
-			last if $entity_content eq "text/plain";	# We found the best one
+			last if $entity_content =~ m|^text/plain\b|;	# Found the best one
 			last if $end;
 		}
 	}
