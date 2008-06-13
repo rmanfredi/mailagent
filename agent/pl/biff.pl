@@ -238,10 +238,11 @@ sub body {
 	# Setting bifflen or bifflines to 0 means no body
 	return '' if $len == 0 || $lines == 0;
 
-	my $content;
-	$content = unmime(\@body) if $'Header{'Mime-Version'};
+	my ($content, $entity);
+	($content, $entity) = unmime(\@body) if $'Header{'Mime-Version'};
 
-	&'add_log("biffing entity is $content") if length($content) && $'loglvl > 8;
+	&'add_log("biffing $entity entity is $content")
+		if length($content) && $'loglvl > 8;
 
 	strip_html(\@body) if $content =~ /html\b/;
 	&trim(*body) if $trim;		# Smart trim of leading reply text
@@ -434,15 +435,16 @@ sub format {
 # first text entity in the message.
 # The supplied array is updated in-place and will contain on return the
 # lines of the MIME entity that was retained.
-# Returns the type of the retained MIME entity.
+# Returns the type of the retained MIME entity and the number of the entity
+# for logging, saying "global" for the whole message.
 # NB: if no text part is found, the array will be empty upon return.
 sub unmime {
 	my ($aref) = @_;
-	my $content = lc($'Header{'Content-Type'});
+	my $content = $'Header{'Content-Type'};
 	$content =~ s/\(.*?\)\s*//g;		# Removed allowed RFC822 comments
 
 	&'add_log("global MIME content-type is $content") if $'loglvl > 16;
-	return $content unless $content =~ m|^multipart/|;
+	return ($content, "global") unless $content =~ m|^multipart/|i;
 
 	my ($boundary) = $content =~ /boundary=(\S+);/;
 	($boundary) = $content =~ /boundary=(\S+)/ unless length $boundary;
@@ -458,6 +460,7 @@ sub unmime {
 
 	my @entity;
 	my $grabbed = 0;
+	my $n = 0;
 
 	for (;;) {
 		unless ($grabbed) {
@@ -469,6 +472,7 @@ sub unmime {
 		$entity_content =~ s/\(.*?\)\s*//g;
 		&'add_log("parsed entity header: content is $entity_content")
 			if $'loglvl > 19;
+		$n++;
 		if ($entity_content =~ m|^text/|) {
 			# We found (another) text part, collect it...
 			@entity = ();
@@ -479,7 +483,13 @@ sub unmime {
 		}
 	}
 
-	&'add_log("kept entity $entity_content for biffing") if $'loglvl > 18;
+	my $entity = "${n}th";
+	$entity =~ s/1th$/1st/;
+	$entity =~ s/2th$/2nd/;
+	$entity =~ s/3th$/3rd/;
+
+	&'add_log("kept $entity entity $entity_content for biffing")
+		if $'loglvl > 18;
 
 	# Maybe the entity bears a transfer encoding?
 	my $entity_encoding = $header->{'Content-Transfer-Encoding'};
@@ -507,7 +517,8 @@ sub unmime {
 		$error = "no encoding";
 	}
 
-	&'add_log("decoded entity ($entity_encoding), error=$error")
+	my $error_msg = length($error) ? $error : "none";
+	&'add_log("decoded $entity entity ($entity_encoding), error=$error_msg")
 		if $'loglvl > 18;
 
 	if (length $error) {
@@ -515,7 +526,7 @@ sub unmime {
 	} else {
 		@$aref = split(/\r?\n/, $$output);
 	}
-	return $entity_content;
+	return ($entity_content, $entity);
 }
 
 # Skip past named boundary in the supplied array
