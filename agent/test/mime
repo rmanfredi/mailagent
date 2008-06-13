@@ -1,0 +1,38 @@
+From raphael_manfredi@pobox.com Tue Jun 10 17:44:12 2008
+Received: from tours.ram.loc (fetchmail@localhost [127.0.0.1])
+	by tours.ram.loc (8.14.3/8.13.8/Debian-3) with ESMTP id m5AFiCJq002957
+	for <ram@localhost>; Tue, 10 Jun 2008 17:44:12 +0200
+From: "Raphael Manfredi" <Raphael_Manfredi@pobox.com>
+To: "Raphael Manfredi" <Raphael_Manfredi@pobox.com>
+Date: Tue, 10 Jun 2008 15:35:21 +0000
+Subject: Sample MIME message
+Message-ID: <D42E3A26BC29C94DB4CC3DA3569AE82B0157AE42DE@GVW1088EXB.pobox.com>
+MIME-Version: 1.0
+Content-Type: multipart/alternative; boundary="foo"
+Status: RO
+Content-Length: 609
+Lines: 22
+
+--foo
+Content-Type: text/html; charset="iso8859-1"
+
+<html>
+<head>
+	<title>Sample HTML part</title>
+</head>
+<body>
+	<p>Sole paragraph</p>
+</body>
+</html>
+
+--foo
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Content-Length: 346
+
+VGhpcyBtZXNzYWdlIGlzIG9uZSBiaWcgTUlNRSBwYXJ0IHRoYXQgaGFzIGJlZW4gYmFzZTY0LWVu
+Y29kZWQuDQoNClRoZSBtYWlsYWdlbnQgdGVzdCBzdWl0ZSBpcyBnb2luZyB0byBsb29rIGZvciB0
+aGUgZm9sbG93aW5nIGxpbmU6DQoNCiAgICAgICAgKioqIFlFUywgc3VjY2Vzc2Z1bGx5IGRlY29k
+ZWQgKioqDQoNCmluIHRoZSBkZWNvZGVkIGJvZHkgYXMgcHJvb2YgdGhhdCB0aGUgYmFzZTY0IGRl
+Y29kaW5nIGxvZ2ljIGlzIHdvcmtpbmcuDQo=
+--foo--

@@ -230,7 +230,7 @@ sub body {
 	local($trim) = @_;			# Whether top reply text should be trimmed
 	local($len) = defined $cf'bifflen ? $cf'bifflen : 560;
 	local($lines) = defined $cf'bifflines ? $cf'bifflines : 7;
-	local(@body) = split(/\n/, $'Header{'Body'});
+	local(@body) = split(/\n/, ${$'Header{'=Body='}});
 	local($skipnl) = $cf'biffnl =~ /OFF/i;	# Skip blank lines?
 	local($_);
 	local($res) = '';
@@ -238,6 +238,13 @@ sub body {
 	# Setting bifflen or bifflines to 0 means no body
 	return '' if $len == 0 || $lines == 0;
 
+	my $content;
+	$content = unmime(\@body) if $'Header{'Mime-Version'};
+
+	&'add_log("retained content for biffing is $content")
+		if length($content) && $'loglvl > 8;
+
+	strip_html(\@body) if $content =~ /html\b/;
 	&trim(*body) if $trim;		# Smart trim of leading reply text
 	&mh(*body, $len) if $cf'biffmh =~ /^on/i;
 
@@ -422,6 +429,171 @@ sub format {
 		$body = substr($body, $kept, 9999);
 	}
 	push(@ary, $body);			# Remaining information on one line
+}
+
+# Un-MIME the body by removing all the MIME headers and looking for the
+# first text entity in the message.
+# The supplied array is updated in-place and will contain on return the
+# lines of the MIME entity that was retained.
+# Returns the type of the retained MIME entity.
+# NB: if no text part is found, the array will be empty upon return.
+sub unmime {
+	my ($aref) = @_;
+	my $content = lc($'Header{'Content-Type'});
+	$content =~ s/\(.*?\)\s*//g;		# Removed allowed RFC822 comments
+
+	&'add_log("global MIME content-type is $content") if $'loglvl > 16;
+	return $content unless $content =~ m|^multipart/|;
+
+	my ($boundary) = $content =~ /boundary=(\S+);/;
+	($boundary) = $content =~ /boundary=(\S+)/ unless length $boundary;
+	$boundary = $1 if $boundary =~ /^"(.*)"/ || $boundary =~ /^'(.*)'/;
+
+	# We do not perform a recursive MIME parsing here
+
+	my $entity_content;
+	my $header;
+
+	&'add_log("searching text part for biffing, boundary=$boundary")
+		if $'loglvl > 16;
+
+	my @entity;
+	my $grabbed = 0;
+
+	for (;;) {
+		unless ($grabbed) {
+			return undef unless skip_past($aref, $boundary);
+		}
+		$grabbed = 0;
+		$header = parse_header($aref);
+		$entity_content = lc($header->{'Content-Type'});
+		$entity_content =~ s/\(.*?\)\s*//g;
+		&'add_log("parsed entity header: content is $entity_content")
+			if $'loglvl > 19;
+		if ($entity_content =~ m|^text/|) {
+			# We found (another) text part, collect it...
+			@entity = ();
+			my $end = !skip_past($aref, $boundary, \@entity);
+			$grabbed = 1;		# Avoid skipping at next loop iteration
+			last if $entity_content eq "text/plain";	# We found the best one
+			last if $end;
+		}
+	}
+
+	&'add_log("kept entity $entity_content for biffing") if $'loglvl > 18;
+
+	# Maybe the entity bears a transfer encoding?
+	my $entity_encoding = $header->{'Content-Transfer-Encoding'};
+	$entity_encoding =~ s/\(.*?\)\s*//g;
+
+	# XXX code duplication with body_check(), factorize some day...
+	my $output;
+	my $error;
+
+	if ($entity_encoding =~ /^base64\s*$/i) {
+		base64'reset(length $'Header{'Body'});
+		foreach my $d (@entity) {
+			base64'decode($d);
+		}
+		$error = base64'error_msg();
+		$output = base64'output();
+	} elsif ($entity_encoding =~ /^quoted-printable\s*$/i) {
+		qp'reset(length $'Header{'Body'});
+		foreach my $d (@entity) {
+			qp'decode($d);
+		}
+		$error = qp'error_msg();
+		$output = qp'output();
+	} else {
+		$error = "no encoding";
+	}
+
+	&'add_log("decoded entity ($entity_encoding), error=$error")
+		if $'loglvl > 18;
+
+	if (length $error) {
+		@$aref = @entity;
+	} else {
+		@$aref = split(/\r?\n/, $$output);
+	}
+	return $entity_content;
+}
+
+# Skip past named boundary in the supplied array
+# If $collect is a defined ARRAY ref, push there all the lines we see until
+# the next boundary.
+# Return false when we see the LAST boundary in the message, meaning there
+# are no more parts to consider.
+sub skip_past {
+	my ($aref, $boundary, $collect) = @_;
+	my $l;
+	while (defined ($l = shift @$aref)) {
+		return 0 if $l eq "--$boundary--";
+		return 1 if $l eq "--$boundary";
+		push(@$collect, $l) if defined $collect;
+	}
+	return undef;	# Not found
+}
+
+# Parse embedded MIME headers, returning hash ref
+sub parse_header {
+	my ($aref) = @_;
+	my %header;
+	my $val;
+	my $last_header;
+	my $l;
+	my $saw_something = 0;
+	while (defined ($l = shift @$aref)) {
+		last if $l =~ /^$/ && $saw_something;
+		$saw_something++;
+		if ($l =~ /^\s/) {
+			$l =~ s/^\s+/ /;
+			$header{$last_header} .= $l if length $last_header;
+		} elsif (my ($field, $value) = $l =~ /^([!-9;-~\w-]+):\s*(.*)/) {
+			$last_header = header'normalize($field);
+			if ($header{$last_header} ne '') {
+				$header{$last_header} .= "\n" . $value;
+			} else {
+				$header{$last_header} = $value;
+			}
+		}
+	}
+	return \%header;
+}
+
+# Strip HTML in-place and remove spurious blank lines
+# This is done only on a best-effort basis to make the biff output nice
+sub strip_html {
+	my ($aref) = @_;
+	my @out;
+	my $in_style = 0;
+	my $is_nl;
+	my $last_was_nl = 0;
+	my $l;
+
+	while (defined ($l = shift @$aref)) {
+		$in_style++ while $l =~ s/<style\b.*?>//;
+		$in_style-- while $l =~ s|</style>||;
+		next if $in_style;
+		$l =~ s/<[^\0]*?>//g;
+		$l =~ s/&(\w)cedil;/$1/g;
+		$l =~ s/&(\w)acute;/$1/g;
+		$l =~ s/&(\w)grave;/$1/g;
+		$l =~ s/&(\w)circ;/$1/g;
+		$l =~ s/&(\w)uml;/$1/g;
+		$l =~ s/&quot;/'/g;
+		$l =~ s/&nbsp;/ /g;
+		$l =~ s/&#160;/ /g;       # Same as &nbsp;
+		$l =~ s/&#(\d+);/chr($1)/g;   # Corect only for the ASCII part...
+		$l =~ s/&amp;/&/g;        # Must come last
+		$l =~ s/^\s*//;
+		$is_nl = 0 == length($l);
+		next if $last_was_nl && $is_nl;
+		$last_was_nl = $is_nl;
+		push(@out, $l);
+	}
+
+	@$aref = @out;
 }
 
 package main;

@@ -74,7 +74,21 @@ $? == 0 || print "21\n";
 &check_log('^\rTo: ram', 31) == 1 || print "32\n";
 &check_log('^Got mail in ~/ok', 33) == 1 || print "34\n";
 &check_log('^\r####', 35) == 1 || print "36\n";
-&not_log('^\r----', 37);
+&check_log('moderated usenet', 37) == 1 || print "38\n";
+&not_log('^\r----', 39);
+&cleanup;
+
+cp_mail("../mime");
+&add_header('X-Tag: biff 3');
+&make_tty(0, 0777, 40);	# 40 & 41
+`$cmd`;
+$? == 0 || print "41\n";
+-f 'ok' || print "42\n";
+-s 'tty0' || print "43\n";
+&get_log(44, 'tty0');
+&not_log('--foo', 45);
+&check_log('^Got mail in ~/ok', 46) == 1 || print "47\n";
+&check_log('successfully decoded', 48) == 1 || print "49\n";
 
 &cleanup;
 unlink 'mail';

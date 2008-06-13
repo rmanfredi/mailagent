@@ -267,6 +267,7 @@ agent/test/filter/range.t      Selector range tests
 agent/test/filter/status.t     Action status updating tests
 agent/test/level               Default logging level for tests
 agent/test/mail                The mail used by testing routines
+agent/test/mime                Sample MIME email with HTML and plain parts
 agent/test/misc/               Directory for miscellaneous tests
 agent/test/misc/compress.t     Folder compression checks
 agent/test/misc/mh.t           MH-style folder checks
@@ -301,7 +302,7 @@ agent/test/pl/mail.pl          Modifies mail components
 agent/test/pl/misc.pl          Set up for miscellaneous tests
 agent/test/pl/mta.pl           Trivial MTA and NTA for tests
 agent/test/qp              Sample quoted-printable encoded email
-agent/test/rules               Rules used by filtering tests
+agent/test/rules           Rules used by filtering tests
 bin/                       Directory for uninstalled binaries
 bin/perload                The dataloading/autoloading perl translator
 bin/svn-revision           Updates the top "revision.h" file if needed

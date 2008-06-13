@@ -145,6 +145,7 @@ X-Tag: /begin/
 
 X-Tag: /biff 1/ 	{ BIFF off; LEAVE; BIFF on; SAVE ok };
 X-Tag: /biff 2/ 	{ BIFF bfmt; SAVE ok; BIFF -l off; LEAVE };
+X-Tag: /biff 3/ 	{ BIFF bfmt; SAVE ok; };
 
 X-Tag: /bounce 1/			{ BOUNCE nobody };
 X-Tag: /bounce 2/			{ BOUNCE "list" };
