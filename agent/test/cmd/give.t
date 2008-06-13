@@ -18,7 +18,7 @@
 do '../pl/cmd.pl';
 unlink 'output';
 
-&add_header('X-Tag: give');
+&add_header('X-Tag: give 1');
 `$cmd`;
 $? == 0 || print "1\n";
 -f 'output' || print "2\n";		# Where output is created
@@ -31,6 +31,25 @@ for ($i = 0; $i < 3; $i++) {
 }
 $ok || print "3\n";
 -f "$user" || print "4\n";		# Default action applies
+
+unlink 'output', 'mail', "$user";
+
+&cp_mail("../base64");
+&add_header('X-Tag: give 2');
+`$cmd`;
+$? == 0 || print "5\n";
+&get_log(6, 'output');
+&check_log('successfully decoded', 7) == 1 || print "8\n";
+
+unlink 'output', 'mail', "$user";
+
+&cp_mail("../qp");
+&add_header('X-Tag: give 2');
+`$cmd`;
+$? == 0 || print "9\n";
+&get_log(10, 'output');
+&check_log('broken', 11) == 1 || print "12\n";
+&check_log('Raphaël', 13) == 1 || print "14\n";
 
 unlink 'output', 'mail', "$user";
 print "0\n";

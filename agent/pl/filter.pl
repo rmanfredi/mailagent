@@ -225,7 +225,9 @@ sub run_abort {
 
 # Run the RESYNC command
 sub run_resync {
-	&header_resync;				# Resynchronize the %Header array
+	# Headers pertaining to body encoding could have changed.
+	&header_check_body_encoding;	# Check and recode if possible
+	&header_resync;					# Resynchronize the %Header array
 	&add_log("RESYNCED [$mfile]") if $loglvl > 4;
 	0;
 }

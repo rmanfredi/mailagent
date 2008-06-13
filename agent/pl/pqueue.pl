@@ -142,7 +142,8 @@ sub pmail {
 
 	if ($result == 0) {
 		local($len) = $Header{'Length'};
-		&add_log("FILTERED [$file] $len bytes") if $loglvl > 4;
+		my $msize = mail_logsize($filename);
+		&add_log("FILTERED [$file]$msize ($len bytes)") if $loglvl > 4;
 	}
 
 	return $result;		# 0 if OK, 1 for analyze errors

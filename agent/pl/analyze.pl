@@ -66,6 +66,26 @@ sub init_special {
 	);
 }
 
+# Compute shorthand file name for logging based on the processed file
+sub mail_logname {
+	my ($file) = @_;
+	my ($mfile) = $file =~ m|.*/(.*)|;	# Basename of mail file
+	$mfile = $file unless $mfile;		# There was no / in name
+	$mfile = '<stdin>' unless $mfile;	# No $file_name if from STDIN
+	return $mfile;
+}
+
+# Compute file size for logging, if possible (i.e. not reading from STDIN)
+sub mail_logsize {
+	my ($file) = @_;
+	return "" unless length $file;
+	my $msize = (stat($file))[7];
+	my $size = "";
+	my $s = $msize == 1 ? "" : "s";
+	$size = " $msize byte$s" if defined $msize;
+	return $size;
+}
+
 # Parse mail message and apply the filtering rules on it
 sub analyze_mail {
 	local($file) = shift(@_);	# Mail file to be parsed
@@ -90,6 +110,11 @@ sub analyze_mail {
 	# Reset environment and umask before each new mail processing
 	&env'setup;
 	umask($env'umask);
+
+	# Log start of processing
+	my $mfile = mail_logname($file);
+	my $msize = mail_logsize($file);
+	add_log("-- HANDLING [$mfile]$msize --") if $loglvl > 8;
 
 	# Parse the mail message in file
 	&parse_mail($file);			# Parse the mail and fill-in H tables

@@ -167,12 +167,13 @@ X-Tag: /feed/
 	REJECT;
 }
 
-X-Tag: /feed/, To: ram		{ SAVE no_resync };
+X-Tag: /feed/, !To: ram		{ SAVE resynced };
 
 X-Tag: /forward 1/			{ FORWARD nobody };
 X-Tag: /forward 2/			{ FORWARD "list" };
 
-X-Tag: /give/				{ GIVE wc > output };
+X-Tag: /give 1/				{ GIVE wc > output };
+X-Tag: /give 2/				{ GIVE cat > output };
 
 X-Tag: /keep/
 {
@@ -229,12 +230,19 @@ X-Tag: /once/
 	ONCE (other,tag,0m) SAVE four;
 }
 
-X-Tag: /pass/
+X-Tag: /pass 1/
 {
 	PASS grep -v and;
 	PASS perl -p -e 's/^\>From /From /';
 	SAVE output;
 }
+X-Tag: /pass 2/
+{
+	PASS grep -v successfully; 
+	STRIP Content-Transfer-Encoding;
+	SAVE output;
+}
+X-Tag: /pass 3/	{ PASS grep -v broken; SAVE output; }
 
 X-Tag: /perl/	{ REJECT PERL };
 <PERL>			{ PERL perl.2 exit_1; REJECT -t; SAVE exit_ok; REJECT };
@@ -248,11 +256,8 @@ X-Tag: /pipe/			{ PIPE wc > output };
 X-Tag: /post 1/			{ POST alt.test comp.others };
 X-Tag: /post 2/			{ POST -l "list" };
 
-X-Tag: /purify/
-{
-	PURIFY grep -v Subject:;
-	SAVE output;
-};
+X-Tag: /purify 1/		{ PURIFY grep -v Subject:; SAVE output; };
+X-Tag: /purify 2/		{ PURIFY grep -v Transfer-Encoding:; SAVE output; };
 
 X-Tag: /protect/
 {

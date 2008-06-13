@@ -113,6 +113,7 @@ agent/pl/actions.pl        Implementation of mailagent's actions
 agent/pl/add_log.pl        Perl library to add logs to logfile
 agent/pl/addr.pl           Approximate address matching and validation
 agent/pl/analyze.pl        Perl library analyzing the incoming mail
+agent/pl/base64.pl         Simple base64 encoder/decoder
 agent/pl/biff.pl           Built-in biffing support
 agent/pl/builtins.pl       Perl library dealing with builtins
 agent/pl/callout.pl        Perl library to handle callout queue
@@ -163,6 +164,7 @@ agent/pl/plural.pl         Perl library to pluralize words
 agent/pl/power.pl          Power management for mail server
 agent/pl/pqueue.pl         Processing the queued mails
 agent/pl/q.pl              Quote removal function
+agent/pl/qp.pl             Simple quoted-printable encoder/decoder
 agent/pl/queue_mail.pl     Queuing mails
 agent/pl/rangeargs.pl      Perl library to expand a list of patches
 agent/pl/read_conf.pl      Perl library to read configuration file
@@ -188,6 +190,7 @@ agent/test/README          About the regression tests
 agent/test/TEST            Runs the full test suite
 agent/test/actions         Rule file for cmd tests
 agent/test/atail           Active monitoring of the out/agentlog file
+agent/test/base64          Sample base64 encoded email
 agent/test/basic/              Basic tests
 agent/test/basic/config.t      Main test initialization and sanity checks
 agent/test/basic/filter.t      Make sure C filter works
@@ -246,6 +249,7 @@ agent/test/cmd/write.t         Test WRITE command
 agent/test/filter/             Testing the filtering capabilities
 agent/test/filter/address.t    Test various match patterns on address fields
 agent/test/filter/backref.t    Check backreferences
+agent/test/filter/base64.t     Check base64 decoding of mail body
 agent/test/filter/case.t       Normalized header case tests
 agent/test/filter/default.t    Check default behaviour when mail not saved
 agent/test/filter/escape.t     Escape sequences within actions
@@ -258,6 +262,7 @@ agent/test/filter/mode.t       Make sure mode selection logic works
 agent/test/filter/multiple.t   Check multiple selectors
 agent/test/filter/not.t        Negated pattern tests
 agent/test/filter/pattern.t    Check patterns specification and loading
+agent/test/filter/qp.t         Check quoted-printable decoding of mail body
 agent/test/filter/range.t      Selector range tests
 agent/test/filter/status.t     Action status updating tests
 agent/test/level               Default logging level for tests
@@ -272,8 +277,8 @@ agent/test/option/             Tests the options to the mailagent program
 agent/test/option/F.t          Test -F option
 agent/test/option/I.t          Test -I option
 agent/test/option/L.t          Test -L option
-agent/test/option/V.t          Test -V option
 agent/test/option/U.t          Test -U option
+agent/test/option/V.t          Test -V option
 agent/test/option/c.t          Test -c option
 agent/test/option/d.t          Test -d option
 agent/test/option/e.t          Test -e option
@@ -295,6 +300,7 @@ agent/test/pl/logfile.pl       Logging file checking
 agent/test/pl/mail.pl          Modifies mail components
 agent/test/pl/misc.pl          Set up for miscellaneous tests
 agent/test/pl/mta.pl           Trivial MTA and NTA for tests
+agent/test/qp              Sample quoted-printable encoded email
 agent/test/rules               Rules used by filtering tests
 bin/                       Directory for uninstalled binaries
 bin/perload                The dataloading/autoloading perl translator

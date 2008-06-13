@@ -1238,8 +1238,8 @@ sub execute_command {
 	select(STDOUT);
 
 	# Now feed the program with the mail
-	if ($input == $BODY_INPUT) {			# Pipes body
-		print WRITE $Header{'Body'};
+	if ($input == $BODY_INPUT) {			# Pipes *decoded* body
+		print WRITE ${$Header{'=Body='}};
 	} elsif ($input == $MAIL_INPUT) {		# Pipes the whole mail
 		print WRITE $Header{'All'};
 	} elsif ($input == $HEADER_INPUT) {		# Pipes the header
@@ -1367,6 +1367,21 @@ sub feed_back {
 	close TRACE;
 	$Header{'Body'} = $temp unless $input == $HEADER_INPUT;
 	$Header{'All'} = $Header{'Head'} . "\n" . $Header{'Body'};
+	if ($input == $BODY_INPUT) {
+		# Was fed *decoded* body, got at decoded body back.
+		# Headers have not changed, recoding will happen as in the original
+		&body_recode;
+		&header_update_size;
+	} elsif ($input == $MAIL_INPUT) {
+		# Headers could have changed and we need to reparse them in order
+		# to know how/whether we should decode the body.
+		&header_resync;
+		&body_check;	# Update $Header{'=Body='} to point to *decoded* body
+	} elsif ($input == $HEADER_INPUT) {
+		# Headers pertaining to body encoding could have changed.
+		&header_check_body_encoding;		# Check and recode if possible
+		&header_resync;						# Resynchronize %Header
+	}
 }
 
 # Feed output back into $Back variable (used by BACK command). Typically, the
@@ -1390,60 +1405,15 @@ sub xeq_back {
 }
 
 # The "RESYNC" command
-# Resynchronizes the %Header entries by reparsing the 'All' entry
+# Resynchronizes the %Header entries by reparsing the 'Head' entry
 sub header_resync {
 	# Clean up all the non-special entries
 	foreach $key (keys %Header) {
 		next if $Pseudokey{$key};		# Skip pseudo-header entries
 		delete $Header{$key};
 	}
-	# There is some code duplication with parse_mail()
-	local($lines) = 0;
-	local($first_from);						# First From line records sender
-	local($last_header);					# Current normalized header field
-	local($in_header) = 1;					# Bug in the range operator
-	local($value);							# Value of current field
-	my $missing_warned = 0;
-	foreach (split(/\n/, $Header{'All'})) {
-		if ($in_header) {					# Still in header of message
-			if (/^$/) {						# End of header
-				$in_header = 0;
-				next;
-			}
-			if (/^\s/) {					# It is a continuation line
-				s/^\s+/ /;					# Swallow multiple spaces
-				$Header{$last_header} .= $_ if $last_header ne '';
-			} elsif (/^([!-9;-~\w-]+):\s*(.*)/) {	# We found a new header
-				$value = $2;				# Bug in perl 4.0 PL19
-				$last_header = &header'normalize($1);
-				$missing_warned = 0;
-				# Multiple headers like 'Received' are separated by a new-
-				# line character. All headers end on a non new-line.
-				if ($Header{$last_header} ne '') {
-					$Header{$last_header} .= "\n$value";
-				} else {
-					$Header{$last_header} .= $value;
-				}
-			} elsif (/^From\s+(\S+)/) {		# The very first From line
-				$first_from = $1;
-			} else {
-				# Did not identify a header field nor a continuation
-				# Maybe there was a wrong header split somewhere?
-				if ($last_header eq '') {
-					&add_log("ERROR ignoring leading header garbage: $_")
-						if $loglvl > 1;
-				} else {
-					&add_log("ERROR missing continuation for $last_header: $_")
-						if !$missing_warned && $loglvl > 1;
-					$Header{$last_header} .= " " . $_;
-					$missing_warned++;
-				}
-			}
-		} else {
-			$lines++;						# One more line in body
-		}
-	}
-	&header_check($first_from, $lines);	# Sanity checks
+	my $first_from = header_parse($Header{'Head'}, \%Header, 0);
+	&header_check($first_from, undef);	# Sanity checks
 }
 
 # The "STRIP" and "KEEP" commands (case insensitive)
@@ -1471,7 +1441,7 @@ sub alter_header {
 		}
 		$line = $_;					# Save original
 		# Make sure header field name is normalized before attempting a match
-		s/^([\w-]+):/&header'normalize($1).':'/e;
+		s/^([!-9;-~\w-]+):/&header'normalize($1).':'/e;
 		unless (/^\s/) {			# If not a continuation line
 			$last_was_altered = 0;	# Reset header alteration flag
 			$matched = 0;			# Assume no match
@@ -1494,6 +1464,9 @@ sub alter_header {
 	}
 	$Header{'Head'} = join("\n", @newhead) . "\n";
 	$Header{'All'} = $Header{'Head'} . "\n" . $Header{'Body'};
+
+	# Headers pertaining to body encoding could have changed.
+	&header_check_body_encoding;	# Check, but no resync
 }
 
 # The "ANNOTATE" command

@@ -24,7 +24,7 @@
 do '../pl/misc.pl';
 unlink 'output';
 
-&add_header('X-Tag: pass');
+&add_header('X-Tag: pass 1');
 &add_option("-o 'fromesc: OFF'");
 open(MAIL, '>>mail');
 print MAIL <<EOM;
@@ -45,4 +45,25 @@ $? == 0 || print "3\n";
 &check_log('^From test bug', 7) == 1 || print "8\n";
 
 unlink 'output', 'mail', 'ok', 'comp';
+
+cp_mail("../base64");
+add_header('X-Tag: pass 2');
+`$cmd`;
+$? == 0 || print "9\n";
+&get_log(10, 'output');
+&not_log('successfully', 11);
+&check_log('base64-encoded', 12);
+
+unlink 'output', 'mail';
+
+cp_mail("../qp");
+add_header('X-Tag: pass 3');
+`$cmd`;
+$? == 0 || print "13\n";
+&get_log(14, 'output');
+&not_log('brok=', 15);			# Line was passed decoded, so this was stripped
+&check_log("char '=3D'!", 16);	# Still encoded in quoted-printable
+
+unlink 'output', 'mail';
+
 print "0\n";

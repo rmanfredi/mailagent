@@ -76,8 +76,10 @@ sub add_body {
 
 # Copy mail in out/
 sub cp_mail {
+	my ($file) = @_;
+	$file = "../mail" unless defined $file;
 	local($_);
-	open(MAIL, '../mail');
+	open(MAIL, $file)	|| die "Can't open $file: $!";
 	open(HERE, '>mail');
 	print HERE while <MAIL>;
 	close MAIL;

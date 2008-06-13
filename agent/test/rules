@@ -161,6 +161,14 @@ X-Tag: /group/			{ BEGIN GROUP; REJECT };
 # filter/case
 X-Tag: case, Cc: root	{ STRIP Cc; SAVE always };
 
+# filter/base64
+X-Tag: base64,
+Body: /successfully/ 	{ SAVE always };
+
+# filter/qp
+X-Tag: qp,
+Body: /broken/ 			{ SAVE always };
+
 # filter/status
 X-Tag: /status/	{ REJECT -t STATUS };
 <STATUS> { RUN ../no/such/file; REJECT -t; SAVE always; REJECT -t; SAVE never };

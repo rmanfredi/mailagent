@@ -138,9 +138,7 @@ sub run_command {
 	local($cmd) = @_;				# Command to be run (passed to subroutines)
 	local($cmd_name);				# Command name
 	local($cont) = $FT_CONT;		# Continue by default
-	local($mfile) = $file_name =~ m|.*/(.*)|;	# Basename of mail file
-	$mfile = $file_name unless $mfile;			# There was no / in name
-	$mfile = '<stdin>' unless $mfile;			# No $file_name if from STDIN
+	local($mfile) = mail_logname($file_name);
 	&macros_subst(*cmd);			# Macros substitutions
 	$cmd =~ s/^\s*//;				# Remove leading spaces
 	$cmd =~ s/\s*$//;				# And trailing ones

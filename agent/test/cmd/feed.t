@@ -16,7 +16,7 @@
 #
 
 do '../pl/cmd.pl';
-unlink 'ok', 'no_resync';
+unlink 'ok', 'resynced';
 
 &add_header('X-Tag: feed');
 `$cmd`;
@@ -25,7 +25,7 @@ $? == 0 || print "1\n";
 -f 'ok' || print "3\n";			# ...here
 &get_log(4, 'ok');
 &not_log('^To:', 5);			# Make sure To: disappeared
--f 'no_resync' || print "6\n";	# Ensure header not disturbed
+-f 'resynced' || print "6\n";	# Ensure RESYNC was done under the hood
 
-unlink 'ok', 'no_resync', 'mail';
+unlink 'ok', 'resynced', 'mail';
 print "0\n";

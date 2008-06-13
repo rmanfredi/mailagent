@@ -118,7 +118,8 @@ sub builtin_path {
 sub run_builtins {
 	undef @Builtcode;
 	# Lookup for builtins. Code moved out of &parse_mail.
-	foreach $line (split(/\n/, $Header{'Body'})) {
+	# We scan the *decoded* body, not the original one
+	foreach $line (split(/\n/, ${$Header{'=Body='}})) {
 		if ($line =~ s/^@(\w+)\s*//) {			# A builtin command ?
 			local($subroutine) = $Builtin{$1};
 			&$subroutine($line) if $subroutine;	# Record it if known

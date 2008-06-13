@@ -114,7 +114,7 @@ sub parse_mail {
 	$Header{'Body'} = '';
 	$Header{'Head'} = '';
 
-	&add_log ("parsing mail") if $loglvl > 18;
+	&add_log ("parsing mail" . ($head_only ? " header" : "")) if $loglvl > 18;
 	while (<$fd>) {
 		$added += length($_);
 
@@ -196,7 +196,244 @@ sub parse_mail {
 	}
 	close MAIL if $file_name ne '';
 	&header_prepend("$FAKE_FROM\n") unless $first_from;
+	&body_check unless $head_only;
 	&header_check($first_from, $lines);	# Sanity checks
+}
+
+# Parse given header string into the supplied hash ref.
+# Do that silently if told to do so via $silent.
+# Returns: the value of the first From line, and fills %$href.
+sub header_parse {
+	my ($headers, $href, $silent) = @_;
+	# There is some code duplication with parse_mail() above
+	local($first_from);						# First From line records sender
+	local($last_header);					# Current normalized header field
+	local($value);							# Value of current field
+	my $missing_warned = 0;
+	foreach (split(/\n/, $headers)) {
+		if (/^\s/) {					# It is a continuation line
+			s/^\s+/ /;					# Swallow multiple spaces
+			$href->{$last_header} .= $_ if $last_header ne '';
+		} elsif (/^([!-9;-~\w-]+):\s*(.*)/) {	# We found a new header
+			$value = $2;				# Bug in perl 4.0 PL19
+			$last_header = &header'normalize($1);
+			$missing_warned = 0;
+			# Multiple headers like 'Received' are separated by a new-
+			# line character. All headers end on a non new-line.
+			if ($href->{$last_header} ne '') {
+				$href->{$last_header} .= "\n$value";
+			} else {
+				$href->{$last_header} .= $value;
+			}
+		} elsif (/^From\s+(\S+)/) {		# The very first From line
+			$first_from = $1;
+		} else {
+			# Did not identify a header field nor a continuation
+			# Maybe there was a wrong header split somewhere?
+			if ($last_header eq '') {
+				&add_log("ERROR ignoring leading header garbage: $_")
+					if $loglvl > 1 && !$silent;
+			} else {
+				&add_log("ERROR missing continuation for $last_header: $_")
+					if !$missing_warned && $loglvl > 1 && !$silent;
+				$href->{$last_header} .= " " . $_;
+				$missing_warned++;
+			}
+		}
+	}
+	return $first_from;
+}
+
+# Set number of Lines in body and body Length to reflect reality
+# If the headers were physically present in the message, they are
+# updated as well.
+sub header_update_size {
+	# Cannot trust %Header to indicate whether the headers were present
+	# since we add these entries in any case...  Use a crude way to detect
+	# presence then...
+	my $had_lines = $Header{'Head'} =~ /^Lines:/im;
+	my $had_length = $Header{'Head'} =~ /^Length:/im;
+
+	my $lines = $Header{'Lines'} = ${$Header{'=Body='}} =~ tr/\n/\n/;
+	my $length = $Header{'Length'} = length($Header{'Body'});
+	my $is_mime = exists $Header{'Mime-Version'};
+
+	if ($had_lines) {
+		alter_header("Lines", $HD_STRIP);
+		header_append(header'format("Lines: $lines"));
+	}
+
+	if ($had_length) {
+		alter_header("Length", $HD_STRIP);
+		&add_log("NOTICE stripped non-RFC822 Length header") if $loglvl > 5;
+	}
+
+	if ($is_mime && exists $Header{'Content-Length'}) {
+		my $clen = $Header{'Content-Length'};
+		if ($clen != $length) {
+			alter_header("Content-Length", $HD_STRIP);
+			header_append(header'format("Content-Length: $length"));
+			$Header{'Content-Length'} = $length;
+			&add_log("NOTICE adjusted Content-Length from $clen to $length")
+				if $loglvl > 5;
+		}
+	}
+
+	if (!$is_mime && exists $Header{'Content-Length'}) {
+		alter_header("Content-Length", $HD_STRIP);
+		delete $Header{'Content-Length'};
+		&add_log("NOTICE stripped Content-Length header in non-MIME message")
+			if $loglvl > 5;
+	}
+}
+
+# Check whether the body we got back has received a transfer encoding.
+# If it has and we know about that transfer encoding, decode it.
+# We make sure the "=Body=" header key is a reference to the decoded body:
+# it is either a reference to $Header{'Body'} when we leave it as-is, or
+# a reference to a newly allocated scalar.
+sub body_check {
+	$Header{'=Body='} = \$Header{'Body'};
+	my $encoding = lc($Header{'Content-Transfer-Encoding'});
+	my %decode = map { $_ => 1 } qw(base64 quoted-printable);
+	unless (exists $Header{'Mime-Version'}) {
+		return unless length $encoding;
+		if ($decode{$encoding}) {
+			&add_log("WARNING ignoring $encoding body transfer encoding")
+				if $loglvl > 3;
+		} else {
+			alter_header("Content-Transfer-Encoding", $HD_STRIP);
+			delete $Header{'Content-Transfer-Encoding'};
+			&add_log("NOTICE stripped $encoding encoding in non-MIME message")
+				if $loglvl > 6;
+		}
+		return;
+	}
+	my %enc = map { $_ => 1 } qw(7bit 8bit binary base64 quoted-printable);
+	if (length $encoding) {
+		&'add_log("WARNING unknown content transfer encoding \"$encoding\"")
+			if $'loglvl > 5 && !$enc{$encoding};
+	}
+	return unless $decode{$encoding};
+	my @data = split(/\r?\n/, $Header{'Body'});
+	my $error;
+	my $output;
+	if ($encoding eq "base64") {
+		base64'reset(length $Header{'Body'});
+		foreach my $d (@data) {
+			base64'decode($d);
+		}
+		$error = base64'error_msg();
+		$output = base64'output();
+	} elsif ($encoding eq "quoted-printable") {
+		qp'reset(length $Header{'Body'});
+		foreach my $d (@data) {
+			qp'decode($d);
+		}
+		$error = qp'error_msg();
+		$output = qp'output();
+	}
+	if (length $error) {
+		&'add_log("WARNING could not decode $encoding body: $error")
+			if $'loglvl > 5;
+	} else {
+		if ($'loglvl > 9) {
+			my $len = length $$output;
+			&'add_log("decoded $encoding body into $len bytes");
+		}
+		$Header{'=Body='} = $output;		# Reference
+	}
+	&header_update_size;
+}
+
+# Force recoding of the body to a new encoding.
+# The $Header{'Body'} variable is supposed to hold the decoded version.
+sub body_recode_with {
+	my ($encoding) = @_;
+	$Header{'=Body='} = \$Header{'Body'};	# The decoded version!
+	my @data = split(/\r?\n/, $Header{'Body'});
+	my $error;
+	my $output;
+	if ($encoding eq "base64") {
+		base64'reset(length($Header{'Body'}) * 4/3);
+		foreach my $d (@data) {
+			base64'encode($d);
+		}
+		$error = base64'error_msg();
+		$output = base64'output();
+	} elsif ($encoding eq "quoted-printable") {
+		qp'reset(length $Header{'Body'} * 1.1);
+		foreach my $d (@data) {
+			qp'encode($d);
+		}
+		$error = qp'error_msg();
+		$output = qp'output();
+	}
+	if (length $error) {
+		&'add_log("WARNING could not recode $encoding body: $error")
+			if $'loglvl > 5;
+	} else {
+		if ($'loglvl > 9) {
+			my $len = length $$output;
+			&'add_log("recoded $encoding body into $len bytes");
+		}
+		delete $Header{'Body'};		# $Header{'=Body='} ref still points to it
+		$Header{'Body'} = $$output;	# Transfer-Encoded version of the body
+		# The body changed, must update the "All" key...
+		$Header{'All'} = $Header{'Head'} . "\n" . $Header{'Body'};
+	}
+}
+
+# When coming from a feeback routine such as PASS, we have a new body that
+# maybe we need to recode to match the original encoding...
+sub body_recode {
+	$Header{'=Body='} = \$Header{'Body'};	# The decoded version!
+	my $encoding = lc($Header{'Content-Transfer-Encoding'});
+	return unless length $encoding;
+	unless (exists $Header{'Mime-Version'}) {
+		&add_log("WARNING not recoding body in $encoding: no MIME header")
+			if $loglvl > 3;
+		alter_header("Content-Transfer-Encoding", $HD_STRIP);
+		delete $Header{'Content-Transfer-Encoding'};
+		return;
+	}
+	my %recode = map { $_ => 1 } qw(base64 quoted-printable);
+	return unless $recode{$encoding};
+	body_recode_with($encoding);
+}
+
+# Whenever we got a new set of headers in $Header{'Head'} we need to ensure
+# the new vision is consistent with the body encoding.  If they strip the
+# Content-Transfer-Encoding header for instance, we have to use the old
+# decoded version we had instead of the original body.
+# If they add a Content-Transfer-Encoding header, we have to recode the body!
+sub header_check_body_encoding {
+	my $plain = \$Header{'Body'} == $Header{'=Body='};	# No encoding
+	if ($plain && $Header{'Head'} !~ /^Content-Transfer-Encoding:/mi) {
+		# No encoding and no header indicating a transfer encodig...
+		return;		# Nothing to change
+	}
+	my %new;
+	header_parse($Header{'Head'}, \%new, 1);	# Silently parse new headers
+	my $encoding = $Header{'Content-Transfer-Encoding'} || "none";
+	my $new_encoding = lc($new{'Content-Transfer-Encoding'}) || "none";
+	return if lc($encoding) eq $new_encoding;	# No change occurred
+
+	&add_log(
+		"WARNING body transfer encoding changed from $encoding to $new_encoding"
+	) if $loglvl > 3;
+
+
+	$Header{'Body'} = ${$Header{'=Body='}};		# Restore decoded version
+	my %encode = map { $_ => 1 } qw(base64 quoted-printable);
+	unless ($encode{$new_encoding}) {
+		$Header{'=Body='} = \$Header{'Body'};
+		return;
+	}
+	body_recode_with($new_encoding);			# Then re-encode it
+
+	# At some point a RESYNC will be needed, caller will decide when it is
+	# necessary to do it.
 }
 
 # Now do some sanity checks:
@@ -205,16 +442,19 @@ sub parse_mail {
 # - if an Envelope field was defined in the header, override it (sorry)
 # - likewise for Relayed, which is the list of relaying hosts, first one first.
 #
-# We guarantee the following header entries:
+# We guarantee the following header entries (to select on in rules):
 #   Envelope:     the actual sender of the message, empty if cannot compute
 #   From:         the value of the From field
 #   To:           to whom the mail was sent
 #   Lines:        number of lines in the message
-#   Length:       number of bytes in the message
+#   Length:       number of bytes in the message body (*decoded* version)
 #   Relayed:      the list of relaying hosts deduced from Received: lines
 #   Reply-To:     the address we may use to reply
 #   Sender:       the value of the Sender field, same as From usually
 #
+# NB: When the $lines parameter is set, we parsed the whole message initially.
+# When it is undef, we're resyncing, possibly after an external messaging of
+# the message.
 sub header_check {
 	local($first_from, $lines) = @_;	# First From line, number of lines
 	unless (defined $Header{'From'}) {
@@ -254,11 +494,17 @@ sub header_check {
 		}
 	}
 
-	# Set number of lines in body, unless there is already a Lines:
-	# header in which case we trust it. Same for Length.
-	$Header{'Lines'} = $lines unless defined($Header{'Lines'});
-	$Header{'Length'} = length($Header{'Head'}) + length($Header{'Body'}) + 1
-		unless defined($Header{'Length'});
+	# Update length information
+	# No warning is emitted unless $lines was defined, indicating initial
+	# parsing of the message we get.
+	my $length = $Header{'Content-Length'};
+	&header_update_size;		# Update number of lines and length...
+	my $count = $Header{'Lines'};
+	&add_log("NOTICE adjusted number of lines from $lines to $count")
+		if $loglvl > 5 && defined($lines) && $count != $lines;
+	$count = $Header{'Content-Length'};
+	&add_log("NOTICE adjusted Content-Length from $length to $count")
+		if $loglvl > 5 && defined($lines) && $count != $length;
 
 	# If there is no Reply-To: line, then take the address in From, if any.
 	# Otherwise use the address found in the return-path
@@ -287,7 +533,7 @@ sub header_check {
 	# the mail) coming last.
 
 	unless ($Header{'Relayed'} = &relay_list) {
-		&add_log("WARNING no valid Received: indication") if $loglvl > 4;
+		&add_log("NOTICE no valid Received: indication") if $loglvl > 6;
 	}
 }
 
@@ -330,7 +576,7 @@ sub relay_list {
 	local($_);
 
 	# All the known top-level domains as of 2006-08-15
-	# with the addition of "loc" and "private".
+	# with the addition of "loc", "localdomain" and "private".
 	# See http://data.iana.org/TLD/tlds-alpha-by-domain.txt
 	my $tlds_re = qr/
 		a(?:ero|rpa|[c-gil-oq-uwxz])|
@@ -344,7 +590,7 @@ sub relay_list {
 		i(?:n(?:fo|t)|[del-oq-t])|
 		j(?:obs|[emop])|
 		k[eghimnrwyz]|
-		l(?:[abcikr-vy]|oc)|
+		l(?:[abcikr-vy]|o(?:c|caldomain))|
 		m(?:il|obi|useum|[acdghk-z])|
 		n(?:ame|et|[acefgilopruz])|
 		o(?:m|rg)|
@@ -509,7 +755,6 @@ sub relay_list {
 
 	return join(', ', reverse @unique);
 }
-
 
 # Append given field to the header structure, updating the whole mail
 # text at the same time, hence keeping the %Header table.

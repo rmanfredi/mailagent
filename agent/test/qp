@@ -1,0 +1,21 @@
+From raphael_manfredi@pobox.com Tue Jun 10 17:44:12 2008
+Received: from tours.ram.loc (fetchmail@localhost [127.0.0.1])
+	by tours.ram.loc (8.14.3/8.13.8/Debian-3) with ESMTP id m5AFiCJq002957
+	for <ram@localhost>; Tue, 10 Jun 2008 17:44:12 +0200
+From: "Raphael Manfredi" <Raphael_Manfredi@pobox.com>
+To: "Raphael Manfredi" <Raphael_Manfredi@pobox.com>
+Date: Tue, 10 Jun 2008 15:35:21 +0000
+Subject: Sample quoted-printable encoding
+Message-ID: <D32E3A26BC29C94DB4CC3DA3569AE82B0157AE42DE@mail.pobox.com>
+Content-Type: text/plain; charset="iso8859-1"
+Content-Transfer-Encoding: quoted-printable
+MIME-Version: 1.0
+Lines: 7
+
+This is a first line of pure ASCII text
+This second line contains the word 'Rapha=EBl'
+This third line is much longer than 76 chars and therefore needs to be brok=
+en up smartly
+This fourth line contains the naughty char '=3D'!
+This fifth line is unreadable: =E0=E9=F4=EA=E8=E0=E9=F4=EA=E8=E0=E9=F4=EA=
+=E8=E0=E9=F4=EA=E8=E0=E9=F4=EA=E8=E0=E9=F4=EA=E8=E0=E9=F4=EA=E8, yeah!

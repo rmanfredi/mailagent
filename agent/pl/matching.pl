@@ -348,31 +348,33 @@ sub match_list {
 sub match_var {
 	local($selector, $pattern, $range) = @_;
 	local($lines) = 0;					# Number of lines in matching buffer
+	my $target = \$Header{$selector};
+	# Need to special-case Body to use the *decoded* version
+	$target = $Header{'=Body='} if $selector eq 'Body';
 	if ($range ne '<1,->') {			# Optimize: count lines only if needed
-		$lines = $Header{$selector} =~ tr/\n/\n/;
+		$lines = $$target =~ tr/\n/\n/;
 	}
 	local($min, $max) = &mrange($range, $lines);
 	return 0 unless $min;				# No matching possible if null range
-	local($buffer);						# Buffer on which matching is attempted
+	my $buffer;							# Buffer on which matching is attempted
 	local(@buffer);						# Same, whith range line selected
 	local(@matched);
 	$pattern = &make_pattern($pattern);
 	# Optimize, since range selection is the exception and not the rule.
 	# Most likely, we use the default selection, i.e. we take everything...
 	if ($min != 1 || $max != 9_999_999) {
-		@buffer = split(/\n/, $Header{$selector});
+		@buffer = split(/\n/, $$target);
 		@buffer = @buffer[$min - 1 .. ($max > $#buffer ? $#buffer : $max - 1)];
 		$buffer = join("\n", @buffer);		# Keep only selected lines
 		undef @buffer;						# May be big, so free ASAP
-	} else {
-		$buffer = $Header{$selector};
+		$target = \$buffer;
 	}
 	# Ensure multi-line matching by adding trailing "m" option to pattern
-	@matched = eval '($buffer =~ ' . $pattern . 'm);';
+	@matched = eval '($$target =~ ' . $pattern . 'm);';
 	# If buffer is empty, we have to recheck the pattern in a non array context
 	# to see if there is a match. Otherwise, /(.*)/ does not seem to match an
 	# empty string as it returns an empty string in $matched[0]...
-	$matched[0] = eval '$buffer =~ ' . $pattern . 'm' if $buffer eq '';
+	$matched[0] = eval '$$target =~ ' . $pattern . 'm' unless length $$target;
 	&eval_error;						# Make sure eval worked
 	&update_backref(*matched);			# Record non-null backreferences
 	$matched[0];						# Return matching status

@@ -546,9 +546,10 @@ sub init_env {
 # List of special header keys which do not represent a true header field.
 sub init_pseudokey {
 	%Pseudokey = (
-		'Body', 1,
-		'Head', 1,
-		'All', 1
+		'Body', 1,			# Body of message
+		'Head', 1,			# Header of message
+		'All', 1,			# Concatenation of Header, "\n", Body
+		'=Body=', 1,		# Reference to body with decoded transfer encoding
 	);
 }
 
@@ -824,5 +825,7 @@ $grep -v '^;#' pl/biff.pl >>magent
 $grep -v '^;#' pl/rulenv.pl >>magent
 $grep -v '^;#' pl/options.pl >>magent
 $grep -v '^;#' pl/install.pl >>magent
+$grep -v '^;#' pl/base64.pl >>magent
+$grep -v '^;#' pl/qp.pl >>magent
 chmod 755 magent
 $eunicefix magent

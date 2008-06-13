@@ -18,7 +18,7 @@
 do '../pl/cmd.pl';
 unlink 'output';
 
-&add_header('X-Tag: purify');
+&add_header('X-Tag: purify 1');
 `$cmd`;
 $? == 0 || print "1\n";
 -f 'output' || print "2\n";		# Where mail is saved
@@ -29,4 +29,24 @@ $? == 0 || print "3\n";
 -s 'comp' != -s 'output' || print "5\n";	# Casually check X-Filter was there
 
 unlink 'output', 'mail', 'ok', 'comp';
+
+cp_mail("../base64");
+add_header('X-Tag: purify 2');
+`$cmd`;
+$? == 0 || print "6\n";
+&get_log(7, 'output');
+&check_log('successfully', 8);
+
+unlink 'output', 'mail';
+
+cp_mail("../qp");
+add_header('X-Tag: purify 2');
+`$cmd`;
+$? == 0 || print "9\n";
+&get_log(10, 'output');
+&not_log('brok=', 11);			# Body must have been recoded
+&not_log("char '=3D'!", 12);
+&check_log("broken", 13);
+
+unlink 'output', 'mail';
 print "0\n";
