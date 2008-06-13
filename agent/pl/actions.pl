@@ -670,6 +670,7 @@ sub forward {
 			if $loglvl;
 		return 1;
 	}
+	local $SIG{PIPE} = 'IGNORE';	# sendmail failure caught at close() time
 	local(@addr) = split(' ', $addresses);
 	print MAILER &header'format("Resent-From: $address"), "\n";
 	local($to) = "Resent-To: " . join(', ', @addr);
@@ -706,6 +707,7 @@ sub bounce {
 			if $loglvl;
 		return 1;
 	}
+	local $SIG{PIPE} = 'IGNORE';	# sendmail failure caught at close() time
 	# Protect Sender: lines in the original message
 	foreach (split(/\n/, $Header{'Head'})) {
 		next if /^From\s+(\S+)/;

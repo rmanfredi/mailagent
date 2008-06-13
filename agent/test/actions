@@ -149,6 +149,8 @@ X-Tag: /biff 3/ 	{ BIFF bfmt; SAVE ok; };
 
 X-Tag: /bounce 1/			{ BOUNCE nobody };
 X-Tag: /bounce 2/			{ BOUNCE "list" };
+X-Tag: /bounce 3/			{ BOUNCE nobody; REJECT -f; DELETE };
+X-Tag: /bounce 3/			{ SAVE ok };
 
 X-Tag: /delete/				{ DELETE };
 
@@ -172,6 +174,8 @@ X-Tag: /feed/, !To: ram		{ SAVE resynced };
 
 X-Tag: /forward 1/			{ FORWARD nobody };
 X-Tag: /forward 2/			{ FORWARD "list" };
+X-Tag: /forward 3/			{ FORWARD nobody; REJECT -f; DELETE };
+X-Tag: /forward 3/			{ SAVE ok };
 
 X-Tag: /give 1/				{ GIVE wc > output };
 X-Tag: /give 2/				{ GIVE cat > output };

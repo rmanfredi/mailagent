@@ -45,6 +45,20 @@ $? == 0 || print "9\n";
 &check_log('^To: ram', 13) == 1 || print "14\n";
 &check_log('^Recipients: first second third$', 15) == 1 || print "16\n";
 
+unlink 'send.mail', 'ok';
+
+&replace_header('X-Tag: bounce 3');
+open(MSEND, '>msend');
+print MSEND <<'EOM';
+#!/bin/sh
+exit 1
+EOM
+close MSEND;
+`$cmd`;
+$? == 0 || print "17\n";
+-f "$user" && print "18\n";		# Mail not saved
+-f 'ok' || print "19\n";		# Failure caught by "REJECT -f"
+
 &clear_mta;
-unlink 'mail', 'list';
+unlink 'mail', 'list', 'ok';
 print "0\n";

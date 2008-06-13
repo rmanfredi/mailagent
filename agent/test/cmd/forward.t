@@ -48,6 +48,20 @@ $? == 0 || print "14\n";
 &check_log('^To: ram', 21) == 1 || print "22\n";
 &check_log('^Recipients: first second third$', 23) == 1 || print "24\n";
 
+unlink 'send.mail', 'ok';
+
+&replace_header('X-Tag: forward 3');
+open(MSEND, '>msend');
+print MSEND <<'EOM';
+#!/bin/sh
+exit 1
+EOM
+close MSEND;
+`$cmd`;
+$? == 0 || print "25\n";
+-f "$user" && print "26\n";		# Mail not saved
+-f 'ok' || print "27\n";		# Failure caught by "REJECT -f"
+
 &clear_mta;
-unlink 'mail', 'list';
+unlink 'mail', 'list', 'ok';
 print "0\n";
