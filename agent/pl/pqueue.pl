@@ -127,6 +127,12 @@ sub pmail {
 
 	local($result) = &analyze_mail($filename);		# Analyze & filter message
 	
+	if ($result == 0) {
+		local($len) = $Header{'Length'};
+		my $msize = mail_logsize($filename);
+		&add_log("FILTERED [$file]$msize ($len bytes)") if $loglvl > 4;
+	}
+
 	# If message was not from stdin and was processed successfully, unlink it
 	unless ($file eq '<stdin>') {
 		if ($result == 0 && $can_unlink && !unlink($filename)) {
@@ -138,12 +144,6 @@ sub pmail {
 		} else {
 			&add_log("ERROR cannot unlock $filename") if $loglvl;
 		}
-	}
-
-	if ($result == 0) {
-		local($len) = $Header{'Length'};
-		my $msize = mail_logsize($filename);
-		&add_log("FILTERED [$file]$msize ($len bytes)") if $loglvl > 4;
 	}
 
 	return $result;		# 0 if OK, 1 for analyze errors
