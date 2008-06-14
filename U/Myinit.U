@@ -18,7 +18,9 @@
 ?X: is included after variables are initialized but before any old
 ?X: config.sh file is read in.
 ?X:
-?MAKE:Myinit: Init
+?MAKE:libswanted Myinit: Init
 ?MAKE:	-pick add $@ %<
+?LINT:describe libswanted
+: private initializations
 libswanted=''
 

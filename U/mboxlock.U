@@ -7,7 +7,7 @@
 ?RCS:  Licence as specified in the README file that comes with dist.
 ?RCS:
 ?RCS: $Log
-?MAKE:d_lockflock d_flockonly lock_by_flock flock_only: cat contains d_flock Myread +usrinc Setvar Oldconfig
+?MAKE:d_lockflock d_flockonly lock_by_flock flock_only: cat contains d_flock Myread +usrinc Setvar Oldconfig package
 ?MAKE:	-pick add $@ %<
 ?S:d_lockflock:
 ?S:	This variable conditionally defines the LOCK_BY_FLOCK symbol, which
@@ -34,6 +34,8 @@
 ?C:.
 ?H:#$d_lockflock	LOCK_BY_FLOCK		/**/
 ?H:#$d_flockonly	FLOCK_ONLY		/**/
+?H:.
+?LINT:set d_lockflock d_flockonly
 : see which mailbox locking should be used
 echo " "
 lock_by_flock=''
@@ -76,7 +78,7 @@ uses .lock type locking before using only flock style locking.
 
 EOM
 	rp="Would you like to use flock style mail spool locking only?"
-	. myread
+	. ./myread
 	case "$ans" in
 	y*|Y*) val="$define";;
 	*) val="$undef";;
