@@ -244,6 +244,16 @@ sub header_parse {
 	return $first_from;
 }
 
+# Compute amount of lines listed in the header
+# We do NOT use $Header{'Lines'} here since this is a filtering value which
+# represents the number of lines in the *decoded* body, not the physical
+# number of lines in the message which the Lines header in the message is
+# supposed to represent.
+sub header_lines {
+	my ($lines) = $Header{'Head'} =~ /^Lines:\s*(\d+)/im;
+	return $lines;
+}
+
 # Set number of Lines in body and body Length to reflect reality
 # If the headers were physically present in the message, they are
 # updated as well.
@@ -254,14 +264,18 @@ sub header_update_size {
 	my $had_lines = $Header{'Head'} =~ /^Lines:/im;
 	my $had_length = $Header{'Head'} =~ /^Length:/im;
 
-	my $lines = $Header{'Lines'} = ${$Header{'=Body='}} =~ tr/\n/\n/;
-	my $length = $Header{'Length'} = length($Header{'Body'});
+	my $lines = $Header{'Body'} =~ tr/\n/\n/;
+	my $length = length($Header{'Body'});
 	my $is_mime = exists $Header{'Mime-Version'};
 
-	if ($had_lines) {
+	if ($had_lines && $lines != &header_lines) {
 		alter_header("Lines", $HD_STRIP);
-		header_append(header'format("Lines: $lines"));
+		header_append(header'format("Lines: $lines\n"));
 	}
+
+	# For filtering, use the *decoded* body!
+	$Header{'Lines'} = ${$Header{'=Body='}} =~ tr/\n/\n/;
+	$Header{'Length'} = length ${$Header{'=Body='}};
 
 	if ($had_length) {
 		alter_header("Length", $HD_STRIP);
@@ -272,7 +286,7 @@ sub header_update_size {
 		my $clen = $Header{'Content-Length'};
 		if ($clen != $length) {
 			alter_header("Content-Length", $HD_STRIP);
-			header_append(header'format("Content-Length: $length"));
+			header_append(header'format("Content-Length: $length\n"));
 			$Header{'Content-Length'} = $length;
 			&add_log("NOTICE adjusted Content-Length from $clen to $length")
 				if $loglvl > 5;
@@ -375,12 +389,13 @@ sub body_recode_with {
 	} else {
 		if ($'loglvl > 9) {
 			my $len = length $$output;
-			&'add_log("recoded $encoding body into $len bytes");
+			&'add_log("recoded $encoding body into $len bytes") if $'loglvl > 7;
 		}
 		delete $Header{'Body'};		# $Header{'=Body='} ref still points to it
 		$Header{'Body'} = $$output;	# Transfer-Encoded version of the body
 		# The body changed, must update the "All" key...
 		$Header{'All'} = $Header{'Head'} . "\n" . $Header{'Body'};
+		&header_update_size;
 	}
 }
 
@@ -400,6 +415,33 @@ sub body_recode {
 	my %recode = map { $_ => 1 } qw(base64 quoted-printable);
 	return unless $recode{$encoding};
 	body_recode_with($encoding);
+}
+
+# When coming back from a FEED, check whether the content transfer encoding
+# is suitable and replace it with the optimal one if not.
+# Upon entry, we expect =Body= to point to the decoded versions and headers
+# of the message to have been parsed in %Header (read: properly resync-ed).
+# Both the header and the body of the message are updated if the encoding
+# is changed.
+# Return TRUE if body was recoded (implying caller should RESYNC the headers).
+sub body_recode_optimally {
+	my $encoding = lc($Header{'Content-Transfer-Encoding'}) || "none";
+	my $optimal = best_body_encoding($Header{'=Body='});
+	my %encoded = map { $_ => 1 } qw(base64 quoted-printable);
+	my $recoded = 0;
+	if ($optimal ne $encoding) {
+		&add_log("converting body encoded with $encoding to optimal $optimal")
+			if $'loglvl > 7;
+		if ($encoded{$optimal}) {
+			$Header{'Body'} = ${$Header{'=Body='}};
+			$Header{'=Body='} = \$Header{'Body'};	# The decoded version!
+			body_recode_with($optimal);
+		}
+		alter_header("Content-Transfer-Encoding", $HD_STRIP);
+		header_append(header'format("Content-Transfer-Encoding: $optimal\n"));
+		$recoded = 1;
+	}
+	return $recoded;
 }
 
 # Whenever we got a new set of headers in $Header{'Head'} we need to ensure
@@ -446,7 +488,7 @@ sub header_check_body_encoding {
 #   Envelope:     the actual sender of the message, empty if cannot compute
 #   From:         the value of the From field
 #   To:           to whom the mail was sent
-#   Lines:        number of lines in the message
+#   Lines:        number of lines in the message (*decoded* version)
 #   Length:       number of bytes in the message body (*decoded* version)
 #   Relayed:      the list of relaying hosts deduced from Received: lines
 #   Reply-To:     the address we may use to reply
@@ -499,9 +541,10 @@ sub header_check {
 	# parsing of the message we get.
 	my $length = $Header{'Content-Length'};
 	&header_update_size;		# Update number of lines and length...
-	my $count = $Header{'Lines'};
+	my $count = &header_lines;
 	&add_log("NOTICE adjusted number of lines from $lines to $count")
-		if $loglvl > 5 && defined($lines) && $count != $lines;
+		if $loglvl > 5 &&
+			defined($lines) && defined($count) && $count != $lines;
 	$count = $Header{'Content-Length'};
 	&add_log("NOTICE adjusted Content-Length from $length to $count")
 		if $loglvl > 5 && defined($lines) && $count != $length;
@@ -770,5 +813,35 @@ sub header_prepend {
 	local($hline) = @_;
 	$Header{'Head'} = $hline . $Header{'Head'};
 	$Header{'All'} = $hline . $Header{'All'};
+}
+
+# Scan the supplied scalar reference (containing a mail body without any
+# content transfer encoding) and determine what is the proper encoding
+# for that body: "7bit", "quoted-printable" or "base64".
+sub best_body_encoding {
+	my ($body) = @_;
+	my $size = 0;
+	my $largest_line = 0;
+	my $qp_escaped = 0;
+	my $non_7bit = 0;
+
+	foreach my $l (split(/\r?\n/, $$body)) {
+		my $len = length($l);
+		$size += $len;
+		$largest_line = $len if $largest_line < $len;
+		$non_7bit += $l =~ tr/[\x80-\xff]/[\x80-\xff]/;
+		$non_7bit += $l =~ tr/[\x0]/[\x0]/;	# NUL never allowed in "7bit"
+		$l =~ s/([^ \t\n!"#\$%&'()*+,\-.\/0-9:;<>?\@A-Z[\\\]^_`a-z{|}~])//g;
+		$qp_escaped = $len - length($l);
+	}
+
+	return "7bit" if $largest_line <= 998 && $non_7bit == 0;
+
+	my $size_qp = $size + 2 * $qp_escaped;
+	my $size_base64 = $size * 4 / 3;
+
+	return "base64" if $size_base64 <= $size_qp;
+	return "quoted-printable" if $qp_escaped * 8 < $size;	# Less than 1/8th
+	return "base64";
 }
 

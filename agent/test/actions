@@ -163,14 +163,17 @@ X-Tag: /do\b/
 };
 <DO>	{ SAVE always.2; DO __foo__'perl_3; SAVE never; };
 
-X-Tag: /feed/
+X-Tag: /feed 1/
 {
 	FEED grep -v To:;
 	SAVE ok;
 	REJECT;
 }
 
-X-Tag: /feed/, !To: ram		{ SAVE resynced };
+X-Tag: /feed 1/, !To: ram	{ SAVE resynced };
+X-Tag: /feed 2/				{ FEED tee output };
+X-Tag: /feed 3/				{ FEED -b tee output };
+X-Tag: /feed 4/				{ FEED -be tee output };
 
 X-Tag: /forward 1/			{ FORWARD nobody };
 X-Tag: /forward 2/			{ FORWARD "list" };
@@ -256,7 +259,9 @@ X-Tag: /perl/	{ REJECT PERL };
 <PERL>			{ PERL perl.1; SAVE never };
 <PERL>			{ PERL no_such_file; ABORT -f; SAVE never };
 
-X-Tag: /pipe/			{ PIPE wc > output };
+X-Tag: /pipe 1/			{ PIPE wc > output };
+X-Tag: /pipe 2/			{ PIPE cat > output };
+X-Tag: /pipe 3/			{ PIPE -b cat > output };
 
 X-Tag: /post 1/			{ POST alt.test comp.others };
 X-Tag: /post 2/			{ POST -l "list" };

@@ -36,7 +36,7 @@
 ;# %D     Day of the week (0-6)
 ;# %H     Host name (name of the machine on which the mailagent runs)
 ;# %I     Internet domain from sender (domain.ct in user@host.domain.ct)
-;# %L     Length of the message in bytes (without header)
+;# %L     Length of the message in bytes (without header, no transfer encoding)
 ;# %N     Full name of sender (login name if none)
 ;# %O     Organization name from sender address (domain in user@host.domain.ct)
 ;# %R     Subject of orginal message with leading Re: suppressed

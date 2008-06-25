@@ -18,19 +18,41 @@
 do '../pl/cmd.pl';
 unlink 'output';
 
-&add_header('X-Tag: pipe');
+&add_header('X-Tag: pipe 1');
 `$cmd`;
 $? == 0 || print "1\n";
 -f 'output' || print "2\n";		# Where output is created
 chop($output = `cat output 2>/dev/null`);
 @output = split(' ', $output);
-@valid = (35, 229, 1632);		# Output of wc on whole mail with X-Tag field
+@valid = (35, 230, 1634);		# Output of wc on whole mail with X-Tag field
 $ok = 1;
 for ($i = 0; $i < 3; $i++) {
 	$ok = 0 if $valid[$i] != $output[$i];
 }
 $ok || print "3\n";
 -f "$user" || print "4\n";		# Default action applies
+
+unlink 'output', 'mail', "$user";
+
+# PIPE checks base64, FEED checks quoted-printable
+
+&cp_mail("../base64");
+&add_header('X-Tag: pipe 2');
+`$cmd`;
+$? == 0 || print "5\n";
+get_log(6, 'output');
+check_log('Content-Transfer-Encoding: base64', 7);
+not_log('successfully', 8);
+check_log('^$', 9);				# EOH present
+
+unlink 'output', "$user";
+
+&replace_header('X-Tag: pipe 3');
+`$cmd`;
+$? == 0 || print "10\n";
+get_log(11, 'output');
+not_log('Content-Transfer-Encoding:', 12);
+check_log('successfully', 13);
 
 unlink 'output', 'mail', "$user";
 print "0\n";

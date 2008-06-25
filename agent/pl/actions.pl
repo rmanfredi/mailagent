@@ -1216,6 +1216,24 @@ sub alarm_clock {
 	die "alarm call\n";				# Longjmp to shell_command
 }
 
+# Print whole mail to supplied fd, without any Content-Transfer-Encoding.
+sub print_binary_mail {
+	my ($fd) = @_;
+	my $skip = 0;
+	foreach my $line (split(/\n/, $Header{'Head'})) {
+		if ($line =~ /^\s/) {
+			print $fd $line, "\n" unless $skip;
+		} else {
+			$skip = 0;
+			my ($field) = $line =~ /^([\w-]+):/;
+			$skip = lc($field) eq "content-transfer-encoding";
+			print $fd $line, "\n" unless $skip;
+		}
+	}
+	print $fd "\n";
+	print $fd ${$Header{'=Body='}};		# No content transfer-encoding
+}
+
 # Execute the command, ran in an eval to protect against SIGPIPE signals
 sub execute_command {
 	local($program, $input, $feedback) = @_;
@@ -1237,8 +1255,8 @@ sub execute_command {
 		close READ if $input == $NO_INPUT;	# Close stdin if needed
 		unless (open(STDOUT, ">$trace")) {	# Where output goes
 			&add_log("WARNING couldn't create $trace: $!") if $loglvl > 5;
-			if ($feedback == $FEEDBACK) {	# Need trace if feedback
-				kill 'SIGPIPE', getppid;	# Parent still waiting
+			if ($feedback != $NO_FEEDBACK) {	# Need trace if feedback
+				kill 'SIGPIPE', getppid;		# Parent still waiting
 				exit 1;
 			}
 		}
@@ -1264,6 +1282,8 @@ sub execute_command {
 		print WRITE ${$Header{'=Body='}};
 	} elsif ($input == $MAIL_INPUT) {		# Pipes the whole mail
 		print WRITE $Header{'All'};
+	} elsif ($input == $MAIL_INPUT_BINARY) {	# Remove any transfer encoding
+		print_binary_mail(\*WRITE);			
 	} elsif ($input == $HEADER_INPUT) {		# Pipes the header
 		print WRITE $Header{'Head'};
 	}
@@ -1275,7 +1295,7 @@ sub execute_command {
 		# Log execution failure and return to shell_command via die if some
 		# feedback was to be done.
 		&add_log("ERROR execution failed for '$program'") if $loglvl > 1;
-		if ($feedback == $FEEDBACK) {		# We wanted feedback
+		if ($feedback != $NO_FEEDBACK) {	# We wanted feedback
 			&mail_back;						# Mail back any output
 			unlink "$trace";				# Remove output of command
 			die "feedback\n";				# Longjmp to shell_command
@@ -1296,8 +1316,8 @@ sub execute_command {
 sub handle_output {
 	if ($feedback == $NO_FEEDBACK) {
 		&mail_back;						# Mail back any output
-	} elsif ($feedback == $FEEDBACK) {
-		&feed_back;						# Feed result back into %Header
+	} else {
+		&feed_back($feedback);			# Feed result back into %Header
 	}
 }
 
@@ -1349,6 +1369,7 @@ EOM
 # Feed back output of a command in the %Header data structure.
 # Uses some local variables from execute_command
 sub feed_back {
+	my ($feedback) = @_;
 	unless (open(TRACE, "$trace")) {
 		&add_log("ERROR couldn't feed back from $trace: $!") if $loglvl > 1;
 		unlink "$trace";				# Maybe I should leave it around
@@ -1390,19 +1411,47 @@ sub feed_back {
 	$Header{'Body'} = $temp unless $input == $HEADER_INPUT;
 	$Header{'All'} = $Header{'Head'} . "\n" . $Header{'Body'};
 	if ($input == $BODY_INPUT) {
-		# Was fed *decoded* body, got at decoded body back.
+		# Was fed *decoded* body, got a decoded body back.
 		# Headers have not changed, recoding will happen as in the original
 		&body_recode;
-		&header_update_size;
 	} elsif ($input == $MAIL_INPUT) {
 		# Headers could have changed and we need to reparse them in order
 		# to know how/whether we should decode the body.
 		&header_resync;
 		&body_check;	# Update $Header{'=Body='} to point to *decoded* body
+		if ($feedback == $FEEDBACK_ENCODING) {
+			&header_resync if &body_recode_optimally;
+		}
 	} elsif ($input == $HEADER_INPUT) {
 		# Headers pertaining to body encoding could have changed.
 		&header_check_body_encoding;		# Check and recode if possible
 		&header_resync;						# Resynchronize %Header
+	} elsif ($input == $MAIL_INPUT_BINARY) {
+		# Was fed a *decoded* body, got at possibly decoded body back.
+		my $old_encoding = lc($Header{'Content-Transfer-Encoding'});
+		&header_resync;
+		&body_check;	# Update $Header{'=Body='} to point to *decoded* body
+		if ($feedback == $FEEDBACK_ENCODING) {
+			# Scan the decoded body and determine the optimal content
+			# transfer encoding, recoding the body as needed and updating
+			# the headers should they change.
+			&header_resync if &body_recode_optimally;
+		} else {
+			# Adjust encoding if needed (they did not supply the -e to FEED)
+			my $current_encoding = lc($Header{'Content-Transfer-Encoding'});
+			my %encoded = map { $_ => 1 } qw(base64 quoted-printable);
+			# We need to recode if there is presently no encoding but there was
+			# one originally.  They could have properly re-encoded the body,
+			# which is why we have to check for the current encoding.
+			if (!$encoded{$current_encoding} && $encoded{$old_encoding}) {
+				alter_header("Content-Transfer-Encoding", $HD_STRIP);
+				header_append(header'format(
+					"Content-Transfer-Encoding: $old_encoding\n"));
+				body_recode_with($old_encoding);
+			}
+		}
+	} else {
+		&add_log("ERROR BUG in feed_back: unknown input value \"$input\"");
 	}
 }
 

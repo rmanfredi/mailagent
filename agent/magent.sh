@@ -502,8 +502,10 @@ sub init_constants {
 	$BODY_INPUT = 1;			# Give body of mail as stdin
 	$MAIL_INPUT = 2;			# Pipe the whole mail
 	$HEADER_INPUT = 3;			# Pipe the header only
+	$MAIL_INPUT_BINARY = 4;		# Whole mail in binary (no transfer encoding)
 	$NO_FEEDBACK = 0;			# No feedback wanted
 	$FEEDBACK = 1;				# Feed result of command back into %Header
+	$FEEDBACK_ENCODING = 2;		# Same as $FEEDBACK, but probe body for encoding
 	
 	# The filter message
 	local($address) = &email_addr;

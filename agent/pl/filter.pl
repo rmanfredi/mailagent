@@ -327,7 +327,8 @@ sub run_run {
 # Run the PIPE command
 sub run_pipe {
 	local($program) = @_;		# Program to run
-	local($failed) = &shell_command($program, $MAIL_INPUT, $NO_FEEDBACK);
+	my $mail = $opt'sw_b ? $MAIL_INPUT_BINARY : $MAIL_INPUT;
+	local($failed) = &shell_command($program, $mail, $NO_FEEDBACK);
 	unless ($failed) {
 		&add_log("PIPED [$mfile] to '$program'") if $loglvl > 4;
 	}
@@ -357,7 +358,9 @@ sub run_pass {
 # Run the FEED command
 sub run_feed {
 	local($program) = @_;		# Program to run
-	local($failed) = &shell_command($program, $MAIL_INPUT, $FEEDBACK);
+	my $mail = $opt'sw_b ? $MAIL_INPUT_BINARY : $MAIL_INPUT;
+	my $feedback = $opt'sw_e ? $FEEDBACK_ENCODING : $FEEDBACK;
+	local($failed) = &shell_command($program, $mail, $feedback);
 	unless ($failed) {
 		&add_log("FED [$mfile] through '$program'") if $loglvl > 4;
 	}

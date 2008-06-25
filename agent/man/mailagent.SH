@@ -17,7 +17,7 @@ esac
 echo "Extracting agent/man/mailagent.$manext (with variable substitutions)"
 $rm -f mailagent.$manext
 $spitshell >mailagent.$manext <<!GROK!THIS!
-.TH MAILAGENT $manext "Version $VERSION PL$PATCHLEVEL"
+.TH MAILAGENT $manext "Version $VERSION-$REVISION"
 ''' @(#) Manual page for mailagent's filter -- (c) ram February 1991
 '''
 ''' $Id$
@@ -1570,6 +1570,13 @@ terminology. If you don't know what that is, simply ignore it.
 User who wrote the mail. If this line is missing, uses the address found in
 the first From line.
 .TP
+.I Length:
+The physical length of the body, in bytes, once content-transfer-encoding
+(if any) has been removed.
+.TP
+.I Lines:
+The amount of lines in the body (decoded, if necessary).
+.TP
 .I To:
 The main recipient(s) of the message. If this line is missing but a set of
 \fIApparently-To:\fR lines is found, then those addresses are used instead. If
@@ -1906,7 +1913,7 @@ the mail as saved. If no further action involving saving is done, then the
 mail will never show up in the mailbox.
 (Never fails)
 .TP
-FEED \fIprogram\fR
+FEED [\fB-be\fR] \fIprogram\fR
 Feed the whole message to a program and get the output back as the new
 message. Hence the program appears as a filter for the whole
 message.  It does not tag the message as having been saved.  A RESYNC
@@ -1915,7 +1922,41 @@ is automatically done upon return.
 .sp
 .B WARNING:
 Your program must be able to properly parse a MIME message and must deal
-with transfer-encoded bodies by itself.
+with transfer-encoded bodies by itself.  To make the program task simpler,
+you can supply the
+.B -b
+switch wich will let mailagent decode the whole body for you, suppressing
+any Content-Transfer-Encoding header (implying "binary").  This is an invalid
+message format for sending the message, but it makes processing easier.
+You still have to parse the MIME parts yourself though.
+.sp
+Using
+.B -b
+does not prevent your program from outputing a valid message back, one
+that can be possibly sent on the network so you have two options:
+either you do not supply any Content-Transfer-Encoding in the headers,
+and mailagent will recode the body for you using the initial transfer
+encoding present in the message (a relatively safe option if you make only
+changes in the body at well-defined spots without introducing 8-bit chars),
+or you can supply the Content-Transfer-Encoding yourself and perform the
+body encoding manually.
+.sp
+To be completely safe and minimize the work in your program, the
+.B -e
+switch will let mailagent analyse the message body you are returning and
+select the proper transfer encoding automatically.  Since this
+will cause the whole body to be analysed, and it can be potentially huge,
+that behaviour must be explicitly asked for. If you need
+.B -e
+then you probably want
+.B -b
+as well (you can supply both by saying
+.B -be
+naturally).
+.sp
+If you do not supply any switch,
+mailagent will give you the message as-is and will get your message
+as-is without any additional magic.
 .TP
 FORWARD \fIaddress(es)\fR
 Forward mail to the specified address(es). This acts as if a save had been
@@ -2037,7 +2078,7 @@ is fully described further in the manpage, and is very different from a
 \fIRUN perl script\fR command. (Returns failure if the script did not compile
 or returned a non-zero status).
 .TP
-PIPE \fIprogram\fR
+PIPE [\fB-b\fR] \fIprogram\fR
 Pipe the whole message to the specified program, but do not get anything
 back. Any output is mailed to the user who runs the \fImailagent\fR.
 The message is not tagged as having been saved in any case, so you must
@@ -2047,7 +2088,13 @@ is your friend here to avoid unwanted deletion.
 .sp
 .B WARNING:
 Your program must be able to properly parse a MIME message and must deal
-with transfer-encoded bodies by itself.
+with transfer-encoded bodies by itself.  To make the program task simpler,
+you can supply the
+.B -b
+switch wich will let mailagent decode the whole body for you, suppressing
+any Content-Transfer-Encoding header (implying "binary").  This is an invalid
+message format for sending the message, but it makes processing easier.
+You still have to parse the MIME parts yourself though.
 .TP
 POST [\fB\-lb\fR] \fInewsgroup(s)\fR
 Post the message to the specified newsgroup(s) after having cleaned-up the
@@ -2526,6 +2573,8 @@ data structure, so modifying the values will influence the filtering process.
 For instance, the SAVE command writes the \fIHead\fR, the \fIX-Filter:\fR line,
 the end of header (a single newline) and then the \fIBody\fR (this is an
 example only, not a documented feature :-).
+The \fI=Body=\fR key is special: it is a Perl reference to a scalar containing
+the body with any content transfer encoding removed.
 .PP
 Note that the \fI\$msgpath\fR variable holds only a snapshot of the folder path
 at the time where the PERL escape
@@ -2596,7 +2645,7 @@ The internet domain name extracted out of the \fIFrom:\fR field (\fIb.c\fR
 in \fIu@a.b.c\fR), converted to lower-case.
 .TP
 %L
-Length of the body part, in bytes
+Length of the body part, in bytes, with content-transfer-encoding removed.
 .TP
 %N
 Full name of the sender (login name if none)
@@ -2659,7 +2708,7 @@ Hour of the day (00-23)
 Message ID, if available (otherwise, this is a null string)
 .TP
 %l
-Number of lines in the message
+Number of lines in the message, once content-transfer-encoding has been removed
 .TP
 %m
 Month of the year (01-12)
@@ -3939,11 +3988,15 @@ A Period\fR to get valid period strings.
 Run a shell command and return a failure status (0 for OK). The input parameter
 may be one of the following constants (defined in the \fImain\fR package):
 \$NO_INPUT to close standard input, \$BODY_INPUT to pipe the body of the
-current message, \$MAIL_INPUT to pipe the whole mail and \$HEADER_INPUT to
+current message, \$MAIL_INPUT to pipe the whole mail as-is,
+\$MAIL_INPUT_BINARY to pipe the whole mail after having removed any
+content transfer-encoding and \$HEADER_INPUT to
 pipe the message header. The feedback parameter may be one of \$FEEDBACK or
 \$NO_FEEDBACK depending whether or not you wish to use the standard output
 to alter the corresponding part of the message. If no feedback is wanted, the
-output of the command is mailed back to the user.
+output of the command is mailed back to the user.  The \$FEEDBACK_ENCODING
+is handled like \$FEEDBACK but will tell mailagent to look at the best
+suitable body encoding when the input is the whole message.
 .TP
 .I &main'parse_address(rfc822-address)
 Parse an RFC822 e-mail address and return a two-elements array containing the
