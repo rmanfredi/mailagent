@@ -823,7 +823,9 @@ sub post {
 	} else {
 		my $subject = $Header{'Subject'};
 		$subject =~ tr/\n/ /;				# Multiples instances collapsed
-		print NEWS header'news_fmt("Subject: $subject\n");
+		# Avoid a Subject: line on its own for INN, even if it means a line
+		# slightly longer than 80 chars.
+		print NEWS "Subject: ", header'news_fmt($subject), "\n";
 	}
 
 	# If no proper Message-ID is present, generate one
@@ -883,7 +885,8 @@ sub post {
 			/^X-Trace:/i			||		# idem
 			/^Newsgroups:/i			||		# Reply from news reader
 			/^Return-Receipt-To:/i	||		# Sendmail's acknowledgment
-			/^Received:/i			||		# We want to remove received
+			/^Received:/i			||		# We want to remove this MTA trace
+			/^Delivered-To:/i		||		# idem
 			/^Precedence:/i			||
 			/^X-Complaints-To:/i	||		# INN2 does not like this field
 			/^Errors-To:/i					# Error report redirection
@@ -947,7 +950,10 @@ sub post {
 		my $fixup = &header'msgid_cleanup(\$refs);
 		&add_log("WARNING fixed References line for news")
 			if $loglvl > 5 && $fixup;
-		print NEWS header'news_fmt("References: $refs\n");
+		# INN does not like an empty References: line, even if properly
+		# followed by continuations.  Therefore, cheat to force the message
+		# to have at least one ref on the line.
+		print NEWS "References: ", header'news_fmt($refs), "\n";
 	}
 
 	# Any address included withing "" means addresses are stored in a file
