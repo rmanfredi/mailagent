@@ -175,7 +175,7 @@ sub msgid_cleanup {
 	# Regexps are written to work on both a single <id> as found in Message-ID
 	# lines, and on a space-separated list as found in References lines.
 
-	s/>\s</>\01</g;				# Protect spaces between IDs for References
+	s/>\s+</>\01</g;			# Protect spaces between IDs for References
 	$fixup++ if s/\s/-/g;		# No spaces
 	$fixup++ if s/_/-/g;		# No _ in names
 	$fixup++ if s/[(){}]//g;	# No () nor {} in names and ID
@@ -213,8 +213,8 @@ sub format {
 		$tmp = substr($field, 0, $len);		# Keep first $len chars
 		$tmp =~ s/^(.*)([,\s]).*/$1$2/;		# Cut at last space or ,
 		$kept = length($tmp);				# Amount of chars we kept
-		$tmp =~ s/\s*$//;					# Remove trailing spaces
-		$tmp =~ s/^\s*//;					# Remove leading spaces
+		$tmp =~ s/\s+$//;					# Remove trailing spaces
+		$tmp =~ s/^\s+//;					# Remove leading spaces
 		$new .= $cont if $new;				# Continuation starts with 8 spaces
 		$len = 70;							# Account continuation for next line
 		$new .= "$tmp\n";
@@ -222,6 +222,24 @@ sub format {
 	}
 	$new .= $cont if $new;					# Add 8 chars if continuation
 	$new .= $field;							# Remaining information on one line
+}
+
+# Same as format() but with extra magic for news articles: we must never
+# emit a continuation right after a header, there must be a single space
+# after the field name.
+# Also, this routine must work when called to format a continuation (field
+# stating with spaces).
+sub news_fmt {
+	my ($field) = @_;			# Field to be formatted
+	my $continuation = 0;
+	$continuation++ if $field =~ s/^\s+//;
+	my $res = &format($field);
+	if ($continuation) {
+		$res = (' ' x 8) . $res;	# Can be larger than 80 chars, but it's OK
+	} else {
+		$res =~ s/^([\w-]+):(\S)/$1: $2/ || $res =~ s/^([\w-]+):$/$1: /;
+	}
+	return $res;
 }
 
 # Scan the head of a file and try to determine whether there is a mail

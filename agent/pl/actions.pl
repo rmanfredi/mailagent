@@ -766,7 +766,7 @@ sub post {
 	my ($faddr, $fcom) = &parse_address($Header{'From'});
 	$fcom = '"' . $fcom . '"' if $fcom =~ /[@.\(\)<>,:!\/=;]/;
 	if ($fcom ne '') {
-		print NEWS header'format("From: $fcom <$faddr>\n");
+		print NEWS header'news_fmt("From: $fcom <$faddr>\n");
 	} else {
 		print NEWS "From: $faddr\n";
 	}
@@ -823,7 +823,7 @@ sub post {
 	} else {
 		my $subject = $Header{'Subject'};
 		$subject =~ tr/\n/ /;				# Multiples instances collapsed
-		print NEWS header'format("Subject: $subject\n");
+		print NEWS header'news_fmt("Subject: $subject\n");
 	}
 
 	# If no proper Message-ID is present, generate one
@@ -922,7 +922,7 @@ sub post {
 			&add_log("NOTICE added space after \"$header:\", for news")
 				if $loglvl > 5;
 		}
-		print NEWS header'format($_), "\n";
+		print NEWS header'news_fmt($_), "\n";
 	}
 
 	# For correct threading, we need a References: line.
@@ -947,14 +947,14 @@ sub post {
 		my $fixup = &header'msgid_cleanup(\$refs);
 		&add_log("WARNING fixed References line for news")
 			if $loglvl > 5 && $fixup;
-		print NEWS header'format("References: $refs\n");
+		print NEWS header'news_fmt("References: $refs\n");
 	}
 
 	# Any address included withing "" means addresses are stored in a file
 	$newsgroups = &complete_list($newsgroups, 'newsgroup');
 	$newsgroups =~ s/\s/,/g;	# Cannot have spaces between them
 	$newsgroups =~ tr/,/,/s;	# Squash down consecutive ','
-	print NEWS header'format("Newsgroups: $newsgroups\n");
+	print NEWS header'news_fmt("Newsgroups: $newsgroups\n");
 	print NEWS "Distribution: local\n" if $localdist;
 	print NEWS $FILTER, "\n";	# Avoid loops: inews may forward to sendmail
 	print NEWS "\n";
