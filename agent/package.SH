@@ -10,6 +10,8 @@ case $CONFIG in
 	fi
 	. $TOP/config.sh
 	;;
+*)
+	TOP=..;;
 esac
 revision=`awk '/^#define[ 	]*REVISION/ {print $3}' < $TOP/revision.h`
 case "$0" in
