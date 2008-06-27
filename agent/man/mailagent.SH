@@ -364,8 +364,7 @@ The path to a file describing the format biffing should use. If not set,
 a default hardwired format is used. Season to taste. (suggested: ~/.biffmsg).
 .TP
 .I biffnice
-When \fIbiffmh\fR is turned ON, this option controls whether the compacted
-message should be reformatted to nicely fit into 80 columns.
+Whether the message should be reformatted to nicely fit into the terminal.
 (optional, defaults to OFF, suggested: ON when \fIbiffmh\fR is also ON).
 .TP
 .I biffnl
@@ -3460,7 +3459,9 @@ the standard set:
 Same as writing %-H, new line, %-B
 .TP
 %-B
-The body part of the biffing message
+The body part of the biffing message, with content-transfer-encoding removed.
+If the message is a MIME multipart one, the text/plain part is shown.  If only
+a text/html part is available, the HTML markup is stripped for biffing.
 .TP
 %-H
 The header part of the biffing message. If shows only From:, To: Subject: and
@@ -3543,10 +3544,8 @@ New %t for %u has arrived in %f:
 ----%b
 .Ef
 Note that the string \fI...more...\fR appears at the end of the body when
-it has not been completely printed out on the screen, regardless of the
-value of the remaining lines. This means you'll get the \fI...more...\fR
-string even if all the lines from now on are blank and \fIbiffnl\fR is OFF.
-And it's not possible to customize this bit, sorry.
+it has not been completely printed out on the screen and the remaining
+lines are not blank or similar.
 .SS "Trimming Leading Quotation"
 .PP
 It is a standard practice, when replying to a message, to include an
@@ -3616,7 +3615,7 @@ the \fIbiffmh\fR variable to ON.
 Since this compacting is output verbatim on the tty, line breaks will occur
 randomly and this may make reading difficult. You may request an automatic
 reformatting of the compacted body by turning \fIbiffnice\fR to ON and the
-biff output will fit nicely within 80 columns.
+biff output will fit nicely within the terminal.
 .PP
 Unfortunately, it is not possible to customize the amount of columns that
 should be used for formatting: since you may biff to any tty you are logged

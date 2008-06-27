@@ -1,8 +1,8 @@
 /*
- * Jmakefile for perl library.
+ * Jmakefile for termios.pl
  */
 
-;# $Id: Jmakefile,v 3.0.1.1 1994/10/29 17:44:36 ram Exp ram $
+;# $Id: Jmakefile,v 3.0.1.1 1994/10/29 18:12:18 ram Exp ram $
 ;#
 ;#  Copyright (c) 1990-2006, Raphael Manfredi
 ;#  
@@ -13,9 +13,18 @@
 ;#  of the source tree for mailagent 3.0.
 ;#
 ;# $Log: Jmakefile,v $
-;# Revision 3.0.1.1  1994/10/29  17:44:36  ram
+;# Revision 3.0.1.1  1994/10/29  18:12:18  ram
 ;# patch20: created
 ;#
 
-SetSubdirs(termios utmp)
-DependSubdirs()
+CFLAGS = -I$(TOP)
+DPFLAGS = -I$(TOP)
+
+DependTarget()
+SimpleProgramTarget(termios_ph)
+
+AllTarget(termios.pl)
+
+termios.pl: termios_pl.sh termios_ph
+	/bin/sh termios_pl.sh
+

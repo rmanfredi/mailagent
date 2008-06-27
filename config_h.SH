@@ -301,6 +301,14 @@ sed <<!GROK!THIS! >$CONFIG_H -e 's!^#undef\(.*/\)\*!/\*#define\1 \*!' -e 's!^#un
  */
 #$i_syswait I_SYS_WAIT	/**/
 
+/* I_TERMIOS:
+ *	This symbol, if defined, indicates that the program should include
+ *	the POSIX termios.h rather than sgtty.h or termio.h.
+ *	There are also differences in the ioctl() calls that depend on the
+ *	value of this symbol.
+ */
+#$i_termios I_TERMIOS		/**/
+
 /* I_TIME:
  *	This symbol, if defined, indicates to the C program that it should
  *	include <time.h>.

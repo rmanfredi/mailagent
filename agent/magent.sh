@@ -829,5 +829,6 @@ $grep -v '^;#' pl/options.pl >>magent
 $grep -v '^;#' pl/install.pl >>magent
 $grep -v '^;#' pl/base64.pl >>magent
 $grep -v '^;#' pl/qp.pl >>magent
+$grep -v '^;#' pl/termios/termios.pl >>magent
 chmod 755 magent
 $eunicefix magent

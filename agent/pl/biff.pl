@@ -35,7 +35,7 @@
 ;# mailagent-specific daemon on another host is not easy to set-up, and that
 ;# daemon is vaporware today anyway].
 ;#
-;# This package relies on pl/utmp/utmp.pl.
+;# This package relies on pl/utmp/utmp.pl and pl/termios/termios.pl.
 #
 # Local biff support
 #
@@ -65,14 +65,29 @@ sub notify {
 	$tty = "/dev/$tty" unless $'test_mode;	# Re-anchor name in file system
 	return unless -x $tty;		# Return if no biffing wanted on that tty
 
-	&'add_log("biffing $cf'user on $tty") if $'loglvl > 8;
+	my ($row, $col) = termios'size($tty);
+	&'add_log("WARNING cannot compute size of $tty: $row")
+		if defined($row) && !defined($col) && $'loglvl > 3;
+	my $assuming = "";
+	unless (defined $col) {
+		($row, $col) = (24, 80);
+		$assuming = "assuming ";
+	}
+	&'add_log("biffing $cf'user on $tty ($assuming$row x $col)")
+		if $'loglvl > 8;
 
 	local($folder) = &'tilda($path);	# Replace home directory with a ~
 	local($n) = "\n\r";					# Use \r in case tty is in raw mode
 
+	# Biffing context containing the amount of lines we can still emit before
+	# reaching the size of the window, and the amount of columns we have for
+	# displaying the text.
+	local @context = ($row, $col);
+
 	unless (open(TTY, ">$tty")) {
-		&'add_log("ERROR cannot open $tty: $!") if $'loglvl;
-		&'add_log("WARNING unable to biff for $folder ($type)") if $'loglvl > 5;
+		&'add_log("ERROR cannot write on $tty: $!") if $'loglvl;
+		&'add_log("WARNING unable to biff for $folder ($type) on $tty")
+			if $'loglvl > 5;
 		return;
 	}
 
@@ -107,7 +122,7 @@ sub custom {
 	local($format, $type) = @_;
 	unless (open(FORMAT, $format)) {
 		&'add_log("ERROR cannot open biff format $format: $!") if $'loglvl > 1;
-		&default;		# Use default format then
+		&default;			# Use default format then
 		return;
 	}
 
@@ -174,9 +189,23 @@ P	$biff'fpath
 :	\02!
 EOM
 	local($_);
+	my $reformat = $cf'biffnice =~ /^on/i;
+	my $width = $context[1];
 	while (<FORMAT>) {
 		chop;
-		print TTY &'macros_subst(*_), $n;
+		my @lines = split($n, &'macros_subst(*_));
+		if (@lines) {
+			foreach my $l (@lines) {
+				if ($reformat) {
+					local @tmp;
+					&format($l, $width, *tmp);	# Format line into @tmp
+					$l = join($n, @tmp);
+				}
+				print TTY $l, $n;
+			}
+		} else {
+			print TTY $n;
+		}
 	}
 	close FORMAT;
 	&macro'unload;			# Release customized macros
@@ -188,8 +217,13 @@ sub beep { "\07" x $env'beep; }
 
 # Default biffing
 sub default {
-	print TTY "$n\07New $mtype for $cf'user has arrived in $folder:$n";
+	my $header = "New $mtype for $cf'user has arrived in $folder:";
+	my $width = $context[1];
+	my $lines = int(length($header) / $width) + 1;
+	$lines-- if 0 == length($header) % $width;
+	print TTY "$n\07$header$n";
 	print TTY "----$n";
+	$context[0] -= $lines + 1;		# Header line plus dashes
 	print TTY &all;
 	print TTY "$n----\07$n";
 }
@@ -207,20 +241,27 @@ sub all {
 }
 
 # Returns mail headers defined in @head, on the opened TTY
-# If the header length is greater than 79 characters, it is trimmed at 76 and
+# If the header length is greater than the tty width, it is trimmed and
 # three dots '...' are emitted to show something was truncated.
 # Also known as the %-H macro
 sub headers {
 	local($res) = '';
+	my $width = $context[1];		# tty columns
 	foreach $head (@head) {
 		next unless defined $'Header{$head};
-		local($line) = "$head: $'Header{$head}";
-		$line = substr($line, 0, 76) . '...' if length($line) >= 80;
+		local($line) = unquote_printable("$head: $'Header{$head}");
+		$line = substr($line, 0, $width - 4) . '...' if length($line) >= $width;
 		$res .= "$line$n";
 	}
 	chop($res);			# Remove final \n\r for macro substitution
 	chop($res);
 	$res;
+}
+
+# Is line a blank one?
+sub is_blank {
+	my ($l) = @_;
+	return $l =~ /^[\W_]*$/;	# Contains only non-words and underscores
 }
 
 # Print first $cf'bifflines lines or $cf'bifflen charaters, whichever
@@ -230,7 +271,7 @@ sub body {
 	local($trim) = @_;			# Whether top reply text should be trimmed
 	local($len) = defined $cf'bifflen ? $cf'bifflen : 560;
 	local($lines) = defined $cf'bifflines ? $cf'bifflines : 7;
-	local(@body) = split(/\n/, ${$'Header{'=Body='}});
+	local(@body) = split(/\r?\n/, ${$'Header{'=Body='}});
 	local($skipnl) = $cf'biffnl =~ /OFF/i;	# Skip blank lines?
 	local($_);
 	local($res) = '';
@@ -248,8 +289,29 @@ sub body {
 	&trim(*body) if $trim;		# Smart trim of leading reply text
 	&mh(*body, $len) if $cf'biffmh =~ /^on/i;
 
+	my $reformat = $cf'biffnice =~ /^on/i;
+	my $width = $context[1];
+	my $tl = 8;					# tab length
+
 	while ($len > 0 && $lines > 0 && defined ($_ = shift(@body))) {
-		next if /^\W*$/ && $skipnl;
+		next if $skipnl && is_blank($_);
+		my $line_length = 0;
+		1 while s|\t|' ' x ($tl - length($`) % $tl)|e;	# Expand tabs
+		s/[\x0-\x1f]//g;						# Remove all control chars
+		if ($reformat) {
+			local @tmp;
+			&format($_, $width, *tmp);			# Format line into @tmp
+			@tmp = grep(!is_blank($_), @tmp) if $skipnl;
+			foreach my $l (@tmp) {
+				$line_length += length $l;		# Do not count newlines
+				$lines--;
+			}
+			$_ = join($n, @tmp);
+		} else {
+			$line_length = length $_;
+			$lines -= int($line_length / $width) + 1;
+			$lines++ if 0 == $line_length % $width;
+		}
 		# Check for overflow, in case we use mh-style biffing and no
 		# reformatting occurred: we may be facing a huge string!
 		if (length($_) > $len) {
@@ -257,8 +319,7 @@ sub body {
 		} else {
 			$res .= $_ . $n;
 		}
-		$len -= length($_);		# Nobody will quibble over missing newline...
-		$lines--;
+		$len -= $line_length;
 	}
 	$res .= "...more...$n" if @body > 0 || $len < 0;
 	chop($res);					# Remove final \n\r for macro substitution
@@ -392,32 +453,26 @@ sub mh {
 		$line .= $_ . ' ';
 	}
 	chop($line);				# Remove trailing extra space
-	$ary[0] = $line;			# Replace first body line with compacted string
+	$ary[0] = $line;			# This is all we keep
 
 	# We stopped compating at index $i - 1, and indices start at 0. This means
 	# lines in the range [0, $i-1] are now all stored as $ary[0], and lines
 	# from [1, $i-1] must be removed from the array ($i-1 lines).
+	# We keep the extra lines so that a "...more..." indication can be given
+	# if needed.
 
 	splice(@ary, 1, $i - 1);	# Remove lines that are now part of $ary[0]
-
-	# Now optionally reformat the first line so that it fits into 80 columns.
-	# The line is formatted into an array, and that array is spliced back
-	# into @ary.
-
-	return unless $cf'biffnice =~ /^on/i;
-	local(@tmp);
-	&format($line, *tmp);		# Format line into @tmp
-	splice(@ary, 0, 1, @tmp);	# Insert formatted string back
 }
 
-
-# Format body to fit into 78 columns by inserting the generated lines in an
+# Format body to fit into tty width by inserting the generated lines in an
 # array, one line per item.
 sub format {
-	local($body, *ary) = @_;	# Body to be formatted, array for result
+	# Body to be formatted, tty width, array for result
+	local($body, $width, *ary) = @_;
 	local($tmp);				# Buffer for temporary formatting
 	local($kept);				# Length of current line
-	local($len) = 79;			# Amount of characters kept
+	local($len) = $width - 1;	# Amount of characters kept
+	$len = 1 if $len < 1;		# Avoid infinite loop if bad parameter
 	# Format body, separating lines on [;,:.?!] or space.
 	while (length($body) > $len) {
 		$tmp = substr($body, 0, $len);		# Keep first $len chars
@@ -426,9 +481,25 @@ sub format {
 		$tmp =~ s/\s*$//;					# Remove trailing spaces
 		$tmp =~ s/^\s*//;					# Remove leading spaces
 		push(@ary, $tmp);					# Create a new line
-		$body = substr($body, $kept, 9999);
+		$body = substr($body, $kept, length $body);
 	}
 	push(@ary, $body);			# Remaining information on one line
+}
+
+# One-liner quoted-printable decoder
+sub to_txt {
+	my ($l) = @_;
+	$l =~ s/=([\da-fA-F]{2})/pack('C', hex($1))/ge;
+	return $l;
+}
+
+# Quick removal of quoted-printable escapes within the headers
+# We do not care about the charset and hope the tty will be able to display
+# the characters just fine.
+sub unquote_printable {
+	my ($l) = @_;
+	$l =~ s/^(.*?)=\?[\w-]+\?Q\?(.*)\?=/$1 . to_txt($2)/ieg && $l =~ s/_/ /g;
+	return $l;
 }
 
 # Un-MIME the body by removing all the MIME headers and looking for the
@@ -586,7 +657,7 @@ sub strip_html {
 		$in_style-- while $l =~ s|</style>||;
 		next if $in_style;
 		$l =~ s/<[^\0]*?>//g;
-		$l =~ s/&(\w)cedil;/$1/g;
+		$l =~ s/&(\w)cedil;/$1/g;	# Transform into ASCII...
 		$l =~ s/&(\w)acute;/$1/g;
 		$l =~ s/&(\w)grave;/$1/g;
 		$l =~ s/&(\w)circ;/$1/g;
@@ -594,7 +665,8 @@ sub strip_html {
 		$l =~ s/&quot;/'/g;
 		$l =~ s/&nbsp;/ /g;
 		$l =~ s/&#160;/ /g;       # Same as &nbsp;
-		$l =~ s/&#(\d+);/chr($1)/g;   # Corect only for the ASCII part...
+		# Corect only for the ASCII part...
+		$l =~ s/&#(\d+);/($1 > 31 && $1 < 256) ? chr($1) : "?"/ge;
 		$l =~ s/&amp;/&/g;        # Must come last
 		$l =~ s/^\s*//;
 		$is_nl = 0 == length($l);

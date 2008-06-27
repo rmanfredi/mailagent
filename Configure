@@ -18,7 +18,7 @@
 
 # $Id: Head.U 25 2008-05-28 11:19:25Z rmanfredi $
 #
-# Generated on Fri May 30 11:10:37 CEST 2008 [metaconfig 3.5-25]
+# Generated on Wed Jun 25 19:17:28 CEST 2008 [metaconfig 3.5-25]
 
 cat >c1$$ <<EOF
 ARGGGHHHH!!!!!
@@ -249,6 +249,7 @@ uuname=''
 vi=''
 zcat=''
 zip=''
+libswanted=''
 hint=''
 myuname=''
 osname=''
@@ -540,6 +541,7 @@ usesocks=''
 : full support for void wanted by default
 defvoidused=15
 
+: private initializations
 libswanted=''
 
 : Find the basic shell for Bourne shell scripts
@@ -5837,7 +5839,7 @@ uses .lock type locking before using only flock style locking.
 
 EOM
 	rp="Would you like to use flock style mail spool locking only?"
-	. myread
+	. ./myread
 	case "$ans" in
 	y*|Y*) val="$define";;
 	*) val="$undef";;
@@ -7457,6 +7459,7 @@ libsdirs='$libsdirs'
 libsfiles='$libsfiles'
 libsfound='$libsfound'
 libspath='$libspath'
+libswanted='$libswanted'
 line='$line'
 lint='$lint'
 lkflags='$lkflags'

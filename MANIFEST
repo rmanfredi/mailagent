@@ -176,6 +176,10 @@ agent/pl/secure.pl         Make sure a file is "secure" and can be trusted
 agent/pl/sendfile.pl       Perl library to send files in shar / kit mode
 agent/pl/signals.pl        Installs emergency signal handlers
 agent/pl/stats.pl          Mailagent's statistics recording and printing
+agent/pl/termios/Jmakefile       Generic Makefile for termios.pl
+agent/pl/termios/Makefile.SH     Produces Makefile for termios.pl
+agent/pl/termios/termios_ph.c    Generates a perl view of struct winsize
+agent/pl/termios/termios_pl.sh   Produces termios.pl, to handle tty size
 agent/pl/tilde.pl          Perl library to perform ~name expansion
 agent/pl/unpack.pl         Perl library to unpack archive files
 agent/pl/usrmac.pl         User-defined macros
