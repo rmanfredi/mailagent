@@ -248,12 +248,19 @@ if (@Data > 0) {
 :# Load the calling function from DATA segment and call it. This function is
 :# called only once per routine to be loaded.
 :sub main'dataload {
+:	package perload;
 :	local($__packname__) = (caller(1))[3];
 :	$__packname__ =~ s/::/'/;
 :	local($__rpackname__) = $__packname__;
 :	local($__at__) = $@;
 :	$__rpackname__ =~ s/^auto_//;
-:	&perload'load_from_data($__rpackname__);
+:	eval { load_from_data($__rpackname__, 0) };
+:	if ($@ eq "RETRY\n") {
+:		undef %Datapos;
+:		load_from_data($__rpackname__, 1);
+:	} else {
+:		die $@ if $@;
+:	}
 :	local($__fun__) = "$__rpackname__";
 :	$__fun__ =~ s/'/'load_/;
 :	eval "*$__packname__ = *$__fun__;";	# Change symbol table entry
@@ -265,17 +272,28 @@ if (@Data > 0) {
 :# Load function name given as argument, fatal error if not existent
 :sub perload'load_from_data {
 :	package perload;
-:	local($pos) = $Datapos{$_[0]};			# Offset within DATA
+:	local ($name, $retried) = @_;
+:	local($pos) = $Datapos{$name};			# Offset within DATA
 :	# Avoid side effects by protecting special variables which will be changed
 :	# by the dataloading operation.
-:	local($., $_, $@);
-:	$pos = &fetch_function_code unless $pos;
-:	die "Function $_[0] not found in data section.\n" unless $pos;
+:	local($., $_);
+:	$pos = &fetch_function_code($name, $retried) unless $pos;
+:	die "Function $name not found in data section.\n" unless $pos;
 :	die "Cannot seek to $pos into data section.\n"
 :		unless seek(main'DATA, $pos, 0);
 :	local($/) = "\n}";
 :	local($body) = scalar(<main'DATA>);
-:	die "End of file found while loading $_[0].\n" unless $body =~ /^\}$/m;
+:	local $loaded = $name;
+:	$loaded =~ s/^(.*?)'(.*)/sub ${1}'load_$2 {/;;
+:	unless ($body =~ /\n\}$/s && substr($body, 0, length $loaded) eq $loaded) {
+:		if ($retried) {
+:			die "End of file found while loading $name.\n"
+:				unless $body =~ /\n\}$/s;
+:			die "Offset table garbled or file changed whilst loading $name.\n";
+:		}
+:		die "RETRY\n";
+:	}
+:	local $@;
 EOC
 	if ($opt_t) {
 		print &q(<<'EOC');
@@ -328,8 +346,20 @@ EOC
 :# the offset of each of the dataloaded routines held in the data section.
 :sub perload'fetch_function_code {
 :	package perload;
+:	local ($name, $retried) = @_;
 :	local($start) = 0;
 :	local($., $_);
+:	if ($retried) {
+:		my $date = scalar localtime;
+:		warn("$0 probably changed, reloading offset table on $date\n");
+:		close(main'DATA);
+:		open(main'DATA, $0) || die "Can't open $0 to reload offset table: $!\n";
+:		my $found = 0;
+:		while (<main'DATA>) {
+:			if (/^__END__\s$/) { $found++; last }
+:		}
+:		die "Unable to find __END__ token in $0\n" unless $found;
+:	}
 :	while (<main'DATA>) {			# First move to start of offset table
 :		next if /^#/;
 :		last if /^$/ && ++$start > 2;	# Skip two blank line after end token
@@ -341,7 +371,7 @@ EOC
 :		($key, $value) = split(' ');
 :		$Datapos{$key} = $value + $start;
 :	}
-:	$Datapos{$_[0]};		# All that pain to get this offset...
+:	$Datapos{$name};		# All that pain to get this offset...
 :}
 :
 EOC

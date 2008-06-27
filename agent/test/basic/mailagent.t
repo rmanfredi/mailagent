@@ -33,7 +33,7 @@ open(RULES, ">.rules") || print "2\n";
 print RULES "{ DELETE };\n";
 close RULES;
 unlink <queue/qm*>;
-open(FILTER, "|$filter -t >/dev/null 2>&1") || print "3\n";
+open(FILTER, "|$filter -t >>.bak 2>&1") || print "3\n";
 print FILTER <<EOF;
 From: test
 
@@ -50,7 +50,7 @@ $? == 0 || print "4\n";
 unlink 'agentlog', '.rules';
 sleep 1 while -f "perl$lockext";		# Let background mailagent die
 # Check empty rules...
-open(FILTER, "|$filter -t >/dev/null 2>&1") || print "10\n";
+open(FILTER, "|$filter -t >>.bak 2>&1") || print "10\n";
 print FILTER <<EOF;
 From: test
 
@@ -71,7 +71,7 @@ sleep 1 while -f "perl$lockext";		# Let background mailagent die
 # Make sure file is correctly queued when another mailagent is running
 `cp /dev/null perl$lockext`;
 $? == 0 || print "19\n";
-open(FILTER, "|$filter -t >/dev/null 2>&1") || print "20\n";
+open(FILTER, "|$filter -t >>.bak 2>&1") || print "20\n";
 print FILTER <<EOF;
 Dummy mail
 EOF
