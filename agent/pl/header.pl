@@ -218,7 +218,7 @@ sub format {
 		$new .= $cont if $new;				# Continuation starts with 8 spaces
 		$len = 70;							# Account continuation for next line
 		$new .= "$tmp\n";
-		$field = substr($field, $kept, 9999);
+		$field = substr($field, $kept, length $field);
 	}
 	$new .= $cont if $new;					# Add 8 chars if continuation
 	$new .= $field;							# Remaining information on one line
@@ -237,7 +237,7 @@ sub news_fmt {
 	if ($continuation) {
 		$res = (' ' x 8) . $res;	# Can be larger than 80 chars, but it's OK
 	} else {
-		$res =~ s/^([\w-]+):(\S)/$1: $2/ || $res =~ s/^([\w-]+):$/$1: /;
+		$res =~ s/^([\w-]+):(\S)/$1: $2/s || $res =~ s/^([\w-]+):\n/$1: \n/s;
 	}
 	return $res;
 }

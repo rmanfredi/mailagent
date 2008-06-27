@@ -823,9 +823,7 @@ sub post {
 	} else {
 		my $subject = $Header{'Subject'};
 		$subject =~ tr/\n/ /;				# Multiples instances collapsed
-		# Avoid a Subject: line on its own for INN, even if it means a line
-		# slightly longer than 80 chars.
-		print NEWS "Subject: ", header'news_fmt($subject), "\n";
+		print NEWS header'news_fmt("Subject: $subject\n");
 	}
 
 	# If no proper Message-ID is present, generate one
@@ -953,7 +951,7 @@ sub post {
 		# INN does not like an empty References: line, even if properly
 		# followed by continuations.  Therefore, cheat to force the message
 		# to have at least one ref on the line.
-		print NEWS "References: ", header'news_fmt($refs), "\n";
+		print NEWS header'news_fmt("References: $refs\n");
 	}
 
 	# Any address included withing "" means addresses are stored in a file
