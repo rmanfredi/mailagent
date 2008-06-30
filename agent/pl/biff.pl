@@ -250,6 +250,7 @@ sub headers {
 	foreach $head (@head) {
 		next unless defined $'Header{$head};
 		local($line) = unquote_printable("$head: $'Header{$head}");
+		$line =~ s/[\x0-\x1f\x7f]//g;
 		$line = substr($line, 0, $width - 4) . '...' if length($line) >= $width;
 		$res .= "$line$n";
 	}
@@ -297,7 +298,7 @@ sub body {
 		next if $skipnl && is_blank($_);
 		my $line_length = 0;
 		1 while s|\t|' ' x ($tl - length($`) % $tl)|e;	# Expand tabs
-		s/[\x0-\x1f]//g;						# Remove all control chars
+		s/[\x0-\x1f\x7f]//g;					# Remove all control chars
 		if ($reformat) {
 			local @tmp;
 			&format($_, $width, *tmp);			# Format line into @tmp
