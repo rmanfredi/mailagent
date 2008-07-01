@@ -89,7 +89,23 @@ $? == 0 || print "41\n";
 &not_log('--foo', 45);
 &check_log('^Got mail in ~/ok', 46) == 1 || print "47\n";
 &check_log('successfully decoded', 48) == 1 || print "49\n";
-
 &cleanup;
+
+cp_mail("../qp");
+my $subject = <<EOM;
+Subject: =?Cp1252?Q?Perl:_La_haute_tec?=
+ =?Cp1252?Q?hnicit=E9_au_service_des_professionnels?=
+EOM
+chop $subject;
+&replace_header($subject);
+&add_header('X-Tag: biff 3');
+&make_tty(0, 0777, 50);	# 50 & 51
+`$cmd`;
+$? == 0 || print "52\n";
+&get_log(53, 'tty0');
+&check_log(
+	'Subject: Perl: La haute technicité au service des professionnels', 54);
+&cleanup;
+
 unlink 'mail';
 print "0\n";

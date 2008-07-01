@@ -488,18 +488,18 @@ sub format {
 }
 
 # One-liner quoted-printable decoder
-sub to_txt {
-	my ($l) = @_;
-	$l =~ s/=([\da-fA-F]{2})/pack('C', hex($1))/ge;
-	return $l;
-}
+# MUST be on one line to not be dataloaded (would mess $1 in the regexp)
+sub to_txt { my $l = shift; $l =~ s/=([\da-fA-F]{2})/pack('C', hex($1))/ge; $l }
 
 # Quick removal of quoted-printable escapes within the headers
 # We do not care about the charset and hope the tty will be able to display
 # the characters just fine.
 sub unquote_printable {
 	my ($l) = @_;
-	$l =~ s/^(.*?)=\?[\w-]+\?Q\?(.*)\?=/$1 . to_txt($2)/ieg && $l =~ s/_/ /g;
+	# The to_txt() routine being used MUST NOT be dataloaded or $1 would be
+	# reset to '' on the first invocation.  It's a perl bug (seen in 5.10)
+	$l =~ s/=\?[\w-]+?\?Q\?(.*?)\?=\s*/to_txt($1)/sieg && $l =~ s/_/ /g;
+	&'add_log("unquoted '$_[0]' to '$l'") if $'loglvl > 19 && $_[0] ne $l;
 	return $l;
 }
 
