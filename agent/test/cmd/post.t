@@ -46,6 +46,20 @@ $? == 0 || print "10\n";
 &check_log('^Newsgroups: first.news,second.news,third.news', 13);
 &check_log('^Distribution: local', 14);
 
+unlink 'send.news';
+&replace_header('X-Tag: post 1');
+# Subject with a trailing space
+my $subject = <<EOM;
+Subject: [perl #2783] Security of ARGV using 2-argument open - It's a feature 
+EOM
+chop $subject;
+replace_header($subject);
+`$cmd`;
+$? == 0 || print "15\n";
+&get_log(16, 'send.news');
+# 1 EOH + 3 paragraphs in mail
+&check_log('^$', 17) == 4 or print "18\n";
+
 &clear_mta;
 unlink 'mail', 'list';
 print "0\n";

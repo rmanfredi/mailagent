@@ -220,8 +220,11 @@ sub format {
 		$new .= "$tmp\n";
 		$field = substr($field, $kept, length $field);
 	}
-	$new .= $cont if $new;					# Add 8 chars if continuation
-	$new .= $field;							# Remaining information on one line
+	unless ($field =~ /^\s+$/) {			# Not only spaces
+		$new .= $cont if $new;				# Add 8 chars if continuation
+		$new .= $field;						# Remaining information on one line
+	}
+	return $new;
 }
 
 # Same as format() but with extra magic for news articles: we must never

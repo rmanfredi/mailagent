@@ -58,7 +58,6 @@ sure to introduce the word 'mailagent' in the subject of your message,
 so that the new rule I am about to add to my ~/.rules may correctly
 redirect your message into a high priority folder :-)
 
-
 There is a mailing list hosted in Japan and set up by Shigeya Suzuki
 <shigeya@foretune.co.jp>, for discussion about the mailagent package as
 a whole. It's a good place to ask questions (or answer them) and to
@@ -92,6 +91,9 @@ and it is expected to remain so, with a high signal/noise ratio.
 
 	Raphael Manfredi <Raphael_Manfredi@pobox.com>
 	Grenoble, France, July 12th 1999
+
+	Raphael Manfredi <Raphael_Manfredi@pobox.com>
+	Grenoble, France, June 28th 2008
 
 ========================================================================
 
@@ -127,17 +129,7 @@ clean up everything and let you re-distribute this kit, without
 carrying useless files. You should keep this distribution intact, so
 that future patches will be applyable.
 
-7) I have an automatic patch sender. Send me the following mail:
-
-	Subject: Command
-	@SH mailhelp PATH
-
-and you'll get instructions (PATH stands for YOUR e-mail address, either
-in INTERNET or in bang notation). I would recommend you to get all the
-issued patches before you start making some modifications on this
-package.
-
-8) If you wish to de-install the package, you may run "make deinstall".
+7) If you wish to de-install the package, you may run "make deinstall".
 A separate "make deinstall.man" will remove the manual pages. Be sure
 the makefiles are correctly set before running any deinstall target.
 On USG systems, some executable have a chance to remain despite the
