@@ -50,22 +50,18 @@ mailagent: magent
  * different architectures).
  */
 
->BINDIR
 InstallScript(mailagent,$(BINDIR))
 
 SetSubdirs(pl filter files man test examples)
 DependDirs(pl filter)
 RemoteDependency(pl/utmp,utmp.pl)
+RemoteDependency(pl/termios,termios.pl)
 
 BINSH = \
 |expand f!$(BIN)!
 	!f.SH \
 -expand
 	magent.sh
-
->SED
->RM
->MKDEP
 
 depend::
 	($(SED) '/^# DO NOT DELETE/q' Makefile && \
