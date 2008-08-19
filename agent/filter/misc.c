@@ -41,20 +41,20 @@
 
 #include <stdio.h>
 
+#ifdef I_STDLIB
+#include <stdlib.h>
+#else
 #ifdef I_MALLOC
 #include <malloc.h>
 #else
-extern char *malloc();
+extern char *malloc();				/* Memory allocation */
 #endif
+#endif	/* I_STDLIB */
 
 #ifdef I_STRING
 #include <string.h>
 #else
 #include <strings.h>
-#endif
-
-#ifdef I_STDLIB
-#include <stdlib.h>
 #endif
 
 #include <ctype.h>

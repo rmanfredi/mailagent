@@ -48,9 +48,15 @@
 #include <errno.h>
 #include <sys/types.h>
 
+#ifdef I_STDLIB
+#include <stdlib.h>
+#else
 #ifdef I_MALLOC
 #include <malloc.h>
+#else
+extern char *malloc();				/* Memory allocation */
 #endif
+#endif	/* I_STDLIB */
 
 #ifdef I_TIME
 # include <time.h>

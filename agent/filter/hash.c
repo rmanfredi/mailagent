@@ -30,9 +30,15 @@
 #include "config.h"
 #include "portable.h"
 
+#ifdef I_STDLIB
+#include <stdlib.h>
+#else
 #ifdef I_MALLOC
 #include <malloc.h>
+#else
+extern char *malloc();				/* Memory allocation */
 #endif
+#endif	/* I_STDLIB */
 
 #ifdef I_STRING
 #include <string.h>
