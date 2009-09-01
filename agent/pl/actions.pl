@@ -887,6 +887,11 @@ sub post {
 			/^Delivered-To:/i		||		# idem
 			/^Precedence:/i			||
 			/^X-Complaints-To:/i	||		# INN2 does not like this field
+			/^X-Mailing-List:/i		||		# INN2 does not like this field
+			/^X-Message-Flag:/i		||		# INN2 does not like this field
+			/^X-Mail-Handler:/i		||		# INN2 does not like this field
+			/^X-Virus-Status:/i		||		# INN2 does not like this field
+			/^DKIM-Signature:/i		||		# INN2 does not like this field
 			/^Errors-To:/i					# Error report redirection
 		) {
 			$last_was_header = 1;			# Mark we discarded the line
