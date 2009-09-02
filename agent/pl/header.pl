@@ -181,10 +181,34 @@ sub msgid_cleanup {
 	$fixup++ if s/[(){}]//g;	# No () nor {} in names and ID
 	$fixup++ if s/\.+>/>/g;		# No trailing dot(s)
 	$fixup++ if s/\.\.+/./g;	# No consecutive dots
+	s/<([^>]*?)>/'<' . &header'msgid_fix($1, \$fixup) . '>'/ge;
 	s/>\01</> </g;				# Restore spaces between IDs
 	$$mref = $_ if $fixup;
 	return $fixup;
 }
+
+# Perload OFF
+
+# Fixup one message ID by ensuring it has but one single "@" in it.
+# Cannot be dataloaded since it is referenced from a regular expression
+sub msgid_fix {
+	my ($x, $fixupref) = @_;
+	# Ensure at least one "@"
+	unless ($x =~ /@/) {
+		$$fixupref++;
+		return $x . "\@faked-by-mailagent.local";
+	}
+	# Ensure only one "@"
+	if ($x =~ tr/@/@/ > 1) {
+		my ($leading, $trailing) = ($x =~ /(.*)@(.*)/);
+		$leading =~ s/@/./g;
+		$$fixupref++;
+		return $leading . '@' . $trailing;
+	}
+	return $x;
+}
+
+# Perload ON
 
 # Parse date from header and return its timestamp (seconds since the Epoch)
 sub parsedate {
