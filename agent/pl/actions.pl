@@ -861,9 +861,6 @@ sub post {
 	);
 
 	foreach (split(/\n/, $Header{'Head'})) {
-		s/^Sender:/Prev-Sender:/i;
-		s/^(To|Cc):/X-$1:/i;				# Keep distribution info
-		s/^(Resent-\w+):/X-$1:/i;
 		next if /^From\s/;					# First From line...
 		if (
 			/^From:/i				||		# This one was cleaned up above
@@ -875,28 +872,26 @@ sub post {
 			/^Apparently-To:/i		||
 			/^Distribution:/i		||		# No mix-up, please
 			/^Control:/i			||
-			/^X-Server-[\w-]+:/i	||
 			/^Xref:/i				||
 			/^NNTP-Posting-.*:/i	||		# Cleanup for NNTP server
 			/^Originator:/i			||		# Probably from news->mail gateway
-			/^X-Loop:/i				||		# INN does not like this field
-			/^X-Trace:/i			||		# idem
 			/^Newsgroups:/i			||		# Reply from news reader
 			/^Return-Receipt-To:/i	||		# Sendmail's acknowledgment
 			/^Received:/i			||		# We want to remove this MTA trace
 			/^Delivered-To:/i		||		# idem
 			/^Precedence:/i			||
-			/^X-Complaints-To:/i	||		# INN2 does not like this field
-			/^X-Mailing-List:/i		||		# INN2 does not like this field
-			/^X-Message-Flag:/i		||		# INN2 does not like this field
-			/^X-Mail-Handler:/i		||		# INN2 does not like this field
-			/^X-Virus-Status:/i		||		# INN2 does not like this field
 			/^DKIM-Signature:/i		||		# INN2 does not like this field
+			/^Accept-?[\w-]*:/i		||		# INN2 does not like this field
+			/^Auth-?[\w-]*:/i		||		# INN2 does not like this field
+			/^X-[\w-]+:/i			||		# INN2 does not like these fields
 			/^Errors-To:/i					# Error report redirection
 		) {
 			$last_was_header = 1;			# Mark we discarded the line
 			next;							# Line is skipped
 		}
+		s/^Sender:/Prev-Sender:/i;
+		s/^(To|Cc):/X-$1:/i;				# Keep distribution info
+		s/^(Resent-\w+):/X-$1:/i;
 		# Skip any RFC-822 header that is not purely made up of [\w-]+
 		# as it is not possible it can be meaningful to the news system.
 		if (/^([!-9;-~\w-]+):/) {
@@ -921,6 +916,8 @@ sub post {
 		}
 		next if /^\s/ && $last_was_header;	# Skip removed header continuations
 		$last_was_header = 0;				# We decided to keep header line
+		s/^([\w-]+):\s+/$1: /;				# INN2 is picky: wants one space
+
 		# Ensure that we always put a single space after the field name
 		# (before possibly emitting a newline for the continuation)
 		if (s/^([\w-]+):(\S)/$1: $2/ || s/^([\w-]+):$/$1: /) {
