@@ -849,6 +849,15 @@ sub post {
 	}
 	print NEWS "Message-ID: $msgid\n";
 
+	# If there is a Followup-To line, ignore it, unless it says "poster".
+	my $followup = $Header{'Followup-To'};
+	if ($followup =~ /\bposter\b/) {
+		print NEWS "Followup-To: poster\n";
+	} elsif ($followup ne '') {
+		&add_log("WARNING stripped Followup-To: $followup")
+			if $loglvl > 5;
+	}
+
 	# Protect Sender: lines in the original message and clean-up header
 	local($last_was_header);		# Set to true when header is skipped
 
@@ -866,6 +875,7 @@ sub post {
 			/^From:/i				||		# This one was cleaned up above
 			/^Subject:/i			||		# This one handled above
 			/^Message-Id:/i			||		# idem
+			/^Followup-To:/i		||		# idem
 			/^Date:/i				||		# idem
 			/^In-Reply-To:/i		||
 			/^References:/i			||		# One will be faked if missing
