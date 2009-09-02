@@ -2429,7 +2429,7 @@ so that the exit may be trapped. \fI&exit\fR takes one argument, the exit code.
 If you use 0, this is understood as a success, any other value meaning failure
 (i.e. the PERL command will return a failure status). Using the perl \fIexit\fR
 function directly would kill \fImailagent\fR and would probably incur some
-mail looses.
+mail losses.
 .PP
 The scripts used should remain simple. In particular, you should avoid the use
 of the \fIpackage\fR directive or define functions with a package name other
@@ -3635,7 +3635,7 @@ source code.
 Once you have extended the filtering command set, you may use those commands
 inside the rule file as if they were built-in. You may even choose to redefine
 the standard commands if they do not suit you (however, if you wish to do
-that, you should know exactly what you are doing, or you may start loosing
+that, you should know exactly what you are doing, or you may start losing
 some mail or get an unexpected behavior -- this also voids your warranty :-).
 .PP
 The ability to provide external commands without actually modifying the main
