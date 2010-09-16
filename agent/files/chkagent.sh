@@ -55,7 +55,7 @@ today=`date "+%y/%m/%d"`
 
 if test -f "$logfile"; then
 	grep "$today" $logfile > $todaylog
-	egrep ": ($lookat)" $todaylog > $output
+	egrep "]: ($lookat)" $todaylog > $output
 	if test -s "$output"; then
 		echo "*** Errors from logfile ($logfile):" > $report
 		echo " " >> $report
