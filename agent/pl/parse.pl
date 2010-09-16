@@ -324,6 +324,7 @@ sub body_check {
 		return;
 	}
 	my %enc = map { $_ => 1 } qw(7bit 8bit binary base64 quoted-printable);
+	$encoding =~ s/\s*;$//;		# Strip (wrong) spurious trailing separator
 	if (length $encoding) {
 		&'add_log("WARNING unknown content transfer encoding \"$encoding\"")
 			if $'loglvl > 5 && !$enc{$encoding};
