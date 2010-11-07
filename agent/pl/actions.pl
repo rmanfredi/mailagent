@@ -894,6 +894,7 @@ sub post {
 			/^Accept-?[\w-]*:/i		||		# INN2 does not like this field
 			/^Auth-?[\w-]*:/i		||		# INN2 does not like this field
 			/^X-[\w-]+:/i			||		# INN2 does not like these fields
+			/^Injection-[\w-]+:/i	||		# INN2 does not like these fields
 			/^Errors-To:/i					# Error report redirection
 		) {
 			$last_was_header = 1;			# Mark we discarded the line
