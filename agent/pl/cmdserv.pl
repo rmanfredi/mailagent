@@ -890,7 +890,7 @@ sub run_user {
 	&cmdenv'set_cmd(join(' ', @command));	# Set command environment
 	local($failed) = &dispatch;				# Execute command
 
-	if (defined %powers) {
+	if (%powers) {
 		$cmdenv'powers = $powers;
 		%cmdenv'powers = %powers;
 		print MAILER "Restored powers ($powers).\n";

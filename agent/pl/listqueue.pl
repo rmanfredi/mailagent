@@ -79,7 +79,7 @@ Filename      Size Queue time  Status    Sender / Recipient list
 	$: = " ,";					# Break recipients on white space or colon
 	format STDOUT =
 @<<<<<<<<<@>>>>>>>@@<<<<<<<<<< @<<<<<<<< @<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-$file     $size $star $queued  $status   $sender
+$file,    $size,$star,$queued, $status,  $sender
                                          ^<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
                                          $recipient
 ~                                        ^<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<

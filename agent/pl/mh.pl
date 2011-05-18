@@ -123,7 +123,7 @@ sub save_msg {
 
 # Read MH profile, fill in %Profile entries.
 sub profile {
-	return if defined %Profile;
+	return if %Profile;
 	# Make sure there is at least a valid Path entry, in case they made a
 	# mistake and asked for MH folder saving without a valid .mh_profile...
 	local($dflt) = defined($'XENV{'maildir'}) ? $'XENV{'maildir'} : 'Mail';
