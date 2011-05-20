@@ -153,7 +153,7 @@ EOM
 	$umask = 077 unless defined $umask;
 	$email = $user unless defined $email;
 	$compspec = "$spool/compressors" unless defined $compspec;
-	$comptag = 'compress' unless defined $comptag;
+	$comptag = 'gzip' unless defined $comptag;
 	$locksafe = 'OFF' unless defined $locksafe;
 	$execsafe = 'OFF' unless defined $execsafe;
 

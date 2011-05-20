@@ -414,7 +414,7 @@ This is an optional parameter. (suggested: \$spool/compressors).
 .TP
 .I comptag
 The default compression tag when creating new folders.
-If not specified, the default is 'compress'.
+If not specified, the default is 'gzip'.
 .TP
 .I comserver
 Name of the file containing authorized SERVER commands and their definition.

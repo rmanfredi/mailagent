@@ -20,14 +20,14 @@
 
 do '../pl/misc.pl';
 sub cleanup {
-	unlink "$user", "$user.Z", 'always', 'always.Z', 'another', '.compress';
+	unlink "$user", "$user.gz", 'always', 'always.gz', 'another', '.compress';
 }
 &cleanup;
 
 # Look whether compress is available. If not, do not perform this test.
-unlink 'mail.Z';
-`compress mail`;
-`uncompress mail` if $? == 0 && -f mail.Z;
+unlink 'mail.gz';
+`gzip mail`;
+`gunzip mail` if $? == 0 && -f mail.gz;
 if ($? != 0) {		# No compress available in path, sorry
 	print "-1\n";	# Do not perform any tests
 	exit 0;
@@ -47,24 +47,24 @@ close COMPRESS || print "3\n";
 `$cmd`;
 $? == 0 || print "4\n";
 -f "$user" && print "5\n";		# Should be compressed
--f "$user.Z" || print "6\n";
+-f "$user.gz" || print "6\n";
 -f 'always' && print "7\n";		# Should also be compressed
--f 'always.Z' || print "8\n";
+-f 'always.gz' || print "8\n";
 -f 'another' || print "9\n";	# This one is not compressed
--f 'another.Z' && print "10\n";
-$msize = -s "$user.Z";
+-f 'another.gz' && print "10\n";
+$msize = -s "$user.gz";
 
-`cp $user.Z $user >/dev/null 2>&1`;
+`cp $user.gz $user >/dev/null 2>&1`;
 `$cmd`;
 $? == 0 || print "11\n";
 -f "$user" || print "12\n";		# Should be not be recompressed
--f "$user.Z" || print "13\n";	# Should still be there
+-f "$user.gz" || print "13\n";	# Should still be there
 -f 'always' && print "14\n";	# Should also be compressed
--f 'always.Z' || print "15\n";
+-f 'always.gz' || print "15\n";
 -f 'another' || print "16\n";	# This one is not compressed
--f 'another.Z' && print "17\n";
+-f 'another.gz' && print "17\n";
 (-s $user != $msize) || print "18\n";		# Mail saved there
-(-s "$user.Z" == $msize) || print "19\n";	# This one left undisturbed
+(-s "$user.gz" == $msize) || print "19\n";	# This one left undisturbed
 
 unlink 'mail';
 &cleanup;
