@@ -168,7 +168,7 @@ runmax   : 3600					# Timeout for RUN command and friends
 # Folder compression
 #compress : ~/.compress			# Folder compression list
 compspecs: $spool/compressors	# Compression progs config file
-comptag  : compress				# Default compression tag
+comptag  : gzip					# Default compression tag
 
 # Optional parameters (for experts...)
 #newcmd   : $spool/newcmd		# Definition of new filtering commands
