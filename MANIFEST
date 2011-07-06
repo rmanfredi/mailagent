@@ -122,6 +122,7 @@ agent/pl/checklock.pl      Perl library to check for long lasting locks
 agent/pl/cmdserv.pl        Implements generic mail server
 agent/pl/compress.pl       Folder compression library
 agent/pl/context.pl        Mailagent context file handling
+agent/pl/ctime.pl          Legacy perl4 library to implement ctime()
 agent/pl/dbr.pl            Internal database management
 agent/pl/distribs.pl       Perl library to scan the distribs file
 agent/pl/dynload.pl        Dynamically loads perl code into mailagent

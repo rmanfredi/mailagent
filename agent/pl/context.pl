@@ -76,7 +76,6 @@ sub clean {
 # Save a new context file, if it has changed since we read it.
 sub save {
 	return unless $context_changed; 		# Do not save if no change
-	require 'ctime.pl';
 	local($existed) = -f $cf'context;
 	&'acs_rqst($cf'context) if $existed;	# Lock existing file
 	unless (open(CONTEXT, ">$cf'context")) {

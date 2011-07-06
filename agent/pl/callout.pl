@@ -214,7 +214,6 @@ sub save {
 		return;
 	}
 
-	require 'ctime.pl';
 	print CALLOUT "# Mailagent callout queue, last updated " . &'ctime(time);
 
 	local(@type, @action, @file);

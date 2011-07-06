@@ -419,7 +419,6 @@ sub fill_stats {
 #   y: USELESS if -m, but kept for nice mnemonic
 #	t: print only statistics for top-level rules (most recent rule file)
 sub main'report_stats {
-	require 'ctime.pl';
 	local($option) = @_;				# Options from command line
 	local($opt_u) = $option =~ /u/;		# Only used rules
 	local($opt_m) = $option =~ /m/;		# Merge all statistics at the end
