@@ -518,9 +518,8 @@ sub init_constants {
 	$HD_KEEP = 1;				# Keep header fields
 
 	# Faked leading From line (used for digest items, by SPLIT)
-	local($now) = &ctime(time);
+	local($now) = scalar(localtime());
 	$now =~ s/\s(\d:\d\d:\d\d)\b/0$1/;	# Add leading 0 if hour < 10
-	chop($now);
 	$FAKE_FROM = "From mailagent " . $now;
 
 	# Miscellaneous constants
@@ -764,7 +763,6 @@ sub eval_error {
 }
 
 !NO!SUBS!
-$grep -v '^;#' pl/ctime.pl >>magent
 $grep -v '^;#' pl/jobnum.pl >>magent
 $grep -v '^;#' pl/read_conf.pl >>magent
 $grep -v '^;#' pl/acs_rqst.pl >>magent

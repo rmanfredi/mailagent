@@ -540,8 +540,8 @@ sub print_summary {
 # Print general informations, as found in @Top.
 sub print_general {
 	local($what) = @_;
-	local($last) = &'ctime($lasttime);
-	local($now) = &'ctime($current_time);
+	local($last) = localtime($lasttime);
+	local($now) = localtime($current_time);
 	local($n, $s);
 	chop $now;
 	chop $last;

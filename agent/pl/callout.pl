@@ -214,7 +214,8 @@ sub save {
 		return;
 	}
 
-	print CALLOUT "# Mailagent callout queue, last updated " . &'ctime(time);
+	print CALLOUT "# Mailagent callout queue, last updated " .
+		scalar(localtime()) . "\n";
 
 	local(@type, @action, @file);
 	local($type, $action, $file);

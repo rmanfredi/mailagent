@@ -85,7 +85,8 @@ sub save {
 	}
 	&'add_log("saving context file $cf'context") if $'loglvl > 17;
 	local($key, $value, $item);
-	print CONTEXT "# Mailagent context, last updated " . &'ctime(time);
+	print CONTEXT "# Mailagent context, last updated " .
+		scalar(localtime()) . "\n";
 	while (($key, $value) = each %Context) {
 		next unless $value;
 		$item++;
