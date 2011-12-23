@@ -76,7 +76,7 @@ $jobnum = $ENV{'jobnum'};
 $fullcmd = $ENV{'fullcmd'};
 
 $dest=shift;							# Who should the list to be sent to
-$dest = $ENV{'path'} if $dest eq '';	# If dest was ommitted
+$dest = $ENV{'path'} if $dest eq '';	# If dest was omitted
 
 # A single '-' as first argument stands for return path
 $dest = $ENV{'path'} if $dest eq '-';

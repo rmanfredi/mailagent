@@ -63,7 +63,7 @@ commands.
 .PP
 .I Maildist
 is used to mail a whole distribution to the given address. The version
-number may be ommitted if the system has no version specified !!
+number may be omitted if the system has no version specified !!
 .I Maildist
 looks for the \fISpool/distribs\fR file to find where the distribution
 is located. If it has been archived, the file name extension is used
@@ -86,7 +86,7 @@ compressed \fItar\fR archive
 .PP
 Note that on file systems with short file names, the final \fB.Z\fR
 extension could be dropped. Therefore, compressed archives must be
-explicitely stated in the \fISpool/distribs\fR file.
+explicitly stated in the \fISpool/distribs\fR file.
 .PP
 Once the directory is found (or extracted), \fImaildist\fR looks
 for a \fI.package\fR file. If one is found, then it is assumed this
@@ -114,7 +114,7 @@ file). A message will be sent back to the user, explaining that only
 patches are available.
 .PP
 .I Mailhelp
-sends help to the address (if ommitted, the return path of the mail
+sends help to the address (if omitted, the return path of the mail
 is used). The help text is found in \fISpool/agenthelp\fR. It should
 have been correctly set in the installation procedure, as explained
 in the \fImailagent\fR($manext) manual page.

@@ -760,7 +760,7 @@ the default lookup place. Optional parameter unless SERVER is used.
 .TP
 .I servshell
 This is the name of the shell used to launch SERVER shell commands (actually
-to proces the wrapper file that will ultimately exec() the command). On some
+to process the wrapper file that will ultimately exec() the command). On some
 systems like HPUX 10.x, this has to be set to /usr/old/bin/sh to get the
 plain old Bourne shell, because /bin/sh is a braindead POSIX shell that
 closes file descriptors greater than 2 upon exec(), whereas the Bourne
