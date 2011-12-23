@@ -540,11 +540,9 @@ sub print_summary {
 # Print general informations, as found in @Top.
 sub print_general {
 	local($what) = @_;
-	local($last) = localtime($lasttime);
-	local($now) = localtime($current_time);
+	local($last) = scalar localtime($lasttime);
+	local($now) = scalar localtime($current_time);
 	local($n, $s);
-	chop $now;
-	chop $last;
 	# Header of statistics
 	print "$what from $now to $last:\n";
 	print '~' x 79 . "\n";
