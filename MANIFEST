@@ -192,6 +192,7 @@ agent/test/Jmakefile       Generic makefile for test suite
 agent/test/Makefile.SH     Makefile for test suite
 agent/test/README          About the regression tests
 agent/test/TEST            Runs the full test suite
+agent/test/getopt.pl       Legacy &Getopt() routine definition from perl4
 agent/test/actions         Rule file for cmd tests
 agent/test/atail           Active monitoring of the out/agentlog file
 agent/test/base64          Sample base64 encoded email

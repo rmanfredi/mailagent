@@ -156,7 +156,9 @@ sub run {
 	# the mailhook variable in the current package.
 	&hook'initvar('newcmd');		# Initialize convenience variables
 	local(@ARGV);					# Argument vector for command
-	require 'shellwords.pl';
+
+	require Text::ParseWords;
+	*shellwords = \&Text::ParseWords::old_shellwords;
 	eval '@ARGV = &shellwords($cmd)';
 
 	# We don't need to protect the following execution within an eval, since

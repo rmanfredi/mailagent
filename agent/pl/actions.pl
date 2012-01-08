@@ -1719,7 +1719,10 @@ sub perl {
 	# Note that the @ARGV array is held in the main package, but since the
 	# mailagent makes no use of it at this point, there is no need to save its
 	# value before clobbering it.
-	require 'shellwords.pl';
+
+	require Text::ParseWords;
+	*shellwords = \&Text::ParseWords::old_shellwords;
+
 	eval '@ARGV = &shellwords($script)';
 	if (chop($@)) {				# There was an unmatched quote
 		$@ =~ s/^U/u/;

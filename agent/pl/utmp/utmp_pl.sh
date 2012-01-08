@@ -67,7 +67,7 @@ $cat >>utmp.pl <<'!NO!SUBS!'
 # Returns the amount of records anyway.
 sub update {
 	&init unless $init;
-	require 'stat.pl';
+	my $ST_MTIME = 9 + $[;	# Field st_mtime from inode structure
 	local($mtime) = (stat($utmp))[$ST_MTIME];
 	return 0 + @utmp unless $mtime > $lmtime;
 	$lmtime = $mtime;

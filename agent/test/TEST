@@ -56,7 +56,7 @@ $ENV{'LOCKEXT'} = $cfsh'd_flexfnam eq 'define' ? '.lock' : '!';
 $failed = 0;
 $how_many = 0;
 
-require 'getopt.pl';
+require './getopt.pl';
 &Getopt;
 
 $mailagent = 'mailagent';			# Default program (dataloaded version)
