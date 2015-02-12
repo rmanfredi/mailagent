@@ -136,7 +136,7 @@ sub update {
 	}
 	$linenum = (&info($hname, $tag))[1] unless defined($linenum);
 	if ($linenum == 0) {				# No entry previously recorded
-		return unless defined(@values);	# Nothing to delete
+		return unless @values;			# Nothing to delete
 		unless(open(DBR, ">>$file")) {
 			&'add_log("ERROR cannot append in $file: $!") if $'loglvl;
 			return;
@@ -162,7 +162,7 @@ sub update {
 			if ($. < $linenum) {		# Before line to update
 				print DBR;				# Print line verbatim
 			} elsif ($. == $linenum) {	# We reached line to be updated
-				next unless defined(@values);
+				next unless @values;
 				print DBR "$hname $tag $now\t";
 				print DBR join("\t", @values);
 				print DBR "\n";
