@@ -51,7 +51,7 @@ sub biff {
 	&add_log("$cf'user is logged on @ttys") if $loglvl > 15;
 	my %done;						# Solaris might give same tty twice
 	foreach $tty (@ttys) {
-		&biff'notify($tty, $folder, $type) unless $done{$tty};
+		&biff'notify($tty, $folder, $type) unless $done{$tty}++;
 	}
 }
 
