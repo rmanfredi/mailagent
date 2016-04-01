@@ -348,4 +348,3 @@ misc/unkit/newcmd.cf       Configuration of the new command
 misc/unkit/rules           Rules to be added to handle kit messages
 misc/unkit/unkit.pl        Implementation of the user-defined UNKIT command
 patchlevel.h               Current version number and patch level
-revision.h                 The current SVN revision number for mailagent
