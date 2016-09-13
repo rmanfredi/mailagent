@@ -146,6 +146,7 @@ bifftrlen: 2					# Minimal trimming length, in lines
 biffquote: ON					# Whether the attribution line should be shown
 biffmh   : OFF					# Compact biffing message ala MH
 biffnice : OFF					# Whether compacted body should be reformatted
+biifchars: iso-8859-1			# Charset to use on the terminal (or utf-8)
 
 # MH-style folders
 mhprofile: ~/.mh_profile		# Name of the MH profile file (optional)

@@ -40,6 +40,8 @@
 # Local biff support
 #
 
+use Encode;
+
 # Perform biffing, given the folder where delivery was made print out a
 # biff-like message on each of the user's terminal where a 'biff y' command
 # was issued to effectively request biffing (i.e. on ttys where the 'x' bit
@@ -280,11 +282,34 @@ sub body {
 	# Setting bifflen or bifflines to 0 means no body
 	return '' if $len == 0 || $lines == 0;
 
-	my ($content, $entity);
+	my ($content, $entity, $enc, $biffenc);
 	($content, $entity) = unmime(\@body) if $'Header{'Mime-Version'};
 
-	&'add_log("biffing $entity entity is $content")
-		if length($content) && $'loglvl > 8;
+	if (length($content)) {
+		&'add_log("biffing $entity entity is $content") if $'loglvl > 8;
+		my $charset;
+		$charset = $1 if $content =~ /\bcharset="?([-\w]+)/;
+		if (defined $charset) {
+			$enc = Encode::find_encoding($charset);
+			unless (ref $enc) {
+				&'add_log("WARNING unknown charset '$charset', no body shown")
+					if $'loglvl > 1;
+				@body = ("[body hidden: unknown charset '$charset']");
+			}
+
+			# If the encoding is the same as the one used in the terminal,
+			# we have no conversion to make.  Reset $enc.
+			$biffenc = Encode::find_encoding($cf'biffchars);
+			$enc = undef if
+				!(ref $biffenc) ||
+				(ref $enc && $biffenc->name eq $enc->name);
+		}
+	}
+
+	if (ref $enc) {
+		&'add_log("biff converting " . $enc->name . " into " . $biffenc->name)
+			if $'loglvl > 8;
+	}
 
 	strip_html(\@body) if $content =~ /html\b/;
 	&trim(*body) if $trim;		# Smart trim of leading reply text
@@ -295,6 +320,10 @@ sub body {
 	my $tl = 8;					# tab length
 
 	while ($len > 0 && $lines > 0 && defined ($_ = shift(@body))) {
+		if (ref $enc) {
+			my $data = $enc->decode($_);
+			$_ = $biffenc->encode($data);
+		}
 		next if $skipnl && is_blank($_);
 		my $line_length = 0;
 		1 while s|\t|' ' x ($tl - length($`) % $tl)|e;	# Expand tabs

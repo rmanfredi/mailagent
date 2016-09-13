@@ -48,6 +48,8 @@
 ;# Baseline for mailagent 3.0 netwide release.
 ;#
 ;#
+use Encode;
+
 package cf;
 
 # This package is responsible for keeping track of the configuration variables.
@@ -175,6 +177,10 @@ EOM
 	$umask = oct($umask) if $umask =~ /^0/;	 # Translate umask into decimal
 	$domain =~ s/^\.*//;					 # Strip leading '.'
 
+	# Backward compatibility -- RAM, 2016-09-13
+
+	$biffchars = 'iso-8859-1' unless defined $biffchars;
+
 	# Update @INC perlib search path with the perlib variable. Paths not
 	# starting by a '/' are supposed to be under the mailagent private lib
 	# directory.
@@ -188,6 +194,17 @@ EOM
 			s/^~/$home/;
 			$_ = $'privlib . '/' . $_ unless m|^/|;
 			push(@INC, $_) unless $seen{$_}++;
+		}
+	}
+
+	# Make sure the "biffchars" encoding is known if biff is set.
+
+	if ($biff =~ /^on/i) {
+		my $enc = Encode::find_encoding($biffchars);
+		unless (ref $enc) {
+			&'add_log("WARNING unknown biff charset '$biffchars', using latin1")
+				if $'loglvl > 1;
+			$biffchars = 'iso-8859-1';
 		}
 	}
 

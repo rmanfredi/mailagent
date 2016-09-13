@@ -336,6 +336,10 @@ Whether or not biffing is wanted when \fImailagent\fR delivers mail to
 a folder. Set it to ON (case insensitively) to allow local biffing if you
 are logged in. (optional, defaults to: OFF)
 .TP
+.I biffchars
+The charset to use when biffing on the terminal.  Set it to utf-8 if you are
+using UTF-8 terminals. (optional, defaults to: iso-8859-1).
+.TP
 .I biffhead
 When biffing is enabled, this variable lists which headers should be
 printed out. Headers should be given in their normalized format and
