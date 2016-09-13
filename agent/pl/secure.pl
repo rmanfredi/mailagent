@@ -46,23 +46,29 @@
 # Return true if the file is secure or missing, false otherwise.
 # Note the extra parameter $exec which is set by exec_secure() only.
 sub file_secure {
-	local($file, $type, $exec) = @_;
+	my ($file, $type, $exec) = @_;
 	return 1 unless -e $file;	# Missing file considered secure
 
-	# If we're trying to execute a symbolic link, try to resolve it recursively
-	# Otherwise, symlinks are not considered secure by file_secure().
+	# We're resolving symlinks recursively
+	# NB: Race condition between our checks and the perusal of the file!
+	#	--RAM, 2016-09-13
+
 	if (-l $file) {				# File is a symbolic link
+		my $target = &symfile_secure($file, $type);
+		unless (defined $target) {
+			# Symbolic link is not secure
+			unless ($exec) {
+				&add_log(
+					"WARNING sensitive $type file $file is an " .
+					"unsecure symbolic link"
+				) if $loglvl > 5;
+			}
+			return 0;	# Unsecure file
+		}
+		$file = $target;
 		if ($exec) {
-			local($target);
-			$target = &symfile_secure($file, $type);
-			return 0 unless defined $target;
 			&add_log("NOTICE running $type $file actually runs $target")
 				if $loglvl > 6;
-			$file = $target;
-		} else {
-			&add_log("WARNING sensitive $type file $file is a symbolic link")
-				if $loglvl > 5;
-			return 0;				# Unsecure file
 		}
 	}
 
