@@ -3621,11 +3621,11 @@ randomly and this may make reading difficult. You may request an automatic
 reformatting of the compacted body by turning \fIbiffnice\fR to ON and the
 biff output will fit nicely within the terminal.
 .PP
-Unfortunately, it is not possible to customize the amount of columns that
-should be used for formatting: since you may biff to any tty you are logged
-on, that would force \fImailagent\fR to probe the tty for its column size,
-for each possible tty where output may go, and there is no reliable portable
-way of doing that. Sorry.
+To make \fIbiffnice\fR really nice, \fImailagent\fR probes each tty (those
+where biffing was turned on) for its size and uses that information to drive
+formatting of the output.  Note that you can set \fIbiffnice\fR even
+when \fIbiffmh\fR is OFF.  This really helps maximizing the amount of body
+text displayed.
 '''
 ''' E x t e n d i n g   F i l t e r i n g   C o m m a n d s
 '''
