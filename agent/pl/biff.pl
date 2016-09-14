@@ -599,16 +599,21 @@ sub unmime {
 	# XXX code duplication with body_check(), factorize some day...
 	my $output;
 	my $error;
+	my $len = 0;
+
+	foreach my $x (@entity) {
+		$len += length $x;
+	}
 
 	if ($entity_encoding =~ /^base64\s*$/i) {
-		base64'reset(length $'Header{'Body'});
+		base64'reset($len);
 		foreach my $d (@entity) {
 			base64'decode($d);
 		}
 		$error = base64'error_msg();
 		$output = base64'output();
 	} elsif ($entity_encoding =~ /^quoted-printable\s*$/i) {
-		qp'reset(length $'Header{'Body'});
+		qp'reset($len);
 		foreach my $d (@entity) {
 			qp'decode($d);
 		}
