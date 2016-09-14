@@ -10,8 +10,8 @@ Message-ID: <D42E3A26BC29C94DB4CC3DA3569AE82B0157AE42DE@GVW1088EXB.pobox.com>
 MIME-Version: 1.0
 Content-Type: multipart/alternative; boundary="foo"
 Status: RO
-Content-Length: 609
-Lines: 22
+Content-Length: 610
+Lines: 23
 
 --foo
 Content-Type: text/html; charset="iso8859-1"
