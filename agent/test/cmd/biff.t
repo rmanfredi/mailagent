@@ -93,8 +93,7 @@ $? == 0 || print "42\n";
 
 cp_mail("../qp");
 my $subject = <<EOM;
-Subject: =?Cp1252?Q?Perl:_La_haute_tec?=
- =?Cp1252?Q?hnicit=E9_au_service_des_professionnels?=
+Subject: =?latin1?Q?Perl:_La_haute_technicit=E9_au_service_des_professionnels?=
 EOM
 chop $subject;
 &replace_header($subject);

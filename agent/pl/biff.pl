@@ -516,18 +516,52 @@ sub format {
 	push(@ary, $body);			# Remaining information on one line
 }
 
-# One-liner quoted-printable decoder
-# MUST be on one line to not be dataloaded (would mess $1 in the regexp)
-sub to_txt { my $l = shift; $l =~ s/=([\da-fA-F]{2})/pack('C', hex($1))/ge; $l }
+# Perload OFF
+
+# Quoted-printable decoder
+# MUST NOT be dataloaded (would mess $1 in the regexp)
+sub to_txt {
+	my ($c, $l) = @_;	# charset, line
+	$l =~ s/=([\da-fA-F]{2})/pack('C', hex($1))/ge;
+	my $enc = Encode::find_encoding($c);
+	my $biffenc = Encode::find_encoding($cf'biffchars);
+	if (ref $enc && ref $biffenc && $enc->name ne $biffenc->name) {
+		my $data = $enc->decode($$l);
+		$data = $biffenc->encode($data);
+		$l = $data if length $data;
+	}
+	return $l;
+}
+
+# Base64 decoder
+# MUST NOT be dataloaded (would mess $1 in the regexp)
+sub b64_to_txt {
+	my ($c, $l) = @_;	# charset, line
+	base64'reset(length $l);
+	base64'decode($l);
+	$l = base64'output();
+	my $enc = Encode::find_encoding($c);
+	my $biffenc = Encode::find_encoding($cf'biffchars);
+	if (ref $enc && ref $biffenc && $enc->name ne $biffenc->name) {
+		my $data = $enc->decode($$l);
+		$data = $biffenc->encode($data);
+		$l = $data if length $data;
+	}
+	return $l;
+}
+
+# Perload ON
 
 # Quick removal of quoted-printable escapes within the headers
-# We do not care about the charset and hope the tty will be able to display
-# the characters just fine.
+# We pay attention to the charset and recode data to the charset specified
+# as "biffchars" in the configuration.
 sub unquote_printable {
 	my ($l) = @_;
 	# The to_txt() routine being used MUST NOT be dataloaded or $1 would be
 	# reset to '' on the first invocation.  It's a perl bug (seen in 5.10)
-	$l =~ s/=\?[\w-]+?\?Q\?(.*?)\?=\s*/to_txt($1)/sieg && $l =~ s/_/ /g;
+	# By precaution, we also do not dataload b64_to_txt().
+	$l =~ s/=\?([\w-]+)\?Q\?(.*?)\?=/to_txt($1,$2)/sieg && $l =~ s/_/ /g;
+	$l =~ s/=\?([\w-]+)\?B\?(.*?)\?=/b64_to_txt($1,$2)/sieg;
 	&'add_log("unquoted '$_[0]' to '$l'") if $'loglvl > 19 && $_[0] ne $l;
 	return $l;
 }
