@@ -82,13 +82,13 @@ cp_mail("../mime");
 &add_header('X-Tag: biff 3');
 &make_tty(0, 0777, 40);	# 40 & 41
 `$cmd`;
-$? == 0 || print "41\n";
--f 'ok' || print "42\n";
--s 'tty0' || print "43\n";
-&get_log(44, 'tty0');
-&not_log('--foo', 45);
-&check_log('^Got mail in ~/ok', 46) == 1 || print "47\n";
-&check_log('successfully decoded', 48) == 1 || print "49\n";
+$? == 0 || print "42\n";
+-f 'ok' || print "43\n";
+-s 'tty0' || print "44\n";
+&get_log(45, 'tty0');
+&not_log('--foo', 46);
+&check_log('^Got mail in ~/ok', 47) == 1 || print "48\n";
+&check_log('successfully decoded', 49) == 1 || print "50\n";
 &cleanup;
 
 cp_mail("../qp");
@@ -99,12 +99,12 @@ EOM
 chop $subject;
 &replace_header($subject);
 &add_header('X-Tag: biff 3');
-&make_tty(0, 0777, 50);	# 50 & 51
+&make_tty(0, 0777, 50);	# 51 & 52
 `$cmd`;
-$? == 0 || print "52\n";
-&get_log(53, 'tty0');
+$? == 0 || print "53\n";
+&get_log(54, 'tty0');
 &check_log(
-	'Subject: Perl: La haute technicité au service des professionnels', 54);
+	'Subject: Perl: La haute technicité au service des professionnels', 55);
 &cleanup;
 
 unlink 'mail';
