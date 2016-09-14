@@ -107,5 +107,19 @@ $? == 0 || print "53\n";
 	'Subject: Perl: La haute technicité au service des professionnels', 55);
 &cleanup;
 
+cp_mail("../mime-recursive");
+&add_header('X-Tag: biff 3');
+&make_tty(0, 0777, 40);	# 56 & 57
+`$cmd`;
+$? == 0 || print "58\n";
+-f 'ok' || print "59\n";
+-s 'tty0' || print "60\n";
+&get_log(61, 'tty0');
+&not_log('--foo', 62);
+&not_log('--bar', 63);
+&check_log('^Got mail in ~/ok', 64) == 1 || print "65\n";
+&check_log('successfully decoded', 66) == 1 || print "67\n";
+&cleanup;
+
 unlink 'mail';
 print "0\n";

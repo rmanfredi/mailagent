@@ -532,8 +532,77 @@ sub unquote_printable {
 	return $l;
 }
 
-# Un-MIME the body by removing all the MIME headers and looking for the
-# first text entity in the message.
+# Recursive MIME parsing to extract the first text entity content
+#
+# Input is (aref, eref, boundary, n)
+# where:
+#	aref			is the array containing the body being parsed
+#	eref			is where we can stuff the entity content
+#	boundary		is the current MIME boundary
+#	n				is the running count of the entity number
+#
+# Returns (content_type, parsed_header, n)
+# where:
+# 	content_type	is the retained entity content-type
+#	parsed_header	is a ref on the parsed header hashtable
+#	n				is the entity number
+sub unmime_recursive {
+	my ($aref, $eref, $boundary, $n) = @_;
+
+	&'add_log("searching text part for biffing, boundary=$boundary, n=$n")
+		if $'loglvl > 16;
+
+	my $entity_content;
+	my $header;
+	my $grabbed = 0;
+
+	for (;;) {
+		unless ($grabbed) {
+			last unless skip_past($aref, $boundary);
+		}
+		$grabbed = 0;
+		$header = parse_header($aref);
+		my $content = lc($header->{'Content-Type'});
+		$content =~ s/\(.*?\)\s*//g;
+		&'add_log("parsed entity header: content is $content") if $'loglvl > 19;
+		$n++;
+		if ($content =~ m|^text/|) {
+			# We found (another) text part, collect it...
+			&'add_log("collecing text n=$n") if $'loglvl > 19;
+			my @entity;
+			my $end = !skip_past($aref, $boundary, \@entity);
+			$grabbed = 1;		# Avoid skipping at next loop iteration
+			if (
+				$end ||
+				$content =~ m|^text/plain\b|	# Found the best one
+			) {
+				@$eref = @entity;
+				$entity_content = $content;
+				&'add_log("done with n=$n, content=$content") if $'loglvl > 19;
+				last;
+			}
+		} elsif ($content =~ m|^multipart/|) {
+			my ($bound) = $content =~ /boundary=(\S+);/;
+			($bound) = $content =~ /boundary=(\S+)/ unless length $bound;
+			$bound = $1 if $bound =~ /^"(.*)"/ || $bound =~ /^'(.*)'/;
+			&'add_log("collecing recursively n=$n, boundary=$bound")
+				if $'loglvl > 19;
+
+			($entity_content, $header, $n) =
+				unmime_recursive($aref, $eref, $bound, $n);
+
+			if ($entity_content =~ m|^text/plain\b|) {
+				&'add_log("done with n=$n, content=$content") if $'loglvl > 19;
+				last;
+			}
+		}
+	}
+
+	return ($entity_content, $header, $n);
+}
+
+# Un-MIME the body by removing all the embedded MIME part stuff and looking
+# for the first text entity in the message.
 # The supplied array is updated in-place and will contain on return the
 # lines of the MIME entity that was retained.
 # Returns the type of the retained MIME entity and the number of the entity
@@ -551,38 +620,14 @@ sub unmime {
 	($boundary) = $content =~ /boundary=(\S+)/ unless length $boundary;
 	$boundary = $1 if $boundary =~ /^"(.*)"/ || $boundary =~ /^'(.*)'/;
 
-	# We do not perform a recursive MIME parsing here
-
-	my $entity_content;
-	my $header;
-
-	&'add_log("searching text part for biffing, boundary=$boundary")
-		if $'loglvl > 16;
+	# We perform a recursive MIME parsing here because the first part of
+	# the message could be a multipart/alternative, with sub MIME sections
+	# containing the text entity we're looking for.
+	#		--RAM, 2016-09-14
 
 	my @entity;
-	my $grabbed = 0;
-	my $n = 0;
-
-	for (;;) {
-		unless ($grabbed) {
-			return undef unless skip_past($aref, $boundary);
-		}
-		$grabbed = 0;
-		$header = parse_header($aref);
-		$entity_content = lc($header->{'Content-Type'});
-		$entity_content =~ s/\(.*?\)\s*//g;
-		&'add_log("parsed entity header: content is $entity_content")
-			if $'loglvl > 19;
-		$n++;
-		if ($entity_content =~ m|^text/|) {
-			# We found (another) text part, collect it...
-			@entity = ();
-			my $end = !skip_past($aref, $boundary, \@entity);
-			$grabbed = 1;		# Avoid skipping at next loop iteration
-			last if $entity_content =~ m|^text/plain\b|;	# Found the best one
-			last if $end;
-		}
-	}
+	my ($entity_content, $header, $n) =
+		unmime_recursive($aref, \@entity, $boundary, 0);
 
 	my $entity = "${n}th";
 	$entity =~ s/1th$/1st/;
