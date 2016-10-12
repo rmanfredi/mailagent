@@ -57,6 +57,7 @@ sub get_line {
 		next if /^\s*#/;		# skip comments
 		next if /^\s*$/;		# skip empty lines
 		s/\s\s+/ /;				# reduce white spaces
+		s/#\s.*$//;				# trailing comments skipped (need space after #)
 		$result .= $_;
 		# Very simple braces handling
 		$in_braces += tr/{/{/ - tr/}/}/;

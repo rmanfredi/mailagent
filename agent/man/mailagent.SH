@@ -1280,7 +1280,8 @@ for instance, no '{' may be used as part of an address.
 .PP
 Comments are introduced by a leading '#' , which must be on the left margin.
 Unlike shell comments, a '#' which is not left justified will not be understood
-as a comment. However, spaces or tabs are allowed in front of '#'.
+as a comment, unless there is a space following '#'.
+Spaces or tabs are allowed in front of '#'.
 .PP
 All the statements in the rule file must end with a ';'. There are mainly
 four parts in each line. A list of comma separated modes, between '<' and '>',
