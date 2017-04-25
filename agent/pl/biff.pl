@@ -539,11 +539,11 @@ sub b64_to_txt {
 	my ($c, $l) = @_;	# charset, line
 	base64'reset(length $l);
 	base64'decode($l);
-	$l = base64'output();
+	my $o = base64'output();
 	my $enc = Encode::find_encoding($c);
 	my $biffenc = Encode::find_encoding($cf'biffchars);
 	if (ref $enc && ref $biffenc && $enc->name ne $biffenc->name) {
-		my $data = $enc->decode($$l);
+		my $data = $enc->decode($$o);
 		$data = $biffenc->encode($data);
 		$l = $data if length $data;
 	}
