@@ -526,7 +526,7 @@ sub to_txt {
 	my $enc = Encode::find_encoding($c);
 	my $biffenc = Encode::find_encoding($cf'biffchars);
 	if (ref $enc && ref $biffenc && $enc->name ne $biffenc->name) {
-		my $data = $enc->decode($$l);
+		my $data = $enc->decode($l);
 		$data = $biffenc->encode($data);
 		$l = $data if length $data;
 	}
