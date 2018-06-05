@@ -114,7 +114,7 @@ sed <<!GROK!THIS! >$CONFIG_H -e 's!^#undef\(.*/\)\*!/\*#define\1 \*!' -e 's!^#un
 #$d_getopt HAS_GETOPT		/**/
 
 /* HAS_GNULIBC:
- *	This symbol, if defined, indicates to the C program that 
+ *	This symbol, if defined, indicates to the C program that
  *	the GNU C library is being used.  A better check is to use
  *	the __GLIBC__ and __GLIBC_MINOR__ symbols supplied with glibc.
  */
@@ -335,7 +335,7 @@ sed <<!GROK!THIS! >$CONFIG_H -e 's!^#undef\(.*/\)\*!/\*#define\1 \*!' -e 's!^#un
  *	This symbol contains the value of sizeof(int) so that the C
  *	preprocessor can make decisions based on it.
  */
-#define INTSIZE $intsize		/**/
+#define INTSIZE $intsize
 
 /* MYHOSTNAME:
  *	This symbol contains name of the host the program is going to run on.
@@ -347,7 +347,7 @@ sed <<!GROK!THIS! >$CONFIG_H -e 's!^#undef\(.*/\)\*!/\*#define\1 \*!' -e 's!^#un
 #define MYHOSTNAME "$myhostname"		/**/
 
 /* PERLPATH:
- *	This symbol contains the absolute location of the perl interpeter.
+ *	This symbol contains the absolute location of the perl interpreter.
  */
 #define PERLPATH "$perlpath"		/**/
 

@@ -11,6 +11,7 @@ README                     Basic instructions
 U/                         Specific metaconfig units
 U/End.U
 U/Myinit.U
+U/Specific.U               Specific code for mailagent before .SH extraction
 U/mboxlock.U
 U/utmp.U
 agent/                     Where mailagent support files are located
