@@ -1,8 +1,10 @@
+.package
 .config/
 *.bak
 *.o
 *.1
 Makefile
+Wanted
 agent/edusers
 agent/files/help/addauth
 agent/files/help/approve
