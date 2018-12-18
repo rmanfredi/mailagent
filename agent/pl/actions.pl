@@ -900,13 +900,11 @@ sub post {
 			$last_was_header = 1;			# Mark we discarded the line
 			next;							# Line is skipped
 		}
-		s/^Sender:/Prev-Sender:/i;
-		s/^(To|Cc):/X-$1:/i;				# Keep distribution info
-		s/^(Resent-\w+):/X-$1:/i;
 		# Skip any RFC-822 header that is not purely made up of [\w-]+
 		# as it is not possible it can be meaningful to the news system.
 		if (/^([!-9;-~\w-]+):/) {
 			my $header = $1;
+			$header = &header::normalize($header);
 			unless ($header =~ /^[\w-]+$/) {
 				&add_log("NOTICE droping RFC-822 header \"$header\" for news")
 					if $loglvl > 5;
@@ -914,7 +912,16 @@ sub post {
 				next;						# Line is skipped
 			}
 			# All headers will now match /^[\w-]+:/
+			if ($Header{$header} =~ /^\s*$/) {
+				&add_log("NOTICE dropping empty header \"$header\" for news")
+					if $loglvl > 5;
+				$last_was_header = 1;		# Mark we discarded the line
+				next;						# Line is skipped
+			}
 		}
+		s/^Sender:/Prev-Sender:/i;
+		s/^(To|Cc):/X-$1:/i;				# Keep distribution info
+		s/^(Resent-\w+):/X-$1:/i;
 		if (/^([\w-]+):/ && exists $single{"\L$1"}) {
 			my $field = lc($1);
 			if ($single{$field}++) {
