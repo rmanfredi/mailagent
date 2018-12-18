@@ -210,7 +210,7 @@ sub recompress {
 sub restore {
 	return unless $cf'compress;		# Do nothing if no compress parameter
 	return unless -s $cf'compress;	# No compress list file, or empty
-	&init unless defined @compress;	# Initialize array only once
+	&init unless @compress;	# Initialize array only once
 	return unless defined $Ext{$cf'comptag};	# Invalid compression tag
 	local($folder) = @_;			# Folder candidate for uncompression
 	&'add_log("candidate folder is $folder") if $'loglvl > 18;
