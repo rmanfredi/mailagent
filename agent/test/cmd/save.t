@@ -71,7 +71,7 @@ $? == 0 || print "15\n";
 -f 'ok' || print "16\n";
 $size = -s 'ok';
 
-&add_option('-o fromfake: OFF');
+&add_option('-o "fromfake: OFF"');
 `$cmd`;
 $? == 0 || print "17\n";
 &get_log(18, 'ok');
