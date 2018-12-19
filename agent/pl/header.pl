@@ -254,7 +254,7 @@ sub format {
 		$new .= $cont if $new;				# Continuation starts with 8 spaces
 		$len = 70;							# Account continuation for next line
 		$new .= "$tmp\n";
-		$field = substr($field, $kept, length $field);
+		$field = substr($field, $kept);
 	}
 	unless ($field =~ /^\s+$/) {			# Not only spaces
 		$new .= $cont if $new;				# Add 8 chars if continuation
@@ -268,17 +268,43 @@ sub format {
 # after the field name.
 # Also, this routine must work when called to format a continuation (field
 # stating with spaces).
+# Finally, this routine ensures that the first line is not just the header
+# name (even if there are continuation lines), so the first line can be
+# longer than 80 chars to fulfill this constraint.
 sub news_fmt {
 	my ($field) = @_;			# Field to be formatted
-	my $continuation = 0;
-	$continuation++ if $field =~ s/^\s+//;
-	my $res = &format($field);
-	if ($continuation) {
-		$res = (' ' x 8) . $res;	# Can be larger than 80 chars, but it's OK
+	my $len = 78;				# Amount of characters kept
+	my $cont = ' ' x 8;			# Continuation lines starts with 8 spaces
+	$field =~ s/^([\w-]+):(\S)/$1: $2/s;	# Ensure name is followed by space
+	return $field if length $field <= $len;	# Nothing to change
+	# The first line needs to be handled specially to not be split on the
+	# first space, even if it becomes longer than our targeted length limit.
+	my $new;
+	if ($field =~ /^[\w-]+:/) {
+		return $field unless $field =~ /^([\w-]+:\s+.+?[\s,])/;
+		$new = $1;
 	} else {
-		$res =~ s/^([\w-]+):(\S)/$1: $2/s || $res =~ s/^([\w-]+):\n/$1: \n/s;
+		return $field unless $field =~ /^(\s+.+?[\s,])/;
+		$new = $1
 	}
-	return $res;
+	# Maybe we can fit more?
+	while (length $new < $len) {
+		my $tmp = substr($field, length $new);
+		last unless $tmp =~ /^(.+?[\s,])/;
+		my $extra = $1;
+		last if length($new) + length($extra) > $len;
+		$new .= $extra;
+	}
+	$field = substr($field, length $new);
+	$new =~ s/\s+$//;			# Remove trailing spaces
+	# Normalize continuation to 8 spaces
+	$new = $cont . $new if $new =~ s/^\s+//;
+	# Format the remaining normally now that we special-cased the first line
+	my $remaining;
+	$field =~ s/^\s+//;
+	$remaining = &format($field) unless $field =~ /^\s*$/;
+	$remaining = $cont . $remaining if length $remaining;
+	return $new . "\n" . $remaining;
 }
 
 # Scan the head of a file and try to determine whether there is a mail

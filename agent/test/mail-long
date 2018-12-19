@@ -9,7 +9,8 @@ Received: by ursa-major.spdcc.com with sendmail-5.65/4.7
 	id <AA13205@ursa-major.spdcc.com>; Fri, 3 Jul 92 01:17:34 -0400
 Received: by iecc.cambridge.ma.us (smail2.5+)
 	id AA04311; 3 Jul 92 00:43:22 EDT (Fri)
-To: ram@eiffel.com
+To: ram@eiffel.com, foo@bar.com, anonymous@example-domain.com,
+	root@another-domain.com, bar@another-long-domain-name.com, another_user@example.com
 Long-Header: this_is_too_long_to_be_cut_shorter_than_our_about_eighty_character_limit_and_must_therefore_be_atomically_emitted
 From: compilers-request@iecc.cambridge.ma.us
 Subject: Re: melting ice technology?
