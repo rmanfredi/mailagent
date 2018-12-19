@@ -238,6 +238,17 @@ sub format {
 		$tmp = substr($field, 0, $len);		# Keep first $len chars
 		$tmp =~ s/^(.*)([,\s]).*/$1$2/;		# Cut at last space or ,
 		$kept = length($tmp);				# Amount of chars we kept
+		# We must ensure our hard split at $len chars does not fall within
+		# a word: we can only split on ',' or space!
+		if ($kept == $len) {
+			for (;;) {
+				my $s = substr($field, $kept, 1);
+				last unless length $s;		# Reached end of string
+				$kept++;
+				$tmp .= $s;
+				last if $s =~ /^[,\s]/;
+			}
+		}
 		$tmp =~ s/\s+$//;					# Remove trailing spaces
 		$tmp =~ s/^\s+//;					# Remove leading spaces
 		$new .= $cont if $new;				# Continuation starts with 8 spaces

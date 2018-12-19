@@ -27,3 +27,19 @@ sub add_option {
 	$cmd = join(' ', $cmd[0], $opt, @cmd[1..$#cmd]);
 }
 
+# Check that file contains a given string
+sub contains_string {
+	my ($file, $string) = @_;
+	local *FILE, $_;
+	open(FILE, $file) || return 0;
+	my $matched = 0;
+	while (<FILE>) {
+		if (/\Q$string/) {
+			$matched = 1;
+			last;
+		}
+	}
+	close FILE;
+	return $matched;
+}
+

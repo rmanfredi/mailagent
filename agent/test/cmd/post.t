@@ -17,6 +17,7 @@
 
 do '../pl/cmd.pl';
 do '../pl/mta.pl';
+do '../pl/misc.pl';
 
 &add_header('X-Tag: post 1');
 `$cmd`;
@@ -60,6 +61,24 @@ $? == 0 || print "15\n";
 # 1 EOH + 3 paragraphs in mail
 &check_log('^$', 17) == 4 or print "18\n";
 
+unlink 'mail', 'list', 'send.news';
+
+&cp_mail("../mail-long");
+&add_header('X-Tag: post 1');
+`$cmd`;
+$? == 0 || print "19\n";
+-f "$user" && print "20\n";		# Mail not saved
+-f 'send.news' || print "21\n";	# Mail processed
+
+# These strings must not be cut (this is around the 78 character limit)
+my @long = (
+	"character_limit_and_must_therefore",
+	"9207030043.AA04311\@iecc.cambridge.ma.us"
+);
+for (my $i = 0; $i < @long; $i++) {
+	&contains_string('send.news', $long[$i]) || print 22 + $i, "\n";
+}
+
+unlink 'mail';
 &clear_mta;
-unlink 'mail', 'list';
 print "0\n";
