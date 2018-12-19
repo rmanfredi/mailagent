@@ -766,7 +766,7 @@ sub post {
 	my ($faddr, $fcom) = &parse_address($Header{'From'});
 	$fcom = '"' . $fcom . '"' if $fcom =~ /[@.\(\)<>,:!\/=;]/;
 	if ($fcom ne '') {
-		print NEWS header'news_fmt("From: $fcom <$faddr>\n");
+		print NEWS header::news_fmt("From: $fcom <$faddr>\n");
 	} else {
 		print NEWS "From: $faddr\n";
 	}
@@ -823,7 +823,7 @@ sub post {
 	} else {
 		my $subject = $Header{'Subject'};
 		$subject =~ tr/\n/ /;				# Multiples instances collapsed
-		print NEWS header'news_fmt("Subject: $subject\n");
+		print NEWS header::news_fmt("Subject: $subject\n");
 	}
 
 	# If no proper Message-ID is present, generate one
@@ -839,7 +839,7 @@ sub post {
 			# duplicate detection provided all feeds are done from mailagent
 			# But we also need to fix places using those message IDs, i.e.
 			# the References line, to preserve correct threading (see below).
-			my $fixup = &header'msgid_cleanup(\$msgid);
+			my $fixup = header::msgid_cleanup(\$msgid);
 			&add_log("WARNING fixed Message-Id line for news")
 				if $loglvl > 5 && $fixup;
 		} else {
@@ -943,7 +943,10 @@ sub post {
 			&add_log("NOTICE added space after \"$header:\", for news")
 				if $loglvl > 5;
 		}
-		print NEWS header'news_fmt($_), "\n";
+		# We include the "\n" at the end of the string to let news_fmt()
+		# avoid emitting the line if it ends-up being a blank line: since
+		# we are emitting a header, that blank line would signal EOH.
+		print NEWS header::news_fmt("$_\n");
 	}
 
 	# For correct threading, we need a References: line.
@@ -971,14 +974,14 @@ sub post {
 		# INN does not like an empty References: line, even if properly
 		# followed by continuations.  Therefore, cheat to force the message
 		# to have at least one ref on the line.
-		print NEWS header'news_fmt("References: $refs\n");
+		print NEWS header::news_fmt("References: $refs\n");
 	}
 
 	# Any address included withing "" means addresses are stored in a file
 	$newsgroups = &complete_list($newsgroups, 'newsgroup');
 	$newsgroups =~ s/\s/,/g;	# Cannot have spaces between them
 	$newsgroups =~ tr/,/,/s;	# Squash down consecutive ','
-	print NEWS header'news_fmt("Newsgroups: $newsgroups\n");
+	print NEWS header::news_fmt("Newsgroups: $newsgroups\n");
 	print NEWS "Distribution: local\n" if $localdist;
 	print NEWS $FILTER, "\n";	# Avoid loops: inews may forward to sendmail
 	print NEWS "\n";

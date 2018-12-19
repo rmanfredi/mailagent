@@ -251,12 +251,15 @@ sub format {
 		}
 		$tmp =~ s/\s+$//;					# Remove trailing spaces
 		$tmp =~ s/^\s+//;					# Remove leading spaces
-		$new .= $cont if $new;				# Continuation starts with 8 spaces
-		$len = 70;							# Account continuation for next line
-		$new .= "$tmp\n";
+		if (length $tmp) {					# Avoid empty line within header!
+			$len = 70;						# Account continuation for next line
+			$new .= $cont if $new;			# Continuation starts with 8 spaces
+			$new .= $tmp;
+			$new .= "\n";
+		}
 		$field = substr($field, $kept);
 	}
-	unless ($field =~ /^\s+$/) {			# Not only spaces
+	unless ($field =~ /^\s*$/) {			# Not only spaces and not empty
 		$new .= $cont if $new;				# Add 8 chars if continuation
 		$new .= $field;						# Remaining information on one line
 	}
@@ -284,7 +287,15 @@ sub news_fmt {
 		return $field unless $field =~ /^([\w-]+:\s+.+?[\s,])/;
 		$new = $1;
 	} else {
-		return $field unless $field =~ /^(\s+.+?[\s,])/;
+		unless ($field =~ /^(\s+.+?[\s,])/) {
+			# No space to break-up the header line
+			$field =~ s/^\s+//;
+			# Do not emit line if it ends-up being empty...
+			# Indeed, we're supposed to be emitting header-lines, and an
+			# empty line would signal an EOH (End Of Header) condition!
+			return ''if $field eq "\n";
+			return $cont . $field;		# Normalize continuations
+		}
 		$new = $1
 	}
 	# Maybe we can fit more?
