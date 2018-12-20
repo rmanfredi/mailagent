@@ -225,14 +225,23 @@ sub parsedate {
 }
 
 # Format header field to fit into 78 columns, each continuation line being
-# indented by 8 chars. Returns the new formatted header string.
+# indented by 4 chars. Returns the new formatted header string.
 sub format {
-	local($field) = @_;			# Field to be formatted
-	local($tmp);				# Buffer for temporary formatting
-	local($new) = '';			# Constructed formatted header
-	local($kept);				# Length of current line
-	local($len) = 78;			# Amount of characters kept
-	local($cont) = ' ' x 8;		# Continuation lines starts with 8 spaces
+	my ($field) = @_;			# Field to be formatted
+	my $tmp;					# Buffer for temporary formatting
+	my $new = '';				# Constructed formatted header
+	my $kept;					# Length of current line
+	my $len = 78;				# Amount of characters kept
+	my $cont = ' ' x 4;			# Continuation lines starts with 4 spaces
+	# No need to format if length already fits the line
+	if (length($field) <= $len) {
+		# Normalize continuations
+		return $cont . $field if $field =~ s/^\s+//;
+		return $field;
+	}
+	# Adjust length down if we're just formatting a continuation line
+	# This can happen when we're called from news_fmt().
+	$len = 74 if $field =~ /^\s/;
 	# Format header field, separating lines on ',' or space.
 	while (length($field) > $len) {
 		$tmp = substr($field, 0, $len);		# Keep first $len chars
@@ -252,7 +261,7 @@ sub format {
 		$tmp =~ s/\s+$//;					# Remove trailing spaces
 		$tmp =~ s/^\s+//;					# Remove leading spaces
 		if (length $tmp) {					# Avoid empty line within header!
-			$len = 70;						# Account continuation for next line
+			$len = 74;						# Account continuation for next line
 			$new .= $cont if $new;			# Continuation starts with 8 spaces
 			$new .= $tmp;
 			$new .= "\n";
@@ -277,7 +286,7 @@ sub format {
 sub news_fmt {
 	my ($field) = @_;			# Field to be formatted
 	my $len = 78;				# Amount of characters kept
-	my $cont = ' ' x 8;			# Continuation lines starts with 8 spaces
+	my $cont = ' ' x 4;			# Continuation lines starts with 4 spaces
 	$field =~ s/^([\w-]+):(\S)/$1: $2/s;	# Ensure name is followed by space
 	return $field if length $field <= $len;	# Nothing to change
 	# The first line needs to be handled specially to not be split on the
@@ -293,7 +302,7 @@ sub news_fmt {
 			# Do not emit line if it ends-up being empty...
 			# Indeed, we're supposed to be emitting header-lines, and an
 			# empty line would signal an EOH (End Of Header) condition!
-			return ''if $field eq "\n";
+			return '' if $field eq "\n";
 			return $cont . $field;		# Normalize continuations
 		}
 		$new = $1
@@ -311,9 +320,10 @@ sub news_fmt {
 	# Normalize continuation to 8 spaces
 	$new = $cont . $new if $new =~ s/^\s+//;
 	# Format the remaining normally now that we special-cased the first line
+	# We add a leading space because we're formatting a continuation line.
 	my $remaining;
 	$field =~ s/^\s+//;
-	$remaining = &format($field) unless $field =~ /^\s*$/;
+	$remaining = &format(" " . $field) unless $field =~ /^\s*$/;
 	$remaining = $cont . $remaining if length $remaining;
 	return $new . "\n" . $remaining;
 }
