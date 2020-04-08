@@ -267,6 +267,16 @@ sub is_blank {
 	return $l =~ /^[\W_]*$/;	# Contains only non-words and underscores
 }
 
+# Keep only printable ASCII chars from biffable lines in specified body array
+# Control chars are swallowed, non-ASCII chars converted to '.'.
+sub to_ascii {
+	my ($aref, $lines) = @_;	# Body as array ref, amount of lines to convert
+	my $n = $lines > @{$aref} ? @{$aref} : $lines;
+	for (my $i = 0; $i < $n; $i++) {
+		$aref->[$i] =~ s/(.)/mangle_ascii($1)/ge;
+	}
+}
+
 # Print first $cf'bifflines lines or $cf'bifflen charaters, whichever
 # comes first. Assumes TTY already opened correctly
 # Also known as the %-B macro if called body(0), or %-T if called body(1).
@@ -285,6 +295,7 @@ sub body {
 	my ($content, $entity, $enc, $biffenc);
 	($content, $entity) = unmime(\@body) if $'Header{'Mime-Version'};
 
+	my $convert_to_ascii = 0;
 	if (length($content)) {
 		&'add_log("biffing $entity entity is $content") if $'loglvl > 8;
 		my $charset;
@@ -292,9 +303,9 @@ sub body {
 		if (defined $charset) {
 			$enc = Encode::find_encoding($charset);
 			unless (ref $enc) {
-				&'add_log("WARNING unknown charset '$charset', no body shown")
+				&'add_log("WARNING unknown charset '$charset', handling as ASCII")
 					if $'loglvl > 1;
-				@body = ("[body hidden: unknown charset '$charset']");
+				$convert_to_ascii = 1;
 			}
 
 			# If the encoding is the same as the one used in the terminal,
@@ -313,6 +324,7 @@ sub body {
 
 	strip_html(\@body) if $content =~ /html\b/;
 	&trim(*body) if $trim;		# Smart trim of leading reply text
+	to_ascii(\@body, $lines) if $convert_to_ascii;
 	&mh(*body, $len) if $cf'biffmh =~ /^on/i;
 
 	my $reformat = $cf'biffnice =~ /^on/i;
@@ -517,6 +529,18 @@ sub format {
 }
 
 # Perload OFF
+
+# Mangle given character to ASCII, or swallow it if CTRL char
+# MUST NOT be dataloaded (would mess $1 in the regexp)
+sub mangle_ascii {
+	my ($x) = @_;
+	my $c = unpack("U", $x);				# Read as Unicode
+	return '' if $c <= 8;					# Invisible
+	# Chars 9 and 10 are \t and \n in ASCII
+	return '' if $c >= 11 && $c < 32;		# Invisible
+	return '.' if $c >= 127;				# Outside the ASCII range
+	return pack("C", $c);					# Write as a byte (ASCII)
+}
 
 # Quoted-printable decoder
 # MUST NOT be dataloaded (would mess $1 in the regexp)
