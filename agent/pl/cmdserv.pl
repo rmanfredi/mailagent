@@ -265,9 +265,15 @@ sub process {
 	# file with the insurance that it will not leave any trace should we
 	# fail abruptly.
 
-	unless (open(MAILER, "+>$cf'tmpdir/serv.mail$$")) {
-		&'add_log("ERROR cannot create temporary mail transcript: $!")
+	my $tmp = "$cf'tmpdir/serv.mail$$";
+	unless (open(MAILER, "+>$tmp")) {
+		&'add_log("ERROR cannot create temporary mail transcript $tmp: $!")
 			if $'loglvl > 1;
+	} else {
+		unless (unlink($tmp)) {
+			&'add_log("ERROR cannot unlink temporary mail transcript $tmp: $!")
+				if $'loglvl > 1;
+		}
 	}
 
 	# We may fork and have to close one end of the MAILER pipe, so make sure
