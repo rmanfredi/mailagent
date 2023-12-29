@@ -528,6 +528,18 @@ sub format {
 	push(@ary, $body);			# Remaining information on one line
 }
 
+sub as_biffchars {
+	my ($c, $l) = @_;	# charset, line
+	my $enc = Encode::find_encoding($c);
+	my $biffenc = Encode::find_encoding($cf'biffchars);
+	if (ref $enc && ref $biffenc && $enc->name ne $biffenc->name) {
+		my $data = $enc->decode($l);
+		$data = $biffenc->encode($data);
+		$l = $data if length $data;
+	}
+	return $l;
+}
+
 # Perload OFF
 
 # Mangle given character to ASCII, or swallow it if CTRL char
@@ -547,31 +559,17 @@ sub mangle_ascii {
 sub to_txt {
 	my ($c, $l) = @_;	# charset, line
 	$l =~ s/=([\da-fA-F]{2})/pack('C', hex($1))/ge;
-	my $enc = Encode::find_encoding($c);
-	my $biffenc = Encode::find_encoding($cf'biffchars);
-	if (ref $enc && ref $biffenc && $enc->name ne $biffenc->name) {
-		my $data = $enc->decode($l);
-		$data = $biffenc->encode($data);
-		$l = $data if length $data;
-	}
-	return $l;
+	return as_biffchars($c, $l);
 }
 
 # Base64 decoder
 # MUST NOT be dataloaded (would mess $1 in the regexp)
 sub b64_to_txt {
 	my ($c, $l) = @_;	# charset, line
-	base64'reset(length $l);
-	base64'decode($l);
-	my $o = base64'output();
-	my $enc = Encode::find_encoding($c);
-	my $biffenc = Encode::find_encoding($cf'biffchars);
-	if (ref $enc && ref $biffenc && $enc->name ne $biffenc->name) {
-		my $data = $enc->decode($$o);
-		$data = $biffenc->encode($data);
-		$l = $data if length $data;
-	}
-	return $l;
+	base64::reset(length $l);
+	base64::decode($l);
+	my $o = base64::output();
+	return as_biffchars($c, $$o);
 }
 
 # Perload ON
