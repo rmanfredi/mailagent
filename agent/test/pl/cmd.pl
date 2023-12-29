@@ -24,7 +24,13 @@ do '../pl/mail.pl';
 &cp_mail;				# From mail.pl
 $user = $ENV{'USER'};
 unlink "$user", 'agentlog', 'send.mail', 'send.news';
-$cmd = "$mailagent -L $ENV{'LEVEL'} -r ../actions mail 2>/dev/null";
+
+sub testing_cmd {
+	my ($file) = @_;
+	$file //= "mail";
+	return "$mailagent -L $ENV{'LEVEL'} -r ../actions $file 2>/dev/null";
+}
+$cmd = testing_cmd();
 
 # We might need this
 do '../pl/logfile.pl';

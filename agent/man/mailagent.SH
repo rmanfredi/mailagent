@@ -1737,6 +1737,30 @@ recorded within %&, each set terminated with a ';'. If a negated selector is
 used, then %& will record all the fields which did not contain the pattern,
 assuming the selection succeeded (otherwise nothing is recorded).
 '''
+.SS "Matching Encoding"
+.PP
+Internally, all headers are transparently recoded into UTF-8 at matching time,
+which means regular expressions only need to target UTF-8 characters, regardless
+of the original encoding used in the headers of the message:
+.Ex
+Subject: /\\\\bcafé\\\\b/		{ SAVE coffee };
+.Ef
+.PP
+For this to work, the initial character set must be known by the \fIEncode\fR
+perl module which comes with the standard distribution.  And your rules need
+to be stored in an UTF-8 encoded file if you want to specify non-ASCII
+characters directly.
+.PP
+If you cannot use UTF-8 encoding in your rule file for some reason, you may
+also use the "\\\\N{}" escape to specify the Unicode names of your non-ASCII
+characters or simply the Unicode codepoint in hexadecimal:
+.Ex
+Subject: /\\\\bcaf\\\\N{LATIN SMALL LETTER E WITH ACUTE}\\\\b/	{ SAVE coffee };
+Subject: /\\\\bcaf\\\\N{U+00E9}\\\\b/	{ SAVE coffee };
+.Ef
+.PP
+You can verify the encoding of your rule file on the filesystem with
+the \fIfile\fR command to make sure it is indeed properly seen as UTF-8.
 .SS "Available Actions"
 .PP
 The following actions are available as filtering commands. Case is irrelevant

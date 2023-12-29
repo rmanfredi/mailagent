@@ -85,6 +85,18 @@ sub perl_pattern {
 # We also enclose the whole pattern within ().
 sub make_pattern {
 	local($_) = shift(@_);
+	if (/\\N\{/) {
+		# Pattern has a \N{} Unicode escape, process it
+		my $orig = $_;
+		eval '{ use utf8; $_ = qq' . "\01$orig\01" . '; }';
+		if ($@) {
+			&add_log("ERROR while processing \\N Unicode escape in '$orig': $@");
+			$_ = $orig;
+		} else {
+			utf8::encode($_);
+			&add_log("converted pattern '$orig' to '$_'") if $loglvl > 19;
+		}
+	}
 	# The whole pattern is inserted within () to make at least one
 	# backreference. Otherwise, the following could happen:
 	#    $_ = '1 for you';
@@ -275,7 +287,7 @@ sub match_single {
 	local($login) = 0;				# Set to true when attempting login match
 	local(@matched);
 	unless (defined $buffer) {		# No buffer for matching was supplied
-		$buffer = $Header{$selector};
+		$buffer = as_utf8::recode($Header{$selector});
 	}
 	#
 	# If we attempt a match on a field holding e-mail addresses and the pattern
@@ -327,6 +339,7 @@ sub match_list {
 	local($selector, $pattern, $range) = @_;
 	local($_) = $Header{$selector};	# Work on a copy of the line
 	tr/\n/ /;						# Make one big happy line
+	$_ = as_utf8::recode($_);
 	local(@list) = split(/,/);		# List of addresses
 	local($min, $max) = &mrange($range, scalar(@list));
 	return 0 unless $min;			# No matching possible if null range
@@ -348,9 +361,14 @@ sub match_list {
 sub match_var {
 	local($selector, $pattern, $range) = @_;
 	local($lines) = 0;					# Number of lines in matching buffer
-	my $target = \$Header{$selector};
+	my $target;
 	# Need to special-case Body to use the *decoded* version
-	$target = $Header{'=Body='} if $selector eq 'Body';
+	if ($selector eq 'Body') {
+		$target = $Header{'=Body='};
+	} else {
+		my $recoded = as_utf8::recode($Header{$selector});
+		$target = \$recoded;
+	}
 	if ($range ne '<1,->') {			# Optimize: count lines only if needed
 		$lines = $$target =~ tr/\n/\n/;
 	}
@@ -374,7 +392,8 @@ sub match_var {
 	# If buffer is empty, we have to recheck the pattern in a non array context
 	# to see if there is a match. Otherwise, /(.*)/ does not seem to match an
 	# empty string as it returns an empty string in $matched[0]...
-	$matched[0] = eval '$$target =~ ' . $pattern . 'm' unless length $$target;
+	$matched[0] = eval '$$target =~ ' . $pattern . 'm'
+		unless length $$target;
 	&eval_error;						# Make sure eval worked
 	&update_backref(*matched);			# Record non-null backreferences
 	$matched[0];						# Return matching status

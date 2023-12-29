@@ -1,6 +1,8 @@
 #
 # Mailagent rules for action regression tests
 #
+# This is an UTF8 file.
+#
 
 # $Id: actions,v 3.0.1.15 2001/03/17 18:15:08 ram Exp ram $
 #
@@ -498,3 +500,13 @@ X-Tag: /mh/
 	PROTECT -u; SAVE simple;
 };
 
+X-Tag: /utf8 #1/		{ REJECT UTF8_1 };
+<UTF8_1> Subject: /fiancee/	{ SAVE bad };
+<UTF8_1> Subject: /fiancée/	{ SAVE ok };
+<UTF8_1> 					{ SAVE bad };
+
+X-Tag: /utf8 #2/		{ REJECT UTF8_2 };
+<UTF8_2> Subject: /fiancee/	{ SAVE bad };
+<UTF8_2> Subject: /fianc\N{U+00E9}e/	{ SAVE ok1; REJECT };
+<UTF8_2> Subject: /fianc\N{LATIN SMALL LETTER E WITH ACUTE}e/	{ SAVE ok2 };
+<UTF8_2> 					{ SAVE bad };
