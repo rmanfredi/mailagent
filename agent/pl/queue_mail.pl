@@ -104,11 +104,17 @@ sub queue_mail {
 		$type = 'qm';
 	}
 
+	# Since on modern systems the PID is no longer constrained to being
+	# a 16-bit value, make sure we limit the value used for uniqueness
+	# to 5 digits, to not mess-up with hardwired queue formats.
+	# 		--RAM, 2023-12-30
+	my $pid = $$ % 100000;
+
 	# The following ensures unique queue mails. As the mailagent itself may
 	# queue intensively throughout the SPLIT command, a queue counter is kept
 	# and is incremented each time a mail is successfully queued.
-	$queue_file = "$type$$";		# Append PID for uniqueness
-	$queue_file = "$type${$}x" . $queue_count if -f "$queue_file";
+	$queue_file = "$type$pid";		# Append PID for uniqueness
+	$queue_file = "$type${pid}x" . $queue_count if -f "$queue_file";
 	$queue_file = "${queue_file}x" while -f "$queue_file";	# Paranoid
 	++$queue_count;					# Counts amount of queued mails
 	&add_log("queue file is $queue_file") if $loglvl > 19;

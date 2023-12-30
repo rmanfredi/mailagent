@@ -550,7 +550,15 @@ char *base;
 	for (;;) {
 		int fd;					/* Opened file */
 
-		sprintf(buf, fmt, dir, base, progpid + try, trailer);
+		/*
+		 * On modern systems, the PID of a process can grow very large (no
+		 * longer limited to 16-bit values. To make the value fit in 5 digits
+		 * we artificially cap the value below.  This is to make sure mailagent's
+		 * queue formatting can fit the hardwired format length.
+		 * 		--RAM, 2023-12-30
+		 */
+
+		sprintf(buf, fmt, dir, base, (progpid + try) % 100000, trailer);
 
 		/*
 		 * Must "lock" the file in the queue in case mailagent happens to be
