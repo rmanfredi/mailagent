@@ -457,7 +457,7 @@ not. The value of this variable is used in place of \fIsecure\fR when checking
 executable files. (defaults to OFF, suggested: ON if possible).
 .TP
 .I execskip
-Whether to skip the \fIexec()\fR security checks alltogether. Don't turn
+Whether to skip the \fIexec()\fR security checks altogether. Don't turn
 this ON unless you really trust all the users having access to your machine
 or file server. (optional, default to OFF, suggested: OFF).
 .TP
@@ -543,7 +543,7 @@ dumped to an emergency mailbox. (optional, defaults to ON).
 .TP
 .I lockwarn
 This variable controls the time after which \fImailagent\fR should
-start emiting a warning when busy trying to acquire a lock.
+start emitting a warning when busy trying to acquire a lock.
 It is a comma separated list of values, in seconds. If two values are
 given, the first is the initial time threshold, the second is the
 repeat period. For instance, a value of "15,60" would cause a warning
@@ -1350,7 +1350,7 @@ the pattern \fI/Raphael/\fR would match, but not \fI/^Raphael/\fR. Instead,
 \fI/^ram@.*$/\fR would match, but this is more easily done with a single word
 pattern \fIram\fR, for it only focuses on the login name of the address and
 would also match if the address was written as \fIeiffel.com!ram\fR.  A single
-address in Internet form, as in \fIram@eiffel.com\fR is implicitely matching
+address in Internet form, as in \fIram@eiffel.com\fR is implicitly matching
 on the address part of the field, and you must not escape the '.' as you
 would have to in a regular expression.
 .PP
@@ -1960,7 +1960,7 @@ You still have to parse the MIME parts yourself though.
 .sp
 Using
 .B -b
-does not prevent your program from outputing a valid message back, one
+does not prevent your program from outputting a valid message back, one
 that can be possibly sent on the network so you have two options:
 either you do not supply any Content-Transfer-Encoding in the headers,
 and mailagent will recode the body for you using the initial transfer
@@ -4892,7 +4892,7 @@ to quietly redefine a commonly used standard command like LEAVE and later
 be able to assume your identity.
 .PP
 Versions after 3.0 PL44 come with an improved (from a security point of view) C
-\fIfilter\fR that will not only perform the aforementionned checks but will
+\fIfilter\fR that will not only perform the aforementioned checks but will
 also ensure that the \fIperl\fR executable and the \fImailagent\fR script
 it is about to exec are not loosely protected (when \fIexecsafe\fR is ON or
 when running with superuser privileges).
@@ -4906,7 +4906,7 @@ as well as mail hooks, are checked for obvious protection flaws before being
 actually run
 Interpreted scripts (starting with the #! magic token) and
 perl scripts following the magic "exec perl if \$under_shell" incantation are
-specially checked for further security of the relevant interpretor. Those
+specially checked for further security of the relevant interpreter. Those
 checks are performed systematically
 (when \fIexecsafe\fR is ON or when running with superuser privileges)
 even if the \fIsecure\fR parameter was
