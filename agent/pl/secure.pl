@@ -276,7 +276,7 @@ sub exec_secure {
 	return 1 unless -T $file;	# Safe as far as we can tell, unless script...
 
 	local($head);				# Heading line
-	local($interpretor);		# Interpretor running the script
+	local($interpretor);		# Interpreter running the script
 	local($perl) = '';			# Empiric support for perl scripts
 	local(*SCRIPT);
 
@@ -310,7 +310,7 @@ sub exec_secure {
 	}
 
 	unless (&file_secure($interpretor, 'interpretor', 1)) {
-		&add_log("ERROR cannot run unsecure interpretor $interpretor")
+		&add_log("ERROR cannot run unsecure interpreter $interpretor")
 			if $loglvl > 1;
 		&add_log("ERROR cannot allow execution of script $file") if $loglvl > 1;
 		return 0;

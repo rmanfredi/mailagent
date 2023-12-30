@@ -567,7 +567,7 @@ sub print_general {
 	$n = $Special{'saved'};
 	$s = $n == 1 ? '' : 's';
 	local($was) = $n == 1 ? 'was' : 'were';
-	print " and $n message$s $was implicitely saved" if $n;
+	print " and $n message$s $was implicitly saved" if $n;
 	print ".\n";
 	$n = $Special{'vacation'};
 	$s = $n == 1 ? '' : 's';

@@ -410,7 +410,7 @@ sub create {
 #
 # If a file is spefied as:
 #        mailbox = f ($maildrop)
-# in the setup.cf file, then it means the optional file is implicitely located
+# in the setup.cf file, then it means the optional file is implicitly located
 # under another configuration variable or specified path. Use that if necessary.
 # Note that if a variable is specified, it is assumed to be a configuration
 # variable and is therefore evaluated in the cf package. It is possible to
